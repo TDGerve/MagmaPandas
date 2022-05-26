@@ -32,14 +32,14 @@ def find_elements(compound: str):
     # Raise an error for invalid elements with more than 1 lower case character
         if sum(c.islower() for c in element) > 1:
             raise ValueError(f"'{element}' is not a valid element")
-    # Check for any non-word characters
+    # Check for non-word characters
         elif len(re.findall(r"\W", element)) > 0:
             raise ValueError(f"'{element}' contains an invalid character")
 
     # Raise an error if there are any leftover characters
     length_elements = sum(len(s) for s in elements)
     if len(compound) != length_elements:
-        raise ValueError(f"There leftover characters in '{compound}'; elements found: {elements}")
+        raise ValueError(f"There are leftover characters in '{compound}'; elements found: {elements}")
 
     return elements
 
@@ -95,6 +95,7 @@ def compound_weights(compounds: list[str]):
 
     return weights
 
+
 def cation_numbers(compounds: list[str]):
     """
     Docstring
@@ -107,9 +108,10 @@ def cation_numbers(compounds: list[str]):
 
     return cations
 
+
 def oxygen_numbers(compounds: list[str]):
     """
-    oxygen
+    Docstrings
     """
 
     oxygen = pd.Series(index=compounds, name='oxygen', dtype=int)
@@ -119,6 +121,10 @@ def oxygen_numbers(compounds: list[str]):
 
     return oxygen
 
+
 def cation_names(compounds: list[str]):
+    """
+    Docstrings
+    """
 
     return [decompose(oxide).index[0] for oxide in compounds]
