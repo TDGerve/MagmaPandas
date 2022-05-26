@@ -3,14 +3,14 @@ import pandas as pd
 import elements as e
 
 
-def read_file(file: str, index_col: List[str], keep_columns: List[str] = [], **kwargs):
+def read_file(file: str, *args, index_col: List[str], keep_columns: List[str] = [], **kwargs):
     """
     Docstring
     """
 
     df = pd.read_csv(file, index_col=index_col, **kwargs)
 
-    return MagmaBase(df, keep_columns=keep_columns, calculate_total=True, **kwargs)
+    return MagmaBase(df, *args, keep_columns=keep_columns, calculate_total=True, **kwargs)
 
 
 class MagmaBase(pd.DataFrame):
@@ -92,6 +92,7 @@ class MagmaBase(pd.DataFrame):
         moles["total"] = moles.sum(axis=1)
         # Add back columns without chemical data
         moles[self._no_data] = self[self._no_data]
+
         return moles
 
 
@@ -113,6 +114,7 @@ class MagmaBase(pd.DataFrame):
         cations['total'] = cations.sum(axis=1)
         # Add back columns without chemical data
         cations[self._no_data] = self[self._no_data]
+
         return cations
 
 
@@ -130,4 +132,21 @@ class MagmaBase(pd.DataFrame):
                  
         self._weights = weights
 
-        self['total'] = self[self.elements].sum(axis=1)   
+        self['total'] = self[self.elements].sum(axis=1)
+
+
+    def mineral_formula(self, O: int=None):
+        """
+        Docstrings
+        """
+        oxygen_numbers = e.oxygen_numbers(self.elements) / e.cation_numbers(self.elements)
+        oxygen_numbers.index = e.cation_names(self.elements)
+        # Calculate cation fractions
+        cations = self.cations[oxygen_numbers.index]
+        # Normalise to oxygen
+        oxygen_total = cations.mul(oxygen_numbers).sum(axis=1)
+        oxygen_factor = O / oxygen_total
+        cations = cations.mul(oxygen_factor, axis=0)
+        cations['O'] = O
+
+        return cations
