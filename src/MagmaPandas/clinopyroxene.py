@@ -15,7 +15,6 @@ def read_clinopyroxene(file: str, *args, index_col: List[str], keep_columns: Lis
 
 class clinopyroxene(MagmaBase):
 
-
     @property
     def formula(self):
         """

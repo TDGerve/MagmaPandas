@@ -3,34 +3,25 @@ import pandas as pd
 import elements as e
 
 
-def read_file(file: str, *args, index_col: List[str], keep_columns: List[str] = [], **kwargs):
+def read_file(file: str, *args, index_col: List[str], keep_columns: List[str] = [], units=None, type=None, **kwargs):
     """
     Docstring
     """
+    allowed_units = ['wt. %', 'mol fraction']
+    allowed_types = ['oxide', 'cation']
+    if not units in allowed_units:
+        raise ValueError(f'units: "{units}" not recognised, please choose from: {allowed_units}')
+    if type not in allowed_types:
+        raise ValueError(f'type: "{type}" not recognised, please choose from: {allowed_types}')
 
     df = pd.read_csv(file, index_col=index_col, **kwargs)
 
-    return MagmaBase(df, *args, keep_columns=keep_columns, calculate_total=True, units='wt. %', **kwargs)
+    return MagmaBase(df, *args, keep_columns=keep_columns, calculate_total=True, units=units, datatype=type, **kwargs)
 
 
 class MagmaBase(pd.DataFrame):
 
-
     _metadata = ["_weights", "_no_data", "_units", "_datatype"]
-
-
-    @property
-    def _constructor(self):
-        """This is the key to letting Pandas know how to keep
-        derivative `MagmaBase` the same type as yours.  It should
-        be enough to return the name of the Class.  However, in
-        some cases, `__finalize__` is not called and `new attributes` are
-        not carried over.  We can fix that by constructing a callable
-        that makes sure to call `__finalize__` every time."""
-
-        def _c(*args, **kwargs):
-            return MagmaBase(*args, **kwargs).__finalize__(self)
-        return _c
 
     def __init__(
         self,
@@ -38,8 +29,8 @@ class MagmaBase(pd.DataFrame):
         *args,
         keep_columns: List[str]=[],
         calculate_total=False,
-        units='wt. %',
-        datatype='oxide',
+        units=None,
+        datatype=None,
         **kwargs,
     ):
         # A pandas series with the masses of all oxides and elements in the dataframe
@@ -69,6 +60,21 @@ class MagmaBase(pd.DataFrame):
 
         super().__init__(df, *args, **kwargs)
 
+
+    @property
+    def _constructor(self):
+        """This is the key to letting Pandas know how to keep
+        derivatives of `MagmaBase` the same type as yours.  It should
+        be enough to return the name of the Class.  However, in
+        some cases, `__finalize__` is not called and `new attributes` are
+        not carried over.  We can fix that by constructing a callable
+        that makes sure to call `__finalize__` every time."""
+
+        def _c(*args, **kwargs):
+            return MagmaBase(*args, **kwargs).__finalize__(self)
+        return _c
+
+
     @property
     def units(self):
         return f'{self._datatype} {self._units}'
@@ -77,12 +83,14 @@ class MagmaBase(pd.DataFrame):
     def units(self, value):
         print('units are read only')
 
+
     @property
     def weights(self):
         """
         Docstrings
         """        
         return self._weights
+
 
     @property
     def elements(self):
@@ -142,23 +150,6 @@ class MagmaBase(pd.DataFrame):
         return cations
 
 
-    def recalculate(self):
-        """
-        Docstrings
-        """
-        weights = pd.Series(name="weight", dtype="float32")
-
-        for col in self.columns:
-                try:
-                    weights[col] = e.calculate_weight(col)
-                except:
-                    pass
-                 
-        self._weights = weights
-
-        self['total'] = self[self.elements].sum(axis=1)
-
-
     def mineral_formula(self, O: int=None):
         """
         Docstrings
@@ -176,3 +167,20 @@ class MagmaBase(pd.DataFrame):
         cations['O'] = O
 
         return cations
+
+    
+    def recalculate(self):
+        """
+        Docstrings
+        """
+        weights = pd.Series(name="weight", dtype="float32")
+
+        for col in self.columns:
+                try:
+                    weights[col] = e.calculate_weight(col)
+                except:
+                    pass
+                 
+        self._weights = weights
+
+        self['total'] = self[self.elements].sum(axis=1)
