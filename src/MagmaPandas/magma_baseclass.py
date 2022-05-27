@@ -10,12 +10,12 @@ def read_file(file: str, *args, index_col: List[str], keep_columns: List[str] = 
 
     df = pd.read_csv(file, index_col=index_col, **kwargs)
 
-    return MagmaBase(df, *args, keep_columns=keep_columns, calculate_total=True, **kwargs)
+    return MagmaBase(df, *args, keep_columns=keep_columns, calculate_total=True, units='wt. %', **kwargs)
 
 
 class MagmaBase(pd.DataFrame):
 
-    _metadata = ["_weights", "_no_data"]
+    _metadata = ["_weights", "_no_data", "_units", "_datatype"]
 
     @property
     def _constructor(self):
@@ -36,12 +36,16 @@ class MagmaBase(pd.DataFrame):
         *args,
         keep_columns: List[str]=[],
         calculate_total=False,
+        units='wt. %',
+        datatype='oxide',
         **kwargs,
     ):
         # A pandas series with the masses of all oxides and elements in the dataframe
         self._weights = pd.Series(name="weight", dtype="float32")
         # A list with the names of all columns that do not contain chemical data
         self._no_data = keep_columns
+        self._units = units
+        self._datatype = datatype
 
         if isinstance(df, pd.DataFrame):
             
@@ -64,6 +68,14 @@ class MagmaBase(pd.DataFrame):
         super().__init__(df, *args, **kwargs)
 
     @property
+    def units(self):
+        return f'{self._datatype} {self._units}'
+
+    @units.setter
+    def units(self, value):
+        print('units are read only')
+
+    @property
     def weights(self):
         """
         Docstrings
@@ -83,6 +95,10 @@ class MagmaBase(pd.DataFrame):
         """
         Docstrings
         """
+        if self._datatype != 'oxide':
+            raise TypeError(f'{self} is not in oxides')
+        if self._units != 'wt. %':
+            raise TypeError(f'{self} is not in wt. %')
         moles = self.copy()[self.elements]
         # Calculate moles
         moles = moles.div(moles._weights)
@@ -92,6 +108,7 @@ class MagmaBase(pd.DataFrame):
         moles["total"] = moles.sum(axis=1)
         # Add back columns without chemical data
         moles[self._no_data] = self[self._no_data]
+        moles._units = 'mol fraction'
 
         return moles
 
@@ -101,6 +118,8 @@ class MagmaBase(pd.DataFrame):
         """
         Docstrings
         """
+        if self._datatype != 'oxide':
+            raise TypeError(f'{self} is not in oxides')
         # Calculate oxide moles
         moles = self.moles[self.elements]
         # Calculate cation moles
@@ -114,6 +133,9 @@ class MagmaBase(pd.DataFrame):
         cations['total'] = cations.sum(axis=1)
         # Add back columns without chemical data
         cations[self._no_data] = self[self._no_data]
+        # Set datatype and elements
+        cations._datatype = 'cation'
+        cations.recalculate()
 
         return cations
 
@@ -139,10 +161,12 @@ class MagmaBase(pd.DataFrame):
         """
         Docstrings
         """
-        oxygen_numbers = e.oxygen_numbers(self.elements) / e.cation_numbers(self.elements)
-        oxygen_numbers.index = e.cation_names(self.elements)
         # Calculate cation fractions
-        cations = self.cations[oxygen_numbers.index]
+        cations = self.cations
+        cations = cations[cations.elements]
+        # Calculate oxygens per cation
+        oxygen_numbers = e.oxygen_numbers(self.elements) / e.cation_numbers(self.elements)
+        oxygen_numbers.index = cations.elelements
         # Normalise to oxygen
         oxygen_total = cations.mul(oxygen_numbers).sum(axis=1)
         oxygen_factor = O / oxygen_total
