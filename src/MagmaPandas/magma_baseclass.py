@@ -15,7 +15,9 @@ def read_file(file: str, *args, index_col: List[str], keep_columns: List[str] = 
 
 class MagmaBase(pd.DataFrame):
 
+
     _metadata = ["_weights", "_no_data", "_units", "_datatype"]
+
 
     @property
     def _constructor(self):
