@@ -15,7 +15,7 @@ def read_file(file: str, index_col: List[str], keep_columns: List[str] = [], **k
 
 class MagmaBase(pd.DataFrame):
 
-    _metadata = ["_weights", "_no_data"]
+    _metadata = ["_weights", "_no_data", "_units"]
 
     @property
     def _constructor(self):
@@ -36,12 +36,15 @@ class MagmaBase(pd.DataFrame):
         *args,
         keep_columns: List[str]=[],
         calculate_total=False,
+        units='wt. %',
         **kwargs,
     ):
         # A pandas series with the masses of all oxides and elements in the dataframe
         self._weights = pd.Series(name="weight", dtype="float32")
         # A list with the names of all columns that do not contain chemical data
         self._no_data = keep_columns
+        self._units = units
+
 
         if isinstance(df, pd.DataFrame):
             
@@ -63,6 +66,15 @@ class MagmaBase(pd.DataFrame):
 
         super().__init__(df, *args, **kwargs)
 
+    @property
+    def units(self):
+        return self._units
+
+    @units.setter
+    def units(self, value):
+        print('units are read only')
+
+    
     @property
     def weights(self):
         """
@@ -92,6 +104,7 @@ class MagmaBase(pd.DataFrame):
         moles["total"] = moles.sum(axis=1)
         # Add back columns without chemical data
         moles[self._no_data] = self[self._no_data]
+        moles._units = 'moles'
         return moles
 
 
@@ -113,6 +126,7 @@ class MagmaBase(pd.DataFrame):
         cations['total'] = cations.sum(axis=1)
         # Add back columns without chemical data
         cations[self._no_data] = self[self._no_data]
+        cations._units = 'cations'
         return cations
 
 
