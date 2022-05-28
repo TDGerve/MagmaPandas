@@ -1,6 +1,6 @@
 from typing import List
 import pandas as pd
-from .magma_baseclass import MagmaBase
+from .magmaFrame_baseclass import MagmaFrame
 
 
 def read_plagioclase(file: str, *args, index_col: List[str], keep_columns: List[str] = [], **kwargs):
@@ -13,7 +13,7 @@ def read_plagioclase(file: str, *args, index_col: List[str], keep_columns: List[
     return plagioclase(df, *args, keep_columns=keep_columns, calculate_total=True, **kwargs)
 
 
-class plagioclase(MagmaBase):
+class plagioclase(MagmaFrame):
 
     @property
     def anorthite(self):

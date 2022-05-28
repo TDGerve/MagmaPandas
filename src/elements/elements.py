@@ -1,4 +1,5 @@
 import re
+from typing import List
 from importlib import resources
 import pandas as pd
 
@@ -83,7 +84,7 @@ def calculate_weight(compound: str):
     return (atomic_weights[elements.index] * elements).sum()
 
 
-def compound_weights(compounds: list[str]):
+def compound_weights(compounds: List[str]):
     """
     Docstring
     """
@@ -96,7 +97,7 @@ def compound_weights(compounds: list[str]):
     return weights
 
 
-def cation_numbers(compounds: list[str]):
+def cation_numbers(compounds: List[str]):
     """
     Docstring
     """
@@ -109,7 +110,7 @@ def cation_numbers(compounds: list[str]):
     return cations
 
 
-def oxygen_numbers(compounds: list[str]):
+def oxygen_numbers(compounds: List[str]):
     """
     Docstrings
     """
@@ -122,7 +123,7 @@ def oxygen_numbers(compounds: list[str]):
     return oxygen
 
 
-def cation_names(compounds: list[str]):
+def cation_names(compounds: List[str]):
     """
     Docstrings
     """
