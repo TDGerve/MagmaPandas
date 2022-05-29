@@ -9,8 +9,31 @@ def read_file(*args, **kwargs):
     return r._read_file(*args, **kwargs)
 
 
-class MagmaFrame(pd.DataFrame):
+def _check_attribute(attr_name: str, allowed_values: List[str]):
+    def decorator(func):
+        """
+        Check if attr_name has a valid value
+        """
 
+        def wrapper(self, *args, **kwargs):
+            attr = getattr(self, attr_name)
+            if attr not in allowed_values:
+                raise ValueError(
+                    f"Calculation is not valid with: {self.units}, please use: {*allowed_values,}"
+                )
+            return func(self, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+class MagmaFrame(pd.DataFrame):
+    """
+    Docstrings
+    """
+
+    # New attributes
     _metadata = ["_weights", "_units", "_datatype"]
 
     @property
@@ -27,7 +50,9 @@ class MagmaFrame(pd.DataFrame):
 
         return _c
 
-    def __init__(self, df, *args, units=None, datatype=None, **kwargs):
+    def __init__(
+        self, df=None, *args, units: str = None, datatype: str = None, **kwargs
+    ) -> None:
 
         super().__init__(df, *args, **kwargs)
 
@@ -48,21 +73,30 @@ class MagmaFrame(pd.DataFrame):
             self["total"] = self[self.elements].sum(axis=1)
 
     @property
-    def _no_data(self):
+    def _no_data(self) -> List:
+        """
+        Names of all columns without chemical data
+        """
         no_data = list(self.columns.difference(self.elements))
         if "total" in no_data:
             no_data.remove("total")
         return no_data
 
     @property
-    def _total(self):
+    def _total(self) -> bool:
+        """
+        Dataframe contains column with totals
+        """
         if "total" in self.columns:
             return True
         else:
             return False
 
     @property
-    def units(self):
+    def units(self) -> str:
+        """
+        Data units
+        """
         return f"{self._datatype} {self._units}"
 
     @units.setter
@@ -70,28 +104,26 @@ class MagmaFrame(pd.DataFrame):
         print("units are read only")
 
     @property
-    def weights(self):
+    def weights(self) -> pd.Series:
         """
-        Docstrings
+        Molar mass of the elements in the dataframe
         """
         return self._weights
 
     @property
-    def elements(self):
+    def elements(self) -> List:
         """
-        Docstrings
+        Names of the elements in the dataframe
         """
         return list(self._weights.index)
 
     @property
+    @_check_attribute("_datatype", ["oxide"])
+    @_check_attribute("_units", ["wt. %"])
     def moles(self):
         """
-        Docstrings
+        Calculate molar fractions from oxide concentrations
         """
-        if self._datatype != "oxide":
-            raise TypeError(f"{self} is not in oxides")
-        if self._units != "wt. %":
-            raise TypeError(f"{self} is not in wt. %")
         moles = self.copy()[self.elements]
         # Calculate moles
         moles = moles.div(moles.weights)
@@ -105,12 +137,11 @@ class MagmaFrame(pd.DataFrame):
         return moles
 
     @property
+    @_check_attribute("_datatype", ["oxide"])
     def cations(self):
         """
-        Docstrings
+        Calculate cation fractions from oxide concentrations
         """
-        if self._datatype != "oxide":
-            raise TypeError(f"{self} is not in oxides")
         # Calculate oxide moles
         moles = self.moles[self.elements]
         # Calculate cation moles
@@ -128,9 +159,10 @@ class MagmaFrame(pd.DataFrame):
 
         return cations
 
+    
     def mineral_formula(self, O: int = None):
         """
-        Docstrings
+        Calculate mineral formulas by normalising to oxygen
         """
         # Calculate cation fractions
         cations = self.cations
@@ -150,7 +182,7 @@ class MagmaFrame(pd.DataFrame):
 
     def recalculate(self):
         """
-        Docstrings
+        Recalculate element masses and total weight.
         """
         weights = pd.Series(name="weight", dtype="float32")
 
@@ -161,5 +193,5 @@ class MagmaFrame(pd.DataFrame):
                 pass
 
         self._weights = weights
-
-        self["total"] = self[self.elements].sum(axis=1)
+        if self._total:
+            self["total"] = self[self.elements].sum(axis=1)

@@ -1,54 +1,64 @@
 import pandas as pd
 import elements as e
 from typing import List
+from functools import wraps
 from .. import MagmaFrames as mf
 
 
-def _check_units(func):
-    def wrapper(*args, **kwargs):
-        units = kwargs["units"]
-        allowed_units = ["wt. %", "mol fraction"]
-        if not units in allowed_units:
-            raise ValueError(
-                f'units: "{units}" not recognised, please choose from: {allowed_units}'
-            )
-        return func(*args, **kwargs)
+def _check_argument(var_name: str, allowed_values: List[str]):
+    def decorator(func):
+        """
+        Check if var_name has a valid value
+        """
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            var = kwargs.get(var_name, None)
+            if var not in allowed_values:
+                raise ValueError(
+                    f"{var_name}: {var}, not recognised, please choose from: {allowed_values}"
+                )
+            return func(*args, **kwargs)
 
-    return wrapper
+        return wrapper
 
-
-def _check_type(func):
-    def wrapper(*args, **kwargs):
-        type = kwargs["Type"]
-        allowed_types = ["oxide", "cation"]
-        if type not in allowed_types:
-            raise ValueError(
-                f'type: "{type}" not recognised, please choose from: {allowed_types}'
-            )
-        return func(*args, **kwargs)
-
-    return wrapper
+    return decorator
 
 
-@_check_units
-@_check_type
+@_check_argument("units", ["wt. %", "mol fraction", "ppm"])
+@_check_argument("Type", ["oxide", "cation"])
+@_check_argument("phase", [None, "melt", "olivine", "clinopyroxene", "plagioclase"])
 def _read_file(
     filepath: str,
     *args,
-    phase: str = None,
     index_col: List[str],
+    total_col: str,
     keep_columns: List[str] = [],
-    total_col: str = None,
+    phase: str = None,    
     units: str = None,
     Type: str = None,
     **kwargs,
 ):
+    """
+    Read compositions from a .csv file into a pd.dataframe, clean the data and pass it to a magmaframe.
+
+    Parameters
+    ----------
+    filepath    :   str
+        path to a .csv file with sample compositions
+    phase   :       str
+
+
+    """
+    if phase is None:
+        phase = "MagmaFrame"
+
     df = pd.read_csv(filepath, *args, index_col=index_col, **kwargs)
 
     delete_columns = set()
     keep_columns = set(keep_columns)
     elements = []
 
+    # Check which column names have valid names for elements or oxides
     for col in df.columns:
         try:
             _ = e.calculate_weight(col)

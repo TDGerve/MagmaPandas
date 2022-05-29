@@ -4,7 +4,18 @@ from .magmaFrame_baseclass import MagmaFrame
 from ..file_readers.readers import _read_file
 
 
-def read_olivine(filepath: str, *args, index_col: List[str], total_col=None, keep_columns: List[str]=[], **kwargs):
+def read_olivine(
+    filepath: str,
+    *args,
+    index_col: List[str],
+    total_col: str = None,
+    keep_columns: List[str] = [],
+    **kwargs
+) -> "olivine":
+    """
+    Read olivine compositions in wt. % oxide from a .csv file
+
+    """
 
     return _read_file(
         filepath=filepath,
