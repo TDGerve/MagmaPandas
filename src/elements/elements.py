@@ -26,7 +26,7 @@ def find_elements(compound: str):
     elements = re.findall("([A-Z][^A-Z]*)", compound)
 
     # Raise an error if no elements are found
-    if len(elements) == 0:
+    if len(elements) < 1:
         raise ValueError(f"'{compound}' does not contain valid elements")
 
     for element in elements:

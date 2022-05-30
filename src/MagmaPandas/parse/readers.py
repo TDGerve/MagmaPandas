@@ -1,27 +1,8 @@
-import pandas as pd
-import elements as e
+from .validate import _check_argument
 from typing import List
-from functools import wraps
+import elements as e
+import pandas as pd
 from .. import MagmaFrames as mf
-
-
-def _check_argument(var_name: str, allowed_values: List[str]):
-    def decorator(func):
-        """
-        Check if var_name has a valid value
-        """
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            var = kwargs.get(var_name, None)
-            if var not in allowed_values:
-                raise ValueError(
-                    f"{var_name}: {var}, not recognised, please choose from: {allowed_values}"
-                )
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
 
 
 @_check_argument("units", ["wt. %", "mol fraction", "ppm"])

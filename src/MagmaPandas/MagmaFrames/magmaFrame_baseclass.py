@@ -1,31 +1,13 @@
 from typing import List
-from ..file_readers import readers as r
+from ..parse.validate import _check_attribute
+from ..parse.readers import _read_file
 import pandas as pd
 import elements as e
 
 
 def read_file(*args, **kwargs):
 
-    return r._read_file(*args, **kwargs)
-
-
-def _check_attribute(attr_name: str, allowed_values: List[str]):
-    def decorator(func):
-        """
-        Check if attr_name has a valid value
-        """
-
-        def wrapper(self, *args, **kwargs):
-            attr = getattr(self, attr_name)
-            if attr not in allowed_values:
-                raise ValueError(
-                    f"Calculation is not valid with: {self.units}, please use: {*allowed_values,}"
-                )
-            return func(self, *args, **kwargs)
-
-        return wrapper
-
-    return decorator
+    return _read_file(*args, **kwargs)
 
 
 class MagmaFrame(pd.DataFrame):
@@ -159,7 +141,6 @@ class MagmaFrame(pd.DataFrame):
 
         return cations
 
-    
     def mineral_formula(self, O: int = None):
         """
         Calculate mineral formulas by normalising to oxygen

@@ -1,7 +1,7 @@
 from typing import List
 import pandas as pd
 from .magmaFrame_baseclass import MagmaFrame
-from ..file_readers.readers import _read_file
+from ..parse.readers import _read_file
 
 
 def read_olivine(

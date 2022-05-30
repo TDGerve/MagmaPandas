@@ -1,16 +1,33 @@
 from typing import List
 import pandas as pd
 from .magmaFrame_baseclass import MagmaFrame
+from ..parse.readers import _read_file
 
 
-def read_clinopyroxene(file: str, *args, index_col: List[str], keep_columns: List[str] = [], **kwargs):
+def read_clinopyroxene(
+    filepath: str,
+    *args,
+    index_col: List[str],
+    total_col: str = None,
+    keep_columns: List[str] = [],
+    **kwargs
+) -> "clinopyroxene":
     """
-    Docstring
+    Read cpx compositions in wt. % oxide from a .csv file
+
     """
 
-    df = pd.read_csv(file, index_col=index_col, **kwargs)
-
-    return clinopyroxene(df, *args, keep_columns=keep_columns, calculate_total=True, **kwargs)
+    return _read_file(
+        filepath=filepath,
+        *args,
+        phase="olivine",
+        index_col=index_col,
+        total_col=total_col,
+        keep_columns=keep_columns,
+        units="wt. %",
+        Type="oxide",
+        **kwargs
+    )
 
 
 class clinopyroxene(MagmaFrame):
