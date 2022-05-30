@@ -12,7 +12,7 @@ def read_melt(
     index_col: List[str],
     total_col: str = None,
     keep_columns: List[str] = [],
-    **kwargs
+    **kwargs,
 ) -> "melt":
     """
     Read olivine compositions in wt. % oxide from a .csv file
@@ -28,13 +28,13 @@ def read_melt(
         keep_columns=keep_columns,
         units="wt. %",
         Type="oxide",
-        **kwargs
+        **kwargs,
     )
 
 
 class melt(melt_thermometers, MagmaFrame):
     def FeRedox_QFM(
-        self, T_K=None, P_bar=None, logshift=0, model="borisov", inplace=False, **kwargs
+        self, T_K=None, P_bar=None, logshift=0, model="Borisov", inplace=False, **kwargs
     ):
         """
         Calculate Fe-redox equilibrium at QFM oxygen buffer for silicate liquids.
@@ -60,12 +60,12 @@ class melt(melt_thermometers, MagmaFrame):
         if T_K is None:
             T_K = self["T_K"]
         if P_bar is None:
-            P_bar = self["P_bar"]        
-        
-        for param in ['T_K', 'P_bar']:
+            P_bar = self["P_bar"]
+
+        for param in ["T_K", "P_bar"]:
             if isinstance(param, pd.Series):
                 if not self.index.equals(P_bar.index):
-                    raise RuntimeError(f'Melt and {param} indices don\'t match')
+                    raise RuntimeError(f"Melt and {param} indices don't match")
 
         mol_fractions = self.moles
 

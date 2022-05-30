@@ -55,7 +55,7 @@ def FeRedox_KC(mol_fractions, T_K, fO2, Pbar):
     return 2 * np.exp(part1 + part2 + part3)
 
 
-def FeRedox_Boris(mol_fractions: pd.DataFrame, T_K, fO2):
+def FeRedox_Boris(mol_fractions: pd.DataFrame, T_K, fO2, *args, **kwargs):
     """
     Borisov et al. (2018), equation 4
 
