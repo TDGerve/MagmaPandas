@@ -43,15 +43,16 @@ class melt(melt_thermometers, MagmaFrame):
         Parameters
         ----------
 
-        T_K         float, pd.Series-like
+        T_K :   float, pd.Series-like
             temperature in Kelvin
-        Pbar        float, pd.Series-like
+        Pbar    :   float, pd.Series-like
             Pressure in bars
-        logshift    int, pd.Series-like
+        logshift    :   int, pd.Series-like
             log units shift of QFM
-        model       string
+        model   :   string
             'KressCarmichael' or 'Borisov'
-
+        inplace :   bool
+            return a new dataframe of add columns to the existing one
         Returns
         -------
         liquid Fe3+/Fe2+ ratio

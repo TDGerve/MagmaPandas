@@ -6,7 +6,12 @@ import pandas as pd
 from scipy.constants import R
 import itertools as it
 
+
 def VdP_QFM(T_K, Pbar):
+    """
+    Solve Tait equations of state for VdP of quartz, magnetite and fayalite 
+    at temperature, T_K and Pbar, ignoring phase transitions.
+    """
 
     p_kbar = Pbar / 1e3
 
@@ -23,8 +28,10 @@ def VdP_QFM(T_K, Pbar):
 
 
 def VdP_QFM_phaseTransitions(T_K, Pbar):
-
-    VdP_SiO2, VdP_mt, VdP_Fe2SiO4 = VdP_QFM(T_K, Pbar)
+    """
+    Solve Tait equations of state for VdP for quartz, magnetite and fayalite 
+    at temperature, T_K and Pbar, taking into account phase transitions
+    """
 
     p_kbar = Pbar / 1e3
 
@@ -47,15 +54,27 @@ def VdP_QFM_phaseTransitions(T_K, Pbar):
     )
     P_fay_ring = opt.fsolve(fay_ring, 8)
 
-    # Integrate VdP for all relevant polymorphs
+    # Integrate VdP for all polymorphs
     # SiO2 polymorphs
+    # Quartz
+    VdP_SiO2 = eos.tait_eos_pressure(
+        phase="quartz", pkbar=min(p_kbar, P_qtz_coe), t=T_K
+    )
+    SiO2_landau = eos.landau_P_dependent(
+        phase="quartz", pkbar=min(p_kbar, P_qtz_coe), t=T_K
+    )
+    VdP_SiO2 = VdP_SiO2 + SiO2_landau
     if p_kbar > P_qtz_coe:
+        # Coesite
         VdP_coe = (
-            eos.tait_eos_pressure(phase="coesite", pkbar=min(p_kbar, P_coe_stish), t=T_K)[4]
+            eos.tait_eos_pressure(
+                phase="coesite", pkbar=min(p_kbar, P_coe_stish), t=T_K
+            )[4]
             - eos.tait_eos_pressure(phase="coesite", pkbar=P_qtz_coe, t=T_K)[4]
         )
         VdP_SiO2 = VdP_SiO2 + VdP_coe
         if p_kbar > P_coe_stish:
+            # Stishovite
             VdP_stish = (
                 eos.tait_eos_pressure(phase="stishovite", pkbar=p_kbar, t=T_K)[4]
                 - eos.tait_eos_pressure(phase="stishovite", pkbar=P_coe_stish, t=T_K)[4]
@@ -63,24 +82,35 @@ def VdP_QFM_phaseTransitions(T_K, Pbar):
             VdP_SiO2 = VdP_SiO2 + VdP_stish
 
     # Fe2SiO4 polymorphs
+    # Fayalite
+    VdP_Fe2SiO4 = eos.tait_eos_pressure(
+        phase="fayalite", pkbar=min(p_kbar, P_fay_ring), t=T_K
+    )[4]
     if p_kbar > P_fay_ring:
+        # Ringwoodite
         VdP_ring = (
             eos.tait_eos_pressure(phase="ringwoodite", pkbar=p_kbar, t=T_K)[4]
             - eos.tait_eos_pressure(phase="ringwoodite", pkbar=P_fay_ring, t=T_K)[4]
         )
         VdP_Fe2SiO4 = VdP_Fe2SiO4 + VdP_ring
-    
+
+    # Magnetite
+    VdP_mt = eos.tait_eos_pressure(phase="magnetite", pkbar=p_kbar, t=T_K)[4]
+
     return VdP_SiO2, VdP_mt, VdP_Fe2SiO4
 
 
 def muO2_QFM_P(T_K, Pbar):
+    """
+    calculate chemical potential of oxygen at QFM and pressure P with equations of state
+    """
 
     Pbar_is_int = isinstance(Pbar, (int, float))
     T_K_is_int = isinstance(T_K, (int, float))
 
     # If P and T are not both numbers
     if not (Pbar_is_int and T_K_is_int):
-    
+
         # If only one variable, P or T, is a number
         if bool(Pbar_is_int) ^ bool(T_K_is_int):
 
@@ -88,12 +118,17 @@ def muO2_QFM_P(T_K, Pbar):
             T_K = [np.array(T_K), it.cycle(np.array([T_K]))][T_K_is_int]
             Pbar = [np.array(Pbar), it.cycle(np.array([Pbar]))][Pbar_is_int]
 
-
-        muO2 = np.zeros(shape=[len(T_K),])
+        muO2 = np.zeros(
+            shape=[
+                len(T_K),
+            ]
+        )
 
         for i, (temperature, pressure) in enumerate(zip(T_K, Pbar)):
-            VdP_quartz, VdP_magnetite, VdP_fayalite = VdP_QFM_phaseTransitions(temperature, pressure)
-            #kiloJoule to Joule
+            VdP_quartz, VdP_magnetite, VdP_fayalite = VdP_QFM_phaseTransitions(
+                temperature, pressure
+            )
+            # kiloJoule to Joule
             muO2[i] = 1e3 * (3 * VdP_quartz + 2 * VdP_magnetite - 3 * VdP_fayalite)
 
     else:
@@ -157,9 +192,7 @@ def fO2_QFM_1bar(T_K, logshift=0):
 
 
 def fO2_QFM(logshift, T_K, Pbar):
-    """
-    
-    """
+    """ """
     offset = 10 ** logshift
 
     muO2_pressure = muO2_QFM_P(T_K, Pbar) - muO2_QFM_P(T_K, 1)
@@ -167,4 +200,3 @@ def fO2_QFM(logshift, T_K, Pbar):
     muO2_1bar = muO2_QFM_1bar(T_K)
 
     return np.exp((muO2_1bar + muO2_pressure) / (R * T_K)) * offset
-
