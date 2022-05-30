@@ -13,7 +13,7 @@ def _read_file(
     *args,
     index_col: List[str],
     total_col: str,
-    keep_columns: List[str] = [],
+    keep_columns: List[str] = None,
     phase: str = None,    
     units: str = None,
     Type: str = None,
@@ -32,11 +32,13 @@ def _read_file(
     """
     if phase is None:
         phase = "MagmaFrame"
+    if keep_columns is None:
+        keep_columns = []
 
     df = pd.read_csv(filepath, *args, index_col=index_col, **kwargs)
 
     delete_columns = set()
-    keep_columns = set(keep_columns)
+    keep_columns = set().add(keep_columns)
     elements = []
 
     # Check which column names have valid names for elements or oxides

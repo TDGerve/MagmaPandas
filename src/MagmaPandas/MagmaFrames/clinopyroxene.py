@@ -9,7 +9,7 @@ def read_clinopyroxene(
     *args,
     index_col: List[str],
     total_col: str = None,
-    keep_columns: List[str] = [],
+    keep_columns: List[str] = None,
     **kwargs
 ) -> "clinopyroxene":
     """
