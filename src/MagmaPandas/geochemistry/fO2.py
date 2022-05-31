@@ -9,7 +9,7 @@ import itertools as it
 
 def VdP_QFM(T_K, P_bar):
     """
-    Solve Tait equations of state for VdP of quartz, magnetite and fayalite 
+    Solve Tait equations of state for VdP of quartz, magnetite and fayalite
     at temperature, T_K and P_bar, ignoring phase transitions.
     """
 
@@ -29,7 +29,7 @@ def VdP_QFM(T_K, P_bar):
 
 def VdP_QFM_phaseTransitions(T_K, P_bar):
     """
-    Solve Tait equations of state for VdP for quartz, magnetite and fayalite 
+    Solve Tait equations of state for VdP for quartz, magnetite and fayalite
     at temperature, T_K and P_bar, taking into account phase transitions
     """
 
@@ -59,7 +59,7 @@ def VdP_QFM_phaseTransitions(T_K, P_bar):
     # Quartz
     VdP_SiO2 = eos.tait_eos_pressure(
         phase="quartz", pkbar=min(p_kbar, P_qtz_coe), t=T_K
-    )
+    )[4]
     SiO2_landau = eos.landau_P_dependent(
         phase="quartz", pkbar=min(p_kbar, P_qtz_coe), t=T_K
     )

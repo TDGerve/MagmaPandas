@@ -2,10 +2,11 @@ from typing import List
 import pandas as pd
 from .magmaFrame_baseclass import MagmaFrame
 from ..parse.readers import _read_file
-from .geochemistry import fO2, Fe_redox
-from .thermometers.melt import melt_thermometers
+from ..geochemistry.fO2 import fO2_QFM
+from ..geochemistry.Fe_redox import FeRedox_KC, FeRedox_Boris
+from ..thermometers.melt import melt_thermometers
 from ..parse.validate import _check_argument
-from ..MagmaFrames.geochemistry.Kd import Kd_blundy_iterator, Kd_toplis_iterator
+from ..geochemistry.Kd import Kd_blundy_iterator, Kd_toplis_iterator
 
 
 def read_melt(
@@ -74,12 +75,12 @@ class melt(melt_thermometers, MagmaFrame):
         mol_fractions = self.moles
 
         model_dict = {
-            "KressCarmichael": Fe_redox.FeRedox_KC,
-            "Borisov": Fe_redox.FeRedox_Boris,
+            "KressCarmichael": FeRedox_KC,
+            "Borisov": FeRedox_Boris,
         }
         equation = model_dict[model]
 
-        fO2_bar = fO2.fO2_QFM(logshift, T_K, P_bar)
+        fO2_bar = fO2_QFM(logshift, T_K, P_bar)
 
         Fe3Fe2 = equation(mol_fractions, T_K, fO2_bar, P_bar)
 
@@ -139,14 +140,20 @@ class melt(melt_thermometers, MagmaFrame):
         [Fe(ol) / Fe(m)] * [Mg(m) / Mg(ol)]
         """
         if model is None:
-            model = 'toplis'
+            model = "toplis"
 
-        if (model == 'toplis') & (P_bar is None):
-            raise ValueError('P_bar argument missing')
+        if (model == "toplis") & (P_bar is None):
+            raise ValueError("P_bar argument missing")
 
         model_dict = {"toplis": Kd_toplis_iterator, "blundy": Kd_blundy_iterator}
         Kd_model = model_dict[model]
 
         mol_fractions = self.moles
 
-        return Kd_model(melt_mol_fractions=mol_fractions, forsterite=forsterite, T_K=T_K, Fe3Fe2=Fe3Fe2, P_bar=P_bar)
+        return Kd_model(
+            melt_mol_fractions=mol_fractions,
+            forsterite=forsterite,
+            T_K=T_K,
+            Fe3Fe2=Fe3Fe2,
+            P_bar=P_bar,
+        )

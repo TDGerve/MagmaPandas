@@ -2,7 +2,7 @@ from . import fO2
 import warnings as w
 import numpy as np
 import pandas as pd
-from ...parse.validate import _check_argument
+from ..parse.validate import _check_argument
 
 
 def FeRedox_KC(mol_fractions, T_K, fO2, P_bar):

@@ -40,3 +40,22 @@ def _check_attribute(attr_name: str, allowed_values: List[str]):
         return wrapper
 
     return decorator
+
+def _check_value(var_name: str, allowed_range: List[float]):
+    def decorator(func):
+        """
+        Check if var_name has a valid value
+        """
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            var = kwargs.get(var_name, None)
+            min, max = allowed_range
+            if min < var < max:
+                raise ValueError(
+                    f"{var_name}: {var}, outside allowed range: {min} - {max}"
+                )
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator

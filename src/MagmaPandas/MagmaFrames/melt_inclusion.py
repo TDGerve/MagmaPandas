@@ -1,9 +1,5 @@
 from typing import List
-import pandas as pd
-from .magmaFrame_baseclass import MagmaFrame
 from ..parse.readers import _read_file
-from .geochemistry import fO2, Fe_redox
-from .thermometers.melt import melt_thermometers
 from .melt import melt
 
 
