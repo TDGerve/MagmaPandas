@@ -50,7 +50,7 @@ class MagmaFrame(pd.DataFrame):
             except:
                 self._no_data.append(col)
 
-        # Recalculate total concentrattions
+        # Recalculate total concentrations
         if "total" in self.columns:
             self["total"] = self[self.elements].sum(axis=1)
 
@@ -106,17 +106,7 @@ class MagmaFrame(pd.DataFrame):
         """
         Calculate molar fractions from oxide concentrations
         """
-        moles = self.copy()[self.elements]
-        # Calculate moles
-        moles = moles.div(moles.weights)
-        # Normalise to 1
-        total = moles.sum(axis=1)
-        moles = moles.div(total, axis=0)
-        moles["total"] = moles.sum(axis=1)
-        # Set the right units
-        moles._units = "mol fraction"
-
-        return moles
+        return self.convert_moles_wtPercent
 
     @property
     @_check_attribute("_datatype", ["oxide"])
@@ -140,6 +130,30 @@ class MagmaFrame(pd.DataFrame):
         cations.recalculate()
 
         return cations
+
+    @property
+    def convert_moles_wtPercent(self):
+        """
+        Convert moles to wt. % or vice versa
+        """
+
+        converted = self.copy()[self.elements]
+        if self._units == "wt. %":
+            converted = converted.div(converted.weights)
+        elif self._units == "mol fraction":
+            converted = converted.mul(converted.weights)
+        # Normalise
+        total = converted.sum(axis=1)
+        converted = converted.div(total, axis=0)
+        converted["total"] = converted.sum(axis=1)
+        # Set the right units
+        if self._units == "wt. %":
+            converted._units = "mol fraction"
+        elif self._units == "mol fraction":
+            converted = converted.mul(100)
+            converted._units = "wt. %"
+
+        return converted
 
     def mineral_formula(self, O: int = None):
         """
@@ -176,3 +190,18 @@ class MagmaFrame(pd.DataFrame):
         self._weights = weights
         if self._total:
             self["total"] = self[self.elements].sum(axis=1)
+
+    def normalise(self):
+        """
+        Normalise composition.
+        """
+        self.recalculate()
+        normalised = self.copy()[self.elements]
+        total = normalised.sum(axis=1)
+
+        normalised = normalised.div(total, axis=0)
+        if self._units == "wt. %":
+            normalised = normalised.mul(100)
+        normalised["total"] = normalised.sum(axis=1)
+
+        return normalised

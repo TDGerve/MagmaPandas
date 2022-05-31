@@ -15,6 +15,8 @@ setuptools.setup(
     package_data= {"elements": ['data/*']}, 
 
     install_requires= [
-    'pandas'
+    'pandas',
+    'scipy',
+    'numpy'
     ]
 )

@@ -7,13 +7,13 @@ from scipy.constants import R
 import itertools as it
 
 
-def VdP_QFM(T_K, Pbar):
+def VdP_QFM(T_K, P_bar):
     """
     Solve Tait equations of state for VdP of quartz, magnetite and fayalite 
-    at temperature, T_K and Pbar, ignoring phase transitions.
+    at temperature, T_K and P_bar, ignoring phase transitions.
     """
 
-    p_kbar = Pbar / 1e3
+    p_kbar = P_bar / 1e3
 
     # VdP SiO2
     *_, VdP_qtz = eos.tait_eos_pressure(phase="quartz", pkbar=p_kbar, t=T_K)
@@ -27,13 +27,13 @@ def VdP_QFM(T_K, Pbar):
     return VdP_qtz, VdP_mt, VdP_fay
 
 
-def VdP_QFM_phaseTransitions(T_K, Pbar):
+def VdP_QFM_phaseTransitions(T_K, P_bar):
     """
     Solve Tait equations of state for VdP for quartz, magnetite and fayalite 
-    at temperature, T_K and Pbar, taking into account phase transitions
+    at temperature, T_K and P_bar, taking into account phase transitions
     """
 
-    p_kbar = Pbar / 1e3
+    p_kbar = P_bar / 1e3
 
     # Calculate pressure of transition for SiO2 polymorphs
     # Quartz --> coesite
@@ -100,23 +100,23 @@ def VdP_QFM_phaseTransitions(T_K, Pbar):
     return VdP_SiO2, VdP_mt, VdP_Fe2SiO4
 
 
-def muO2_QFM_P(T_K, Pbar):
+def muO2_QFM_P(T_K, P_bar):
     """
     calculate chemical potential of oxygen at QFM and pressure P with equations of state
     """
 
-    Pbar_is_int = isinstance(Pbar, (int, float))
+    P_bar_is_int = isinstance(P_bar, (int, float))
     T_K_is_int = isinstance(T_K, (int, float))
 
     # If P and T are not both numbers
-    if not (Pbar_is_int and T_K_is_int):
+    if not (P_bar_is_int and T_K_is_int):
 
         # If only one variable, P or T, is a number
-        if bool(Pbar_is_int) ^ bool(T_K_is_int):
+        if bool(P_bar_is_int) ^ bool(T_K_is_int):
 
             # Cycle the short variable
             T_K = [np.array(T_K), it.cycle(np.array([T_K]))][T_K_is_int]
-            Pbar = [np.array(Pbar), it.cycle(np.array([Pbar]))][Pbar_is_int]
+            P_bar = [np.array(P_bar), it.cycle(np.array([P_bar]))][P_bar_is_int]
 
         muO2 = np.zeros(
             shape=[
@@ -124,7 +124,7 @@ def muO2_QFM_P(T_K, Pbar):
             ]
         )
 
-        for i, (temperature, pressure) in enumerate(zip(T_K, Pbar)):
+        for i, (temperature, pressure) in enumerate(zip(T_K, P_bar)):
             VdP_quartz, VdP_magnetite, VdP_fayalite = VdP_QFM_phaseTransitions(
                 temperature, pressure
             )
@@ -132,7 +132,7 @@ def muO2_QFM_P(T_K, Pbar):
             muO2[i] = 1e3 * (3 * VdP_quartz + 2 * VdP_magnetite - 3 * VdP_fayalite)
 
     else:
-        VdP_quartz, VdP_magnetite, VdP_fayalite = VdP_QFM_phaseTransitions(T_K, Pbar)
+        VdP_quartz, VdP_magnetite, VdP_fayalite = VdP_QFM_phaseTransitions(T_K, P_bar)
         muO2 = 1e3 * (3 * VdP_quartz + 2 * VdP_magnetite - 3 * VdP_fayalite)
 
     return muO2
@@ -191,11 +191,11 @@ def fO2_QFM_1bar(T_K, logshift=0):
     return np.exp(mu_O2 / (R * T_K)) * offset
 
 
-def fO2_QFM(logshift, T_K, Pbar):
+def fO2_QFM(logshift, T_K, P_bar):
     """ """
     offset = 10 ** logshift
 
-    muO2_pressure = muO2_QFM_P(T_K, Pbar) - muO2_QFM_P(T_K, 1)
+    muO2_pressure = muO2_QFM_P(T_K, P_bar) - muO2_QFM_P(T_K, 1)
 
     muO2_1bar = muO2_QFM_1bar(T_K)
 

@@ -2,16 +2,17 @@ from . import fO2
 import warnings as w
 import numpy as np
 import pandas as pd
+from ...parse.validate import _check_argument
 
 
-def FeRedox_KC(mol_fractions, T_K, fO2, Pbar):
+def FeRedox_KC(mol_fractions, T_K, fO2, P_bar):
     """
     Calculate Fe-redox equilibrium for silicate liquids according to equation 7 from Kress and Carmichael (1991).
 
     Parameters
     ----------
-    composition     pd.DataFrame
-        Liquid major element composition in wt.% oxides
+    mol_fractions     pd.DataFrame
+        melt composition in oxide mol fractions
     T_K             float, pd.Series-like
         temperature in Kelvin
     fO2           float, pd.Series-like
@@ -22,10 +23,10 @@ def FeRedox_KC(mol_fractions, T_K, fO2, Pbar):
 
     Returns
     -------
-    Fe3+/Fe2+ ratio in the liquid
+    melt Fe3+/Fe2+ ratio
 
     """
-    P_Pa = Pbar * 1e-5
+    P_Pa = P_bar * 1e-5
 
     LNfO2 = np.log(fO2)
 
@@ -61,7 +62,7 @@ def FeRedox_Boris(mol_fractions: pd.DataFrame, T_K, fO2, *args, **kwargs):
 
     Parameters
     mol_fractions   :   dataframe
-        Melt composition in mol_fractions
+        Melt composition in oxide mol_fractions
     T_K :   float, pd.Series-like
         temperature in Kelvin
     fO2 :   float, pd.Series-like
@@ -69,7 +70,7 @@ def FeRedox_Boris(mol_fractions: pd.DataFrame, T_K, fO2, *args, **kwargs):
 
     Returns
     -------
-    Fe3+/Fe2+ ratio in the liquid
+    melt Fe3+/Fe2+ ratio
     """   
 
     oxides = ["SiO2", "TiO2", "MgO", "CaO", "Na2O", "K2O", "Al2O3", "P2O5"]
@@ -105,3 +106,35 @@ def FeRedox_Boris(mol_fractions: pd.DataFrame, T_K, fO2, *args, **kwargs):
     )
 
     return 10**(part1 + part2 + part3)
+
+@_check_argument("FeRedox_model", ["Borisov", "KressCarmichael"])
+def FeRedox_QFM(mol_fractions, T_K, P_bar, logshift=0, model="Borisov"):
+    """
+    Calculate Fe-redox equilibrium at QFM oxygen buffer for silicate liquids.
+    Uses either equation 7 from Kress and Carmichael (1991) or equation 4 from Borisov et al. (2018).
+
+    Parameters
+    ----------
+    mol_fractions   :   dataframe
+        Melt composition in oxide mol_fractions
+    T_K         float, pd.Series-like
+        temperature in Kelvin
+    P_bar        float, pd.Series-like
+        Pressure in bars
+    logshift    int, pd.Series-like
+        log units shift of QFM
+    model       string
+        'KressCarmichael' or 'Borisov'       
+
+    Returns
+    -------
+    melt Fe3+/Fe2+ ratio
+
+    """
+
+    model_dict = {"KressCarmichael": FeRedox_KC, "Borisov": FeRedox_Boris}
+    equation = model_dict[model]
+
+    fO2_bar = fO2.fO2_QFM(logshift, T_K, P_bar)
+
+    return equation(mol_fractions, T_K, fO2_bar, P_bar)

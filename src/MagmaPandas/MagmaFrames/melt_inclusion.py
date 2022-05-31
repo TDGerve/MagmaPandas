@@ -14,7 +14,7 @@ def read_melt(
     total_col: str = None,
     keep_columns: List[str] = None,
     **kwargs,
-) -> "melt":
+) -> "melt_inclusion":
     """
     Read olivine compositions in wt. % oxide from a .csv file
 
@@ -23,7 +23,7 @@ def read_melt(
     return _read_file(
         filepath=filepath,
         *args,
-        phase="melt",
+        phase="melt_inclusion",
         index_col=index_col,
         total_col=total_col,
         keep_columns=keep_columns,
@@ -33,7 +33,7 @@ def read_melt(
     )
 
 
-class melt(melt):
+class melt_inclusion(melt):
     def Fe_loss_correction(self):
         """
         Docstrings

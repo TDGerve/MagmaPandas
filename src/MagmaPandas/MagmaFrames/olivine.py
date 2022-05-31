@@ -38,7 +38,7 @@ class olivine(MagmaFrame):
         """
         cations = self.cations
         return pd.Series(
-            cations["Mg"] * 100 / (cations["Fe"] + cations["Mg"]), name="Fo#"
+            cations["Mg"] / (cations["Fe"] + cations["Mg"]), name="Fo#"
         )
 
     @property

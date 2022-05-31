@@ -38,7 +38,7 @@ def _read_file(
     df = pd.read_csv(filepath, *args, index_col=index_col, **kwargs)
 
     delete_columns = set()
-    keep_columns = set().add(keep_columns)
+    # keep_columns = set().add(keep_columns)
     elements = []
 
     # Check which column names have valid names for elements or oxides
@@ -50,7 +50,7 @@ def _read_file(
             delete_columns.add(col)
 
     # Drop all columns without chemical data, unless explicitely specified otherwise in 'keep_columns'
-    df = df.drop(delete_columns.difference(keep_columns), axis=1)
+    df = df.drop(delete_columns.difference(set(keep_columns)), axis=1)
     df[elements] = df[elements].astype("float32")
     # Recalculate total concentrattions
     if total_col is not None:
