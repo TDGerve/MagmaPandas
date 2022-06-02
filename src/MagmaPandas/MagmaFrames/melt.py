@@ -3,7 +3,7 @@ import pandas as pd
 from .magmaFrame_baseclass import MagmaFrame
 from ..parse.readers import _read_file
 from ..geochemistry.fO2 import fO2_QFM
-from ..geochemistry.Kd import Kd_dataframe
+from ..geochemistry.Kd import Kd_vectorised
 from ..thermometers.melt import melt_thermometers
 from ..parse.validate import _check_argument
 from ..configuration import configuration
@@ -154,7 +154,7 @@ class melt(melt_thermometers, MagmaFrame):
             raise ValueError("P_bar argument missing")
 
 
-        Kd_model = getattr(Kd_dataframe, configuration().Kd_model)
+        Kd_model = getattr(Kd_vectorised, configuration().Kd_model)
 
         mol_fractions = self.moles
 

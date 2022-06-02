@@ -21,89 +21,6 @@ def Kd_toplis(T_K, P_bar, forsterite, SiO2_A):
     )
 
 
-def Kd_toplis_iterator(
-    melt_mol_fractions: pd.DataFrame,
-    forsterite,
-    T_K,
-    P_bar,
-    Fe3Fe2,
-    **kwargs,
-):
-    """
-    Equation 10 of Toplis (2005) iteratively solved for forsterite content
-
-    Parameters
-    ----------
-    melt_mol_fractions : pd.DataFrame
-        melt composition in oxide mol fraction.
-    olivine_forsterite
-        forsterite fraction in olivine as Mg * 100 / (Mg + Fe)
-    T_K :
-        Temperature in Kelvin
-    P_bar :
-        Pressure in bar
-    Fe3Fe2 :
-        melt Fe3+/Fe2+ ratio
-    """
-
-    for name in ["T_K", "P_bar", "forsterite"]:
-        param = locals()[name]
-        if isinstance(param, pd.Series):
-            if not melt_mol_fractions.index.equals(param.index):
-                raise RuntimeError(f"Melt and {name} indices don't match")
-
-    # Convert everything to Series for easier looping
-    if isinstance(forsterite, (int, float)):
-        forsterite = pd.Series(forsterite, index=melt_mol_fractions.index)
-    if isinstance(T_K, (int, float)):
-        T_K = pd.Series(T_K, index=melt_mol_fractions.index)
-    if isinstance(Fe3Fe2, (int, float)):
-        Fe3Fe2 = pd.Series(Fe3Fe2, index=melt_mol_fractions.index)
-    if isinstance(P_bar, (int, float)):
-        P_bar = pd.Series(P_bar, index=melt_mol_fractions.index)
-
-    fo_converge_default = 0.001
-    fo_converge = kwargs.setdefault("fo_converge", fo_converge_default)
-
-    SiO2mol_A = SiO2_A_toplis(melt_mol_fractions)
-
-    # initialise Kds
-    Kd = Kd_toplis(T_K, P_bar, forsterite, SiO2mol_A)
-
-    # Liquid Fe2+/Fe(total)
-    Fe2Fe_total = 1 / (1 + Fe3Fe2)
-    # liquid Fe2+/Mg
-    Fe2Mg = (melt_mol_fractions["FeO"] / melt_mol_fractions["MgO"]) * Fe2Fe_total
-    # Equilibrium forsterite content according to Kd
-    forsterite_EQ = 1 / (1 + Kd * Fe2Mg)
-
-    # Difference between observed Fo and equilibrium Fo
-    forsterite_delta = abs(forsterite - forsterite_EQ) / forsterite
-
-    iterate = forsterite_delta > fo_converge
-    # iterate until equilibrium forsterite content doesn't change any more
-    while sum(iterate) > 1:
-
-        Kd[iterate] = Kd_toplis(
-            T_K[iterate],
-            P_bar[iterate],
-            forsterite_EQ.loc[iterate],
-            SiO2mol_A.loc[iterate],
-        )
-
-        forsterite[iterate] = forsterite_EQ[iterate].copy()
-
-        forsterite_EQ[iterate] = 1 / (1 + Kd[iterate] * Fe2Mg[iterate])
-
-        forsterite_delta[iterate] = (
-            abs(forsterite[iterate] - forsterite_EQ[iterate]) / forsterite[iterate]
-        )
-
-        iterate = forsterite_delta > fo_converge
-
-    return Kd
-
-
 def Phi_toplis(molar_SiO2, molar_Na2O, molar_K2O):
     """ "returns Phi component for Toplis (2005) Fe-Mg Kd calculations
 
@@ -201,78 +118,6 @@ def Kd_blundy(forsterite, Fe3Fe2_liquid, T_K):
     return 0.3642 * (1 - Fe3FeTotal) * np.exp(312.7 * (1 - 2 * forsterite) / T_K)
 
 
-def Kd_blundy_iterator(
-    melt_mol_fractions: pd.DataFrame,
-    forsterite,
-    T_K,
-    Fe3Fe2,
-    **kwargs,
-):
-
-    """
-    Equation 8 by Blundy (2020) iteratively solved for forsterite content
-
-    Parameters
-    ----------
-    melt_mol_fractions : pd.DataFrame
-        melt composition in oxide mol fraction.
-    olivine_forsterite
-        forsterite fraction in olivine as Mg / (Mg + Fe)
-    T_K :
-        Temperature in Kelvin
-    Fe3Fe2 :
-        melt Fe2+/Fe3+ ratio
-    """
-
-    for name in ["T_K", "forsterite"]:
-        param = locals()[name]
-        if isinstance(param, pd.Series):
-            if not melt_mol_fractions.index.equals(param.index):
-                raise RuntimeError(f"Melt and {name} indices don't match")
-
-    # Convert everything to Series for easier looping
-    if isinstance(forsterite, (int, float)):
-        forsterite = pd.Series(forsterite, index=melt_mol_fractions.index)
-    if isinstance(T_K, (int, float)):
-        T_K = pd.Series(T_K, index=melt_mol_fractions.index)
-    if isinstance(Fe3Fe2, (int, float)):
-        Fe3Fe2 = pd.Series(Fe3Fe2, index=melt_mol_fractions.index)
-
-    fo_converge_default = 0.001
-    fo_converge = kwargs.setdefault("fo_converge", fo_converge_default)
-
-    # initialise Kds
-    Kd = Kd_blundy(forsterite, Fe3Fe2, T_K)
-
-    # Liquid Fe2+/Fe(total)
-    Fe2Fe_total = 1 / (1 + Fe3Fe2)
-    Fe2Mg = (melt_mol_fractions["FeO"] / melt_mol_fractions["MgO"]) * Fe2Fe_total
-    # Equilibrium forsterite content according to Kd
-    forsterite_EQ = 1 / (1 + Kd * Fe2Mg)
-
-    # Difference between observed Fo and equilibrium Fo
-    forsterite_delta = abs(forsterite - forsterite_EQ) / forsterite
-
-    iterate = forsterite_delta > fo_converge
-    # iterate until equilibrium forsterite content doesn't change any more
-    while sum(iterate) > 1:
-
-        Kd.loc[iterate] = Kd_blundy(
-            forsterite_EQ[iterate], Fe3Fe2[iterate], T_K[iterate]
-        )
-
-        forsterite[iterate] = forsterite_EQ[iterate].copy()
-
-        forsterite_EQ.loc[iterate] = 1 / (1 + Kd[iterate] * Fe2Mg[iterate])
-
-        forsterite_delta.loc[iterate] = (
-            abs(forsterite[iterate] - forsterite_EQ[iterate]) / forsterite[iterate]
-        )
-
-        iterate = forsterite_delta > fo_converge
-
-    return Kd
-
 
 def equilibrium_forsterite(Kd, Fe2Mg):
     """
@@ -296,7 +141,7 @@ def equilibrium_forsterite(Kd, Fe2Mg):
     return 1 / (1 + Kd * Fe2Mg)
 
 
-class Kd_dataframe:
+class Kd_vectorised:
     def blundy(
         melt_mol_fractions: pd.DataFrame,
         forsterite,
@@ -450,3 +295,12 @@ class Kd_dataframe:
             iterate = forsterite_delta > fo_converge
 
         return Kd
+
+class Kd():
+    def toplis():
+        #do things
+        return 0
+
+    def blundy():
+        #do other things
+        return 0
