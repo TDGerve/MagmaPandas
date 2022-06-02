@@ -8,11 +8,20 @@ class iterate():
         self.iterate_var = iterate_var
 
     def __call__(self, func):
-        def wrapper(*args):
-            results_guess = np.repeat(self.initial, len(args[0]))
-            results_equilibrium = func(*args)
+        def wrapper(**kwargs):
+            results_guess = kwargs[self.iterate_var]
+            results_equilibrium = func(**kwargs)
             results_delta = abs(results_guess - results_equilibrium) / results_guess
             iterate = results_delta > self.converge
 
             while sum(iterate) > 1:
-                args = [arg[iterate] for arg in args]
+                kwargs[self.iterate_var] = results_equilibrium
+                kwargs = {key: val[iterate] for key, val in kwargs.items()}
+                results_equilibrium = func(**kwargs)
+                results_delta = abs(results_guess - results_equilibrium) / results_guess
+                iterate = results_delta > self.converge
+
+            return results_equilibrium
+
+        return wrapper
+
