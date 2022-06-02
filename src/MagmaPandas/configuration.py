@@ -1,6 +1,5 @@
 from .parse.validate import _check_setter
-from .geochemistry.Kd import Kd_toplis_iterator, Kd_blundy_iterator
-from .geochemistry.Fe_redox import FeRedox_Boris, FeRedox_KC
+
 
 
 Fe3Fe2_models = ["borisov", "kressCarmichael"]

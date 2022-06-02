@@ -62,12 +62,9 @@ class MagmaFrame(pd.DataFrame):
 
     @property
     def _constructor_sliced(self):
-        """This is the key to letting Pandas know how to keep
-        derivatives of `MagmaBase` the same type as yours.  It should
-        be enough to return the name of the Class.  However, in
-        some cases, `__finalize__` is not called and `new attributes` are
-        not carried over.  We can fix that by constructing a callable
-        that makes sure to call `__finalize__` every time."""
+        """
+        Docstrings
+        """
 
         from MagmaPandas.MagmaSeries import MagmaSeries
 
