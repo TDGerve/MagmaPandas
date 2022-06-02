@@ -55,4 +55,4 @@ class melt_thermometers:
             if "P_bar" not in self.columns:
                 self["P_bar"] = P_bar
         else:
-            return pd.Series(T_K, name="T_K")
+            return pd.Series(T_K, name="T_K").squeeze()

@@ -75,7 +75,10 @@ def FeRedox_Boris(mol_fractions: pd.DataFrame, T_K, fO2, *args, **kwargs):
 
     oxides = ["SiO2", "TiO2", "MgO", "CaO", "Na2O", "K2O", "Al2O3", "P2O5"]
 
-    missing_oxides = set(oxides).difference(mol_fractions.columns)
+    if isinstance(mol_fractions, pd.DataFrame):
+        missing_oxides = set(oxides).difference(mol_fractions.columns)
+    elif isinstance(mol_fractions, pd.Series):
+        missing_oxides = set(oxides).difference(mol_fractions.index)
 
     if len(missing_oxides) > 0:
 

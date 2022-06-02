@@ -6,7 +6,7 @@ from ..parse.validate import _check_argument
 
 
 ##### Toplis (2005) Fe-Mg olivine - melt exchange coefficient #####
-####################################################
+###################################################################
 
 def Kd_toplis(T_K, P_bar, forsterite, SiO2_A):
     """
@@ -124,8 +124,12 @@ def Phi_toplis(molar_SiO2, molar_Na2O, molar_K2O):
         int or list-like
     """
 
-    if sum(np.array(molar_SiO2) > 60) > 1:
-        raise RuntimeError("SiO2 >60 mol% present")
+    try:
+        if sum(np.array(molar_SiO2) > 60) > 1:
+            raise RuntimeError("SiO2 >60 mol% present")
+    except:
+        if molar_SiO2 > 60:
+            raise RuntimeError("SiO2 >60 mol%")
 
     return (0.46 * (100 / (100 - molar_SiO2)) - 0.93) * (molar_Na2O + molar_K2O) + (
         -5.33 * (100 / (100 - molar_SiO2)) + 9.69
@@ -170,14 +174,20 @@ def SiO2_A_toplis(melt_mol_fractions):
     # Equation 11
     SiO2_A = molar_SiO2 + Phi * (molar_Na2O + molar_K2O)
 
-    if "H2O" in molar_concentrations.columns:
-        SiO2_A = SiO2_A + 0.8 * molar_concentrations["H2O"]  # equation 14
+    try:
+        # For dataframes
+        if "H2O" in molar_concentrations.columns:
+            SiO2_A = SiO2_A + 0.8 * molar_concentrations["H2O"]  # equation 14
+    except:
+        # For series
+         if "H2O" in molar_concentrations.index:
+            SiO2_A = SiO2_A + 0.8 * molar_concentrations["H2O"]  # equation 14       
 
     return SiO2_A
 
 
 ##### Blundy (2020) Fe-Mg olivine - melt exchange coefficient #####
-####################################################
+###################################################################
 
 
 def Kd_blundy(forsterite, Fe3Fe2_liquid, T_K):

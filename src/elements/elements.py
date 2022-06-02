@@ -11,7 +11,7 @@ def periodic_table(masses_only: bool = True):
 
     if not masses_only:
         with resources.open_text("elements.data", "PeriodicTable.csv") as df:
-            return pd.read_csv(df, index_col=["AtomicNumber"])
+            return pd.read_csv(df, index_col=["Symbol"])
 
     with resources.open_text("elements.data", "PeriodicTable.csv") as df:
         return pd.read_csv(
@@ -129,3 +129,5 @@ def cation_names(compounds: List[str]):
     """
 
     return [decompose(oxide).index[0] for oxide in compounds]
+
+

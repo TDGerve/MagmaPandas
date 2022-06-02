@@ -3,10 +3,10 @@ import pandas as pd
 from .magmaFrame_baseclass import MagmaFrame
 from ..parse.readers import _read_file
 from ..geochemistry.fO2 import fO2_QFM
-from ..geochemistry.Fe_redox import FeRedox_KC, FeRedox_Boris
 from ..thermometers.melt import melt_thermometers
 from ..parse.validate import _check_argument
-from ..geochemistry.Kd import Kd_blundy_iterator, Kd_toplis_iterator
+from .configuration import configuration
+
 
 
 def read_melt(
@@ -36,8 +36,22 @@ def read_melt(
 
 
 class melt(melt_thermometers, MagmaFrame):
+    @property
+    def _constructor(self):
+        """This is the key to letting Pandas know how to keep
+        derivatives of `MagmaBase` the same type as yours.  It should
+        be enough to return the name of the Class.  However, in
+        some cases, `__finalize__` is not called and `new attributes` are
+        not carried over.  We can fix that by constructing a callable
+        that makes sure to call `__finalize__` every time."""
+
+        def _c(*args, **kwargs):
+            return melt(*args, **kwargs).__finalize__(self)
+
+        return _c
+
     def Fe3Fe2_QFM(
-        self, T_K=None, P_bar=None, logshift=0, model="Borisov", inplace=False
+        self, T_K=None, P_bar=None, logshift=0, inplace=False
     ):
         """
         Calculate Fe-redox equilibrium at QFM oxygen buffer for silicate liquids.
@@ -52,8 +66,6 @@ class melt(melt_thermometers, MagmaFrame):
             Pressure in bars
         logshift    :   int, pd.Series-like
             log units shift of QFM
-        model   :   string
-            'KressCarmichael' or 'Borisov'
         inplace :   bool
             return a new dataframe of add columns to the existing one
         Returns
@@ -74,15 +86,11 @@ class melt(melt_thermometers, MagmaFrame):
 
         mol_fractions = self.moles
 
-        model_dict = {
-            "KressCarmichael": FeRedox_KC,
-            "Borisov": FeRedox_Boris,
-        }
-        equation = model_dict[model]
+        Fe3Fe2_model = configuration().Fe3Fe2
 
         fO2_bar = fO2_QFM(logshift, T_K, P_bar)
 
-        Fe3Fe2 = equation(mol_fractions, T_K, fO2_bar, P_bar)
+        Fe3Fe2 = Fe3Fe2_model(mol_fractions, T_K, fO2_bar, P_bar)
 
         if inplace:
             self["Fe3Fe2"] = Fe3Fe2
@@ -132,21 +140,20 @@ class melt(melt_thermometers, MagmaFrame):
         else:
             return melt_mol_fractions
 
-    @_check_argument("model", [None, "toplis", "blundy"])
-    def Kd_olivine_FeMg(self, forsterite, T_K, Fe3Fe2, P_bar=None, model=None):
+
+    def Kd_olivine_FeMg(self, forsterite, T_K, Fe3Fe2, P_bar=None):
         """
         Calulate Fe-Mg exchange coefficients between olivine (ol) and melt (m) as:
 
         [Fe(ol) / Fe(m)] * [Mg(m) / Mg(ol)]
         """
-        if model is None:
-            model = "toplis"
 
-        if (model == "toplis") & (P_bar is None):
+
+        if (configuration().Kd_model == "toplis") & (P_bar is None):
             raise ValueError("P_bar argument missing")
 
-        model_dict = {"toplis": Kd_toplis_iterator, "blundy": Kd_blundy_iterator}
-        Kd_model = model_dict[model]
+
+        Kd_model = configuration().Kd
 
         mol_fractions = self.moles
 
@@ -157,3 +164,7 @@ class melt(melt_thermometers, MagmaFrame):
             Fe3Fe2=Fe3Fe2,
             P_bar=P_bar,
         )
+
+    @staticmethod
+    def test_config():
+        print(configuration().Kd, "\n", configuration().Fe3Fe2)

@@ -4,10 +4,7 @@ import elements as e
 import pandas as pd
 from .. import MagmaFrames as mf
 
-
-@_check_argument("units", ["wt. %", "mol fraction", "ppm"])
-@_check_argument("Type", ["oxide", "cation"])
-@_check_argument("phase", [None, "melt", "olivine", "clinopyroxene", "plagioclase"])
+@_check_argument("phase", [None, "melt", "melt_inclusion", "olivine", "clinopyroxene", "plagioclase"])
 def _read_file(
     filepath: str,
     *args,
