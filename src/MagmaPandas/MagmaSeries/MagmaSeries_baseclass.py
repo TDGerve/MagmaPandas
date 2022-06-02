@@ -45,7 +45,7 @@ class MagmaSeries(pd.Series):
                 datatype = data._datatype
 
         # A pandas series with the masses of all oxides and elements in the dataSeries
-        self._weights = pd.Series(name="weight", dtype="float32")
+        self._weights = pd.Series(name="weight", dtype=float)
         # A list with the names of all indices that do not contain chemical data
         self._units = units
         self._datatype = datatype
@@ -57,8 +57,8 @@ class MagmaSeries(pd.Series):
                 self._no_data.append(col)
 
         # # Recalculate total concentrations
-        if "total" in self.index:
-            self["total"] = self[self.elements].sum()
+        # if "total" in self.index:
+        #     self["total"] = self.loc[self.elements].sum()
 
     @property
     def _constructor(self):

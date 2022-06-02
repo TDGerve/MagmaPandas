@@ -34,7 +34,7 @@ class MagmaFrame(pd.DataFrame):
                 datatype = data._datatype
 
         # A pandas series with the masses of all oxides and elements in the dataframe
-        self._weights = pd.Series(name="weight", dtype="float32")
+        self._weights = pd.Series(name="weight", dtype=float)
         # A list with the names of all columns that do not contain chemical data
         self._units = units
         self._datatype = datatype

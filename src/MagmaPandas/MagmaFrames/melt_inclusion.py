@@ -3,7 +3,7 @@ from ..parse.readers import _read_file
 from .melt import melt
 import pandas as pd
 from ..geochemistry.fO2 import fO2_QFM
-from .configuration import configuration
+from ..configuration import configuration
 
 
 
