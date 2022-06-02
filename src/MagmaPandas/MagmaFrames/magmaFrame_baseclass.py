@@ -45,9 +45,6 @@ class MagmaFrame(pd.DataFrame):
             except:
                 self._no_data.append(col)
 
-        # # Recalculate total concentrations
-        if "total" in self.columns:
-            self["total"] = self[self.elements].sum(axis=1)
 
     @property
     def _constructor(self):

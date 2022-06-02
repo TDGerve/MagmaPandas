@@ -56,9 +56,6 @@ class MagmaSeries(pd.Series):
             except:
                 self._no_data.append(col)
 
-        # # Recalculate total concentrations
-        # if "total" in self.index:
-        #     self["total"] = self.loc[self.elements].sum()
 
     @property
     def _constructor(self):
