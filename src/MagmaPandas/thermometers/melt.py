@@ -7,7 +7,8 @@ class melt_thermometers:
 
         """Liquid thermometer
 
-        Equation 16 of Putirka (2008) calculates liquiqdus temperature for liquid compositions. Requires equilibrium with olivine + plagioclase + clinopyroxene.
+        Equation 14 from Putirka (2008) calculates liquiqdus temperature for liquid compositions. 
+        Requires equilibrium with olivine.
 
         Parameters
         ----------
@@ -42,7 +43,7 @@ class melt_thermometers:
         # Calculate molar oxide fractions
         mol_fractions = self.moles
         # Melt Mg#
-        Mg_no = mol_fractions["MgO"] / (mol_fractions["MgO"] + mol_fractions["FeO"])
+        Mg_no = mol_fractions["MgO"] / (mol_fractions["MgO"] + mol_fractions["FeO"]) # SHOULD PROBABLY BE STRICTLY Fe2+
 
         T_K = (
             754
@@ -59,7 +60,8 @@ class melt_thermometers:
 
         """Liquid thermometer
 
-        Equation 16 of Putirka (2008) calculates liquiqdus temperature for liquid compositions. Requires equilibrium with olivine + plagioclase + clinopyroxene.
+        Equation 16 from Putirka (2008) calculates liquiqdus temperature for liquid compositions. 
+        Requires equilibrium with olivine + plagioclase + clinopyroxene.
 
         Parameters
         ----------
