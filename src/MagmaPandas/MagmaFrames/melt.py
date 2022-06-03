@@ -3,7 +3,7 @@ import pandas as pd
 from .magmaFrame_baseclass import MagmaFrame
 from ..parse.readers import _read_file
 from ..geochemistry.fO2 import fO2_QFM
-from ..geochemistry.Kd import Kd_vectorised
+from ..geochemistry.Kd_ol_melt import Kd_FeMg_vectorised
 from ..thermometers.melt import melt_thermometers
 from ..parse.validate import _check_argument
 from ..configuration import configuration
@@ -36,7 +36,7 @@ def read_melt(
     )
 
 
-class melt(melt_thermometers, MagmaFrame):
+class melt(MagmaFrame):
     @property
     def _constructor(self):
         """This is the key to letting Pandas know how to keep
@@ -46,10 +46,16 @@ class melt(melt_thermometers, MagmaFrame):
         not carried over.  We can fix that by constructing a callable
         that makes sure to call `__finalize__` every time."""
 
-        def _c(*args, **kwargs):
-            return melt(*args, **kwargs).__finalize__(self)
+        def _c(*args, weights=self._weights, **kwargs):
+            return melt(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
+
+    def temperature(self, **kwargs):
+
+        thermometer = getattr(melt_thermometers, configuration().melt_thermometer)
+
+        return thermometer(self, **kwargs)
 
     def Fe3Fe2_QFM(
         self, T_K=None, P_bar=None, logshift=0, inplace=False
@@ -142,19 +148,13 @@ class melt(melt_thermometers, MagmaFrame):
             return melt_mol_fractions
 
 
-    def Kd_olivine_FeMg(self, forsterite, T_K, Fe3Fe2, P_bar=None):
+    def Kd_olivine_FeMg(self, forsterite, T_K, Fe3Fe2, **kwargs):
         """
         Calulate Fe-Mg exchange coefficients between olivine (ol) and melt (m) as:
 
         [Fe(ol) / Fe(m)] * [Mg(m) / Mg(ol)]
         """
-
-
-        if (configuration().Kd_model == "toplis") & (P_bar is None):
-            raise ValueError("P_bar argument missing")
-
-
-        Kd_model = getattr(Kd_vectorised, configuration().Kd_model)
+        Kd_model = getattr(Kd_FeMg_vectorised, configuration().Kd_model)
 
         mol_fractions = self.moles
 
@@ -163,6 +163,6 @@ class melt(melt_thermometers, MagmaFrame):
             forsterite=forsterite,
             T_K=T_K,
             Fe3Fe2=Fe3Fe2,
-            P_bar=P_bar,
+            **kwargs
         )
 

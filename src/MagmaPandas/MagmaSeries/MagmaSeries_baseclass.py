@@ -2,7 +2,8 @@ from typing import List
 from ..parse.validate import _check_attribute, _check_argument
 import pandas as pd
 import elements as e
-
+from ..configuration import configuration
+from ..thermometers.melt import melt_thermometers
 
 def _MagmaSeries_expanddim(data=None, *args, **kwargs):
     from MagmaPandas.MagmaFrames import MagmaFrame
@@ -36,26 +37,22 @@ class MagmaSeries(pd.Series):
         self, data=None, *args, units: str = None, datatype: str = None, **kwargs
     ) -> None:
 
-        super().__init__(data, *args, **kwargs)
-
-        if isinstance(data, MagmaSeries):
-            if units is None:
-                units = data._units
-            if datatype is None:
-                datatype = data._datatype
-
-        # A pandas series with the masses of all oxides and elements in the dataSeries
-        self._weights = pd.Series(name="weight", dtype=float)
-        # A list with the names of all indices that do not contain chemical data
         self._units = units
         self._datatype = datatype
+        if "weights" in kwargs.keys():
+            self._weights = kwargs.pop("weights")
 
-        for col in self.index:
-            try:
-                self._weights[col] = e.calculate_weight(col)
-            except:
-                self._no_data.append(col)
+        super().__init__(data, *args, **kwargs)
 
+        if not hasattr(self, "_weights"):
+            print("series failure")
+            self._weights = pd.Series(name="weight", dtype=float)
+            for idx in self.index:
+                try:
+                    # Calculate element/oxide weight
+                    self._weights[idx] = e.calculate_weight(idx)
+                except:
+                    pass
 
     @property
     def _constructor(self):
@@ -66,14 +63,17 @@ class MagmaSeries(pd.Series):
         not carried over.  We can fix that by constructing a callable
         that makes sure to call `__finalize__` every time."""
 
-        def _c(*args, **kwargs):
-            return MagmaSeries(*args, **kwargs).__finalize__(self)
+        def _c(*args, weights=self._weights, **kwargs):
+            return MagmaSeries(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
 
     @property
     def _constructor_expanddim(self):
-        return _MagmaSeries_expanddim.__finalize__(self)
+        def _c(*args, weights=self._weights, **kwargs):
+            return _MagmaSeries_expanddim(*args, weights=weights, **kwargs).__finalize__(self)
+
+        return _c
 
     @property
     def _no_data(self) -> List:
@@ -107,16 +107,13 @@ class MagmaSeries(pd.Series):
         print("units are read only")
 
     @property
-    def weights(self) -> pd.Series:
-        """
-        Molar mass of the elements in the dataframe
-        """
+    def weights(self):
         return self._weights
 
     @property
     def elements(self) -> List:
         """
-        Names of the elements in the dataframe
+        Names of the elements in the series
         """
         return list(self._weights.index)
 
@@ -198,18 +195,12 @@ class MagmaSeries(pd.Series):
 
     def recalculate(self):
         """
-        Recalculate element masses and total weight.
+        Recalculate total weight.
         """
-        weights = pd.Series(name="weight", dtype="float32")
 
-        for col in self.index:
-            try:
-                weights[col] = e.calculate_weight(col)
-            except:
-                pass
-
-        self._weights = weights
-        if self._total:
+        if not self._total:
+            raise ValueError("no 'total' in Series")
+        else:
             self["total"] = self[self.elements].sum()
 
     def normalise(self):
@@ -226,3 +217,12 @@ class MagmaSeries(pd.Series):
         normalised["total"] = normalised.sum()
 
         return normalised
+
+    def melt_temperature(self, **kwargs):
+        """
+        calculate liquidus temperature for melts
+        """
+
+        thermometer = getattr(melt_thermometers, configuration().melt_thermometer)
+
+        return thermometer(self, **kwargs)

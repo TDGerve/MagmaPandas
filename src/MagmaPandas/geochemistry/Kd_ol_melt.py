@@ -12,9 +12,9 @@ from ..parse.validate import _check_argument
 ###################################################################
 
 
-def Kd_toplis(T_K, P_bar, forsterite, SiO2_A):
+def FeMg_toplis(T_K, P_bar, forsterite, SiO2_A):
     """
-    Equation 10 from Toplis (2005)
+    Toplis (2005) Equation 10
     """
     return np.exp(
         (-6766 / (R * T_K) - 7.34 / R)
@@ -24,8 +24,8 @@ def Kd_toplis(T_K, P_bar, forsterite, SiO2_A):
     )
 
 
-def Phi_toplis(molar_SiO2, molar_Na2O, molar_K2O):
-    """ "returns Phi component for Toplis (2005) Fe-Mg Kd calculations
+def toplis_Phi(molar_SiO2, molar_Na2O, molar_K2O):
+    """
 
     Equation 12 from Toplis (2005) calculates a Phi parameter to correct SiO2 for alkali-bearing liquids.
     This expression is only valid for SiO2 <= 60 mol %
@@ -57,7 +57,7 @@ def Phi_toplis(molar_SiO2, molar_Na2O, molar_K2O):
     )
 
 
-def SiO2_A_toplis(melt_mol_fractions):
+def toplis_SiO2_A(melt_mol_fractions):
     """returns adjusted SiO2 for Toplis (2005) Fe-Mg Kd calculations
 
     Equations 11 and 14 calculate adjusted molar SiO2 by correcting for akalis and water
@@ -91,7 +91,7 @@ def SiO2_A_toplis(melt_mol_fractions):
     molar_Na2O = molar_concentrations["Na2O"]
     molar_K2O = molar_concentrations["K2O"]
 
-    Phi = Phi_toplis(molar_SiO2, molar_Na2O, molar_K2O)
+    Phi = toplis_Phi(molar_SiO2, molar_Na2O, molar_K2O)
     # Equation 11
     SiO2_A = molar_SiO2 + Phi * (molar_Na2O + molar_K2O)
 
@@ -111,7 +111,7 @@ def SiO2_A_toplis(melt_mol_fractions):
 ###################################################################
 
 
-def Kd_blundy(forsterite, Fe3Fe2_liquid, T_K):
+def FeMg_blundy(forsterite, Fe3Fe2_liquid, T_K):
     """
     Blundy et al., 2020, equation 8
     """
@@ -135,16 +135,11 @@ def equilibrium_forsterite(Kd, Fe2Mg):
     Equilibrium forsterite fraction as Mg/(Mg + Fe)
     """
 
-    # # liquid Fe2+/Fe3+ ratio
-    # Fe2Fe_total = 1 / (1 + Fe3Fe2)
-    # # liquid Fe2+/Mg
-    # Fe2Mg_liquid = (melt_mol_fractions["FeO"] / melt_mol_fractions["MgO"]) * Fe2Fe_total
-
     return 1 / (1 + Kd * Fe2Mg)
 
 
-class Kd_vectorised:
-    def FeMg_olMelt_blundy(
+class Kd_FeMg_vectorised:
+    def blundy(
         melt_mol_fractions: pd.DataFrame,
         forsterite,
         T_K,
@@ -185,7 +180,7 @@ class Kd_vectorised:
         fo_converge = kwargs.setdefault("fo_converge", fo_converge_default)
 
         # initialise Kds
-        Kd = Kd_blundy(forsterite, Fe3Fe2, T_K)
+        Kd = FeMg_blundy(forsterite, Fe3Fe2, T_K)
         # Liquid Fe2+/Fe(total)
         Fe2Fe_total = 1 / (1 + Fe3Fe2)
         Fe2Mg = (melt_mol_fractions["FeO"] / melt_mol_fractions["MgO"]) * Fe2Fe_total
@@ -197,7 +192,7 @@ class Kd_vectorised:
         iterate = forsterite_delta > fo_converge
         # iterate until equilibrium forsterite content doesn't change any more
         while sum(iterate) > 1:
-            Kd.loc[iterate] = Kd_blundy(
+            Kd.loc[iterate] = FeMg_blundy(
                 forsterite_EQ[iterate], Fe3Fe2[iterate], T_K[iterate]
             )
             forsterite[iterate] = forsterite_EQ[iterate].copy()
@@ -253,9 +248,9 @@ class Kd_vectorised:
         fo_converge_default = 0.001
         fo_converge = kwargs.setdefault("fo_converge", fo_converge_default)
 
-        SiO2mol_A = SiO2_A_toplis(melt_mol_fractions)
+        SiO2mol_A = toplis_SiO2_A(melt_mol_fractions)
         # initialise Kds
-        Kd = Kd_toplis(T_K, P_bar, forsterite, SiO2mol_A)
+        Kd = FeMg_toplis(T_K, P_bar, forsterite, SiO2mol_A)
         # Liquid Fe2+/Fe(total)
         Fe2Fe_total = 1 / (1 + Fe3Fe2)
         # liquid Fe2+/Mg
@@ -268,7 +263,7 @@ class Kd_vectorised:
         iterate = forsterite_delta > fo_converge
         # iterate until equilibrium forsterite content doesn't change any more
         while sum(iterate) > 1:
-            Kd[iterate] = Kd_toplis(
+            Kd[iterate] = FeMg_toplis(
                 T_K[iterate],
                 P_bar[iterate],
                 forsterite_EQ.loc[iterate],
@@ -284,7 +279,7 @@ class Kd_vectorised:
         return Kd
 
 
-class Kd:
+class Kd_FeMg:
     def blundy(
         melt_mol_fractions: pd.Series,
         forsterite: float,
@@ -312,7 +307,7 @@ class Kd:
         fo_converge = kwargs.setdefault("fo_converge", fo_converge_default)
 
         # initialise Kds
-        Kd = Kd_blundy(forsterite, Fe3Fe2, T_K)
+        Kd = FeMg_blundy(forsterite, Fe3Fe2, T_K)
         # Liquid Fe2+/Fe(total)
         Fe2Fe_total = 1 / (1 + Fe3Fe2)
         Fe2Mg = (melt_mol_fractions["FeO"] / melt_mol_fractions["MgO"]) * Fe2Fe_total
@@ -324,7 +319,7 @@ class Kd:
         iterate = forsterite_delta > fo_converge
         # iterate until equilibrium forsterite content doesn't change any more
         while iterate:
-            Kd = Kd_blundy(forsterite_EQ, Fe3Fe2, T_K)
+            Kd = FeMg_blundy(forsterite_EQ, Fe3Fe2, T_K)
             forsterite = forsterite_EQ.copy()
             forsterite_EQ = 1 / (1 + Kd * Fe2Mg)
             forsterite_delta = abs(forsterite - forsterite_EQ) / forsterite
@@ -360,10 +355,10 @@ class Kd:
         fo_converge_default = 0.001
         fo_converge = kwargs.setdefault("fo_converge", fo_converge_default)
 
-        SiO2mol_A = SiO2_A_toplis(melt_mol_fractions)
+        SiO2mol_A = toplis_SiO2_A(melt_mol_fractions)
 
         # initialise Kd
-        Kd = Kd_toplis(T_K, P_bar, forsterite, SiO2mol_A)
+        Kd = FeMg_toplis(T_K, P_bar, forsterite, SiO2mol_A)
 
         # Liquid Fe2+/Fe(total)
         Fe2Fe_total = 1 / (1 + Fe3Fe2)
@@ -379,11 +374,11 @@ class Kd:
         # iterate until equilibrium forsterite content doesn't change any more
         while iterate:
 
-            Kd = Kd_toplis(
+            Kd = FeMg_toplis(
                 T_K,
                 P_bar,
                 forsterite_EQ,
-                SiO2mol_A.loc,
+                SiO2mol_A,
             )
 
             forsterite = forsterite_EQ.copy()

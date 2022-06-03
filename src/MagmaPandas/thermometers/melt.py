@@ -1,8 +1,9 @@
+from numpy import isin
 import pandas as pd
 
 
 class melt_thermometers:
-    def temperature(self, P_bar=None, inplace=False):
+    def putirka2008_14(self, inplace=False, **kwargs):
 
         """Liquid thermometer
 
@@ -20,16 +21,74 @@ class melt_thermometers:
         pd.Series
             liquidus temperatures in degrees Kelvin.
         """
+        import MagmaPandas as mp
+
+        if isinstance(self, mp.MagmaFrame):
+            elements = self.columns
+        elif isinstance(self, mp.MagmaSeries):
+            elements = self.index
+
+        oxides = set(["MgO", "FeO", "Na2O", "K2O"])
+        absentOxides = oxides.difference(elements)
+
+        if "H2O" not in elements:
+            H2O = 0.0
+        else:
+            H2O = self["H2O"]
+
+        if len(absentOxides) > 0:
+            raise KeyError(f"{absentOxides} not found in melt")
+
+        # Calculate molar oxide fractions
+        mol_fractions = self.moles
+        # Melt Mg#
+        Mg_no = mol_fractions["MgO"] / (mol_fractions["MgO"] + mol_fractions["FeO"])
+
+        T_K = (
+            754
+            + 190.6 * Mg_no
+            + 25.52 * self["MgO"]
+            + 9.585 * self["FeO"]
+            + 14.87 * (self["Na2O"] + self["K2O"])
+            - 9.176 * H2O
+        ) + 273.15
+
+        return pd.Series(T_K, name="T_K").squeeze()
+
+    def putirka2008_16(self, P_bar=None, inplace=False, **kwargs):
+
+        """Liquid thermometer
+
+        Equation 16 of Putirka (2008) calculates liquiqdus temperature for liquid compositions. Requires equilibrium with olivine + plagioclase + clinopyroxene.
+
+        Parameters
+        ----------
+
+        P_bar : int or list-like
+            crystallisation pressures. Indices need to match melt if using pd.Series.
+
+
+        Returns
+        -------
+        pd.Series
+            liquidus temperatures in degrees Kelvin.
+        """
+        import MagmaPandas as mp
 
         if P_bar is None:
             P_bar = self["P_bar"]
+
+        if isinstance(self, mp.MagmaFrame):
+            elements = self.columns
+        elif isinstance(self, mp.MagmaSeries):
+            elements = self.index
 
         if isinstance(P_bar, pd.Series):
             if not self.index.equals(P_bar.index):
                 raise RuntimeError("Melt and P_bar indices don't match")
 
         oxides = set(["SiO2", "Al2O3", "MgO"])
-        absentOxides = oxides.difference(self.columns)
+        absentOxides = oxides.difference(elements)
 
         if len(absentOxides) > 0:
             raise KeyError(f"{absentOxides} not found in melt")
@@ -52,7 +111,9 @@ class melt_thermometers:
 
         if inplace:
             self["T_K"] = T_K
-            if "P_bar" not in self.columns:
+            if "P_bar" not in elements:
                 self["P_bar"] = P_bar
         else:
             return pd.Series(T_K, name="T_K").squeeze()
+
+

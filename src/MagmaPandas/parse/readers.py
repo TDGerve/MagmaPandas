@@ -59,5 +59,5 @@ def _read_file(
     return create_class_instance(
         df,
         units=units,
-        datatype=Type,
+        datatype=Type
     )

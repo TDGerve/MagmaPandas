@@ -41,10 +41,11 @@ class olivine(MagmaFrame):
         not carried over.  We can fix that by constructing a callable
         that makes sure to call `__finalize__` every time."""
 
-        def _c(*args, **kwargs):
-            return olivine(*args, **kwargs).__finalize__(self)
+        def _c(*args, weights=self._weights, **kwargs):
+            return olivine(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
+
     @property
     def forsterite(self):
         """

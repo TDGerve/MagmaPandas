@@ -23,27 +23,24 @@ class MagmaFrame(pd.DataFrame):
     @_check_argument("datatype", [None, "cation", "oxide"])
     def __init__(
         self, data=None, *args, units: str = None, datatype: str = None, **kwargs
-    ) -> None:
+    ) -> None:        
+
+        self._units = units
+        self._datatype = datatype
+        if "weights" in kwargs.keys():
+            self._weights = kwargs.pop("weights")
 
         super().__init__(data, *args, **kwargs)
 
-        if isinstance(data, MagmaFrame):
-            if units is None:
-                units = data._units
-            if datatype is None:
-                datatype = data._datatype
+        if not hasattr(self, "_weights"):
+            self._weights = pd.Series(name="weight", dtype=float)
+            for col in self.columns:
+                try:
+                    # Calculate element/oxide weight
+                    self._weights[col] = e.calculate_weight(col)
+                except:
+                    pass
 
-        # A pandas series with the masses of all oxides and elements in the dataframe
-        self._weights = pd.Series(name="weight", dtype=float)
-        # A list with the names of all columns that do not contain chemical data
-        self._units = units
-        self._datatype = datatype
-
-        for col in self.columns:
-            try:
-                self._weights[col] = e.calculate_weight(col)
-            except:
-                self._no_data.append(col)
 
 
     @property
@@ -55,8 +52,8 @@ class MagmaFrame(pd.DataFrame):
         not carried over.  We can fix that by constructing a callable
         that makes sure to call `__finalize__` every time."""
 
-        def _c(*args, **kwargs):
-            return MagmaFrame(*args, **kwargs).__finalize__(self)
+        def _c(*args, weights=self._weights, **kwargs):
+            return MagmaFrame(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
 
@@ -68,8 +65,8 @@ class MagmaFrame(pd.DataFrame):
 
         from MagmaPandas.MagmaSeries import MagmaSeries
 
-        def _c(*args, **kwargs):
-            return MagmaSeries(*args, **kwargs).__finalize__(self)
+        def _c(*args, weights=self._weights, **kwargs):
+            return MagmaSeries(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
 
@@ -156,7 +153,7 @@ class MagmaFrame(pd.DataFrame):
         Convert moles to wt. % or vice versa
         """
 
-        converted = self.copy()[self.elements]
+        converted = self.loc[:, self.elements]
         if self._units == "wt. %":
             converted = converted.div(converted.weights)
         elif self._units == "mol fraction":

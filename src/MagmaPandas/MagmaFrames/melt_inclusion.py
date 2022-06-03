@@ -1,11 +1,11 @@
-from typing import List, Union
+from typing import List, Type, Union
 from ..parse.readers import _read_file
 from .melt import melt
 import pandas as pd
 from ..geochemistry.fO2 import fO2_QFM
 from ..configuration import configuration
-
-
+from ..geochemistry.Kd_ol_melt import Kd_FeMg
+from ..geochemistry.Fe_redox import Fe_redox
 
 
 def read_melt_inclusion(
@@ -44,8 +44,10 @@ class melt_inclusion(melt):
         not carried over.  We can fix that by constructing a callable
         that makes sure to call `__finalize__` every time."""
 
-        def _c(*args, **kwargs):
-            return melt_inclusion(*args, **kwargs).__finalize__(self)
+        def _c(*args, weights=self._weights, **kwargs):
+            return melt_inclusion(*args, weights=weights, **kwargs).__finalize__(self)
+
+        return _c
 
         return _c
 
@@ -54,62 +56,84 @@ class melt_inclusion(melt):
         sample,
         FeO_initial: Union[int, float],
         Kd: float,
-        P_bar: Union[float, int],
+        P_bar: float,
         **kwargs,
     ):
         """
         Docstrings
 
         """
-        inclusion = self.loc[[sample], :]
-        if inclusion.loc[sample, "FeO"] > FeO_initial:
+        inclusion = self.loc[sample, :]
+        if inclusion["FeO"] > FeO_initial:
             raise ValueError("Inclusion FeO is higher than initial FeO")
 
         stepsize = kwargs.get("stepsize", 0.001)
+        olivine_stepsize = stepsize / 4
         forsterite = kwargs.get("forsterite", 0.8)
         QFM_logshift = kwargs.get("QFM_logshift", 1)
-        temperature = inclusion.temperature(P_bar=1e3)
-
+        temperature = inclusion.melt_temperature(P_bar=P_bar)
 
         fO2 = fO2_QFM(QFM_logshift, temperature, P_bar)
-        Fe3Fe2_model = configuration().Fe3Fe2
-        Kd_model = configuration().Kd
+        Fe3Fe2_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
+        Kd_model = getattr(Kd_FeMg, configuration().Kd_model)
 
-        
-        moles = inclusion.moles[inclusion.elements]
-        moles.index = [0]
+        moles = melt_inclusion(
+            columns=self.elements, units="mol fraction", datatype="oxide"
+        )
+        moles.loc[0] = inclusion.moles[inclusion.elements].values
         equilibration_step = pd.Series(0, index=moles.columns)
         equilibration_step.loc[["FeO", "MgO"]] = stepsize, -stepsize
 
-        wtPercent = moles.convert_moles_wtPercent
-        FeO = wtPercent.loc[0, 'FeO']
+        FeO = moles.iloc[-1].convert_moles_wtPercent["FeO"]
+
         step = 1
+        olivine_crystallised = 0
+        decrease_stepsize = True
 
-        for step in range(4):
+        while FeO < FeO_initial:
 
-            moles.loc[stepsize*step] = moles.iloc[-1] + equilibration_step
+            idx = moles.index[-1] + stepsize
 
-            wtPercent = moles.convert_moles_wtPercent
-            FeO = wtPercent.loc[stepsize*step, 'FeO']
+            moles.loc[idx] = (moles.iloc[-1] + equilibration_step).values
 
             # melt Fe3+/Fe2+
             Fe3Fe2 = Fe3Fe2_model(moles.iloc[-1], temperature, fO2)
             # FeMg ol-melt Kd
             Kd = Kd_model(moles.iloc[-1], forsterite, temperature, P_bar, Fe3Fe2)
             Fe2_FeTotal = 1 / (1 + Fe3Fe2)
-            Fe2Mg = moles.loc[stepsize * step, "FeO"] * Fe2_FeTotal / moles.loc[stepsize * step, "MgO"]
+            Fe2Mg = (
+                moles.loc[idx, "FeO"]
+                * Fe2_FeTotal
+                / moles.loc[idx, "MgO"]
+            )
             # Equilibrium forsterite content
             Fo_EQ = 1 / (1 + Kd * Fe2Mg)
             # Equilibrium olivine composition
-            olivine = pd.Series({"MgO": Fo_EQ * 2, "FeO": (1 - Fo_EQ) * 2, "SiO2": 1}, index=[0])
-            moles.iloc[-1] = moles.iloc[-1] - olivine * (stepsize / 4)
+            olivine = pd.Series(
+                {"MgO": Fo_EQ * 2, "FeO": (1 - Fo_EQ) * 2, "SiO2": 1},
+                index=moles.columns,
+            ).fillna(0.0)
 
-            wtPercent = moles.convert_moles_wtPercent
-            FeO = wtPercent.loc[stepsize*step, 'FeO']
+            temperature_new = moles.iloc[-1].convert_moles_wtPercent.melt_temperature(P_bar=P_bar)
+            add_olivine = moles.iloc[-1]
+            while temperature_new < temperature:
+                add_olivine = add_olivine + olivine * (olivine_stepsize)
+                temperature_new = add_olivine.convert_moles_wtPercent.melt_temperature(P_bar=P_bar)
+                olivine_crystallised += olivine_stepsize
+            moles.iloc[-1] = add_olivine.values
 
-            temperature_new = wtPercent.temperature       
+            FeO = moles.iloc[-1].convert_moles_wtPercent["FeO"]
 
+            if FeO > FeO_initial:
+                if decrease_stepsize:
+                    moles.drop([idx], inplace=True)
+                    FeO = moles.iloc[-1].convert_moles_wtPercent["FeO"]
+                    stepsize = stepsize / 10
+                    equilibration_step.loc[["FeO", "MgO"]] = stepsize, -stepsize
+                    decrease_stepsize = False
 
-            # step += 1
+            step +=1        
 
-        return wtPercent, temperature_new, temperature
+        wtPercent = moles.convert_moles_wtPercent
+
+        return wtPercent, temperature, temperature_new, olivine_crystallised
