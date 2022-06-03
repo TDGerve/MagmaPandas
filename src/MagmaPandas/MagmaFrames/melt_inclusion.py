@@ -98,7 +98,7 @@ class melt_inclusion(melt):
 
             # melt Fe3+/Fe2+
             Fe3Fe2 = Fe3Fe2_model(moles.iloc[-1], temperature, fO2)
-            # FeMg ol-melt Kd
+            # FeMg Kd
             Kd = Kd_model(moles.iloc[-1], forsterite, temperature, P_bar, Fe3Fe2)
             Fe2_FeTotal = 1 / (1 + Fe3Fe2)
             Fe2Mg = (
@@ -113,18 +113,22 @@ class melt_inclusion(melt):
                 {"MgO": Fo_EQ * 2, "FeO": (1 - Fo_EQ) * 2, "SiO2": 1},
                 index=moles.columns,
             ).fillna(0.0)
-
+            # Model temperature after Fe-Mg exchange
             temperature_new = moles.iloc[-1].convert_moles_wtPercent.melt_temperature(P_bar=P_bar)
             add_olivine = moles.iloc[-1]
             while temperature_new < temperature:
+                # Add olivine until calculated temperature is back at initial
                 add_olivine = add_olivine + olivine * (olivine_stepsize)
                 temperature_new = add_olivine.convert_moles_wtPercent.melt_temperature(P_bar=P_bar)
+                # Recored crystallised olivine amount
                 olivine_crystallised += olivine_stepsize
+            # Copy olivine corrected composition    
             moles.iloc[-1] = add_olivine.values
 
             FeO = moles.iloc[-1].convert_moles_wtPercent["FeO"]
 
             if FeO > FeO_initial:
+                # Decrease stepsize (once) is FeO is overstepped
                 if decrease_stepsize:
                     moles.drop([idx], inplace=True)
                     FeO = moles.iloc[-1].convert_moles_wtPercent["FeO"]
@@ -134,6 +138,7 @@ class melt_inclusion(melt):
 
             step +=1        
 
+        # Recalculate compositions to oxide wt. %
         wtPercent = moles.convert_moles_wtPercent
 
         return wtPercent, temperature, temperature_new, olivine_crystallised
