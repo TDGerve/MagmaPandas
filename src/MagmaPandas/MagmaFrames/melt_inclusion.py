@@ -2,6 +2,7 @@ from typing import List, Type, Union
 from ..parse.readers import _read_file
 from .melt import melt
 import pandas as pd
+import numpy as np
 from ..geochemistry.fO2 import fO2_QFM
 from ..configuration import configuration
 from ..geochemistry.Kd_ol_melt import Kd_FeMg
@@ -60,18 +61,20 @@ class melt_inclusion(melt):
         """
         # Grab model parameters
         converge = kwargs.get("converge", 0.02)
-        temperature_converge = kwargs.get("temperature_converge", 1)
+        temperature_converge = kwargs.get("temperature_converge", 0.2)
         stepsize = kwargs.get("stepsize", 0.001)
         # Select Fe loss or gain
         if inclusion["FeO"] > FeO_initial:
             stepsize = -stepsize
-        olivine_stepsize = stepsize / 4
         forsterite = kwargs.get("forsterite", 0.8)
         QFM_logshift = kwargs.get("QFM_logshift", 1)
 
         # Collect configured models
         Fe3Fe2_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
         Kd_model = getattr(Kd_FeMg, configuration().Kd_model)
+
+        # Normalise inclusion composition
+        inclusion = inclusion.div(inclusion.sum()).mul(100)
 
         # Calculate temperature and fO2
         temperature = inclusion.melt_temperature(P_bar=P_bar)
@@ -90,10 +93,9 @@ class melt_inclusion(melt):
 
         # Parameters for the while loop
         olivine_melted = 0
-        decrease_stepsize = True
         decrease_factor = 10
 
-        while abs(FeO - FeO_initial) > converge:
+        while not np.isclose(FeO, FeO_initial, atol=converge):
             # Exchange Fe and Mg
             idx = moles.index[-1] + stepsize
             moles.loc[idx] = (moles.iloc[-1] + FeMg_exchange).values
@@ -119,28 +121,41 @@ class melt_inclusion(melt):
 
             # Crystallise or melt olivine to remain isothermal
             add_olivine = moles.iloc[-1]
-            while abs(temperature_new - temperature) > temperature_converge:
+            # Set stepsize for olivine addition/removal
+            olivine_stepsize = stepsize / 4
+            while not np.isclose(temperature_new, temperature, atol=temperature_converge):
                 # crystallise olivine until calculated temperature is back at initial
-                add_olivine = add_olivine + olivine * (olivine_stepsize)
+                add_olivine = add_olivine + olivine * olivine_stepsize
                 temperature_new = add_olivine.convert_moles_wtPercent.melt_temperature(
                     P_bar=P_bar
                 )
-                # Record crystallised olivine amount
+                # Record added/removed olivine amount. Negative values for crystallisatin
                 olivine_melted += olivine_stepsize
+                T_overstepped = np.sign(temperature - temperature_new) != np.sign(stepsize)
+                # Reverse one iteration and reduce stepsize if temperature was
+                # overstepped by more than the convergence value
+                if T_overstepped and not np.isclose(temperature_new, temperature, atol=temperature_converge):
+                    add_olivine = add_olivine - olivine * olivine_stepsize
+                    olivine_melted -= olivine_stepsize
+                    olivine_stepsize = olivine_stepsize / decrease_factor
+                    continue
+                
             # Copy olivine corrected composition
             moles.iloc[-1] = add_olivine.values
+
 
             # New inclusion FeO
             FeO = moles.iloc[-1].convert_moles_wtPercent["FeO"]
 
-            # Reduce stepsize (once) when approaching initial FeO
-            if (abs(FeO - FeO_initial) < (converge * 5)) and decrease_stepsize:
+            overstepped = np.sign(FeO_initial - FeO) != np.sign(stepsize)
+            # Reverse one iteration and reduce stepsize if FeO content 
+            # gets oversteppend by more than the convergence value
+            if overstepped and not np.isclose(FeO, FeO_initial, atol=converge):
                 moles.drop([idx], inplace=True)
                 FeO = moles.iloc[-1].convert_moles_wtPercent["FeO"]
                 stepsize = stepsize / decrease_factor
                 olivine_stepsize = stepsize / 4
                 FeMg_exchange = FeMg_exchange.div(decrease_factor)
-                decrease_stepsize = False
 
         # Recalculate compositions to oxide wt. %
         wtPercent = moles.convert_moles_wtPercent
@@ -157,8 +172,11 @@ class melt_inclusion(melt):
         """
         # Grab model parameters
         converge = kwargs.get("converge", 0.002)
-        temperature_converge = kwargs.get("temperature_converge", 1)
+        temperature_converge = kwargs.get("temperature_converge", 0.2)
         QFM_logshift = kwargs.get("QFM_logshift", 1)
+
+        # Normalise inclusion composition
+        inclusion = inclusion.div(inclusion.sum()).mul(100)
 
         # Calculate temperature and fO2
         temperature = inclusion.melt_temperature(P_bar=P_bar)
@@ -194,7 +212,6 @@ class melt_inclusion(melt):
         # Model Fe loss or gain
         if forsterite_EQ > forsterite_host:
             stepsize = -stepsize
-        olivine_stepsize = stepsize / 10
 
         # Set up initial data
         moles = melt_inclusion(
@@ -210,7 +227,7 @@ class melt_inclusion(melt):
         decrease_stepsize = True
         decrease_factor = 10
 
-        while abs(forsterite_host - forsterite_EQ) > converge:
+        while not np.isclose(forsterite_EQ, forsterite_host, atol=converge):
             # Exchange Fe-Mg
             idx = moles.index[-1] + stepsize
             moles.loc[idx] = (moles.iloc[-1] + FeMg_exchange).values
@@ -229,30 +246,42 @@ class melt_inclusion(melt):
 
             # Crystallise or melt olivine to remain isothermal
             remove_olivine = moles.iloc[-1]
-            while abs(temperature_new - temperature) > temperature_converge:
+            # Set stepsize
+            olivine_stepsize = stepsize / 4
+            while not np.isclose(temperature_new, temperature, atol=temperature_converge):
                 # Melt or crystallise olivine until the temperature is back to original.
                 remove_olivine = remove_olivine - olivine * olivine_stepsize
                 temperature_new = (
                     remove_olivine.convert_moles_wtPercent.melt_temperature(P_bar=P_bar)
                 )
-                # Record crystallised olivine amount
-                olivine_crystallised += olivine_stepsize
+                # Record removed/added olivine amount. Negative values for crystallisation
+                olivine_crystallised -= olivine_stepsize
+
+                T_overstepped = np.sign(temperature_new - temperature) != np.sign(stepsize)
+                # Reverse one iteration and reduce stepsize if temperature was
+                # overstepped by more than the convergence value
+                if T_overstepped and not np.isclose(temperature_new, temperature, atol=temperature_converge):
+                    remove_olivine = remove_olivine + olivine * olivine_stepsize
+                    olivine_crystallised += olivine_stepsize
+                    olivine_stepsize = olivine_stepsize / decrease_factor
+                    continue
+ 
             # Copy olivine corrected composition
             moles.iloc[-1] = remove_olivine.values
 
             # New equilibrium forsterite content
             forsterite_EQ = calc_forsterite_EQ(moles.iloc[-1])
 
-            # Decrease stepsize (once) is Fo# is aproaching host olivine Fo#
-            if (
-                abs(forsterite_host - forsterite_EQ) < (converge * 5)
-            ) and decrease_stepsize:
+            overstepped = np.sign(forsterite_host - forsterite_EQ) != np.sign(stepsize)
+            # Reverse one iteration and reduce stepsize if forsterite content 
+            # gets oversteppend by more than the convergence value
+            if overstepped and not np.isclose(forsterite_EQ, forsterite_host, atol=converge):
                 moles.drop([idx], inplace=True)
                 forsterite_EQ = calc_forsterite_EQ(moles.iloc[-1])
                 stepsize = stepsize / decrease_factor
                 olivine_stepsize = stepsize / 4
                 FeMg_exchange = FeMg_exchange.div(decrease_factor)
-                decrease_stepsize = False
+
 
         # Recalculate compositions to oxide wt. %
         wtPercent = moles.convert_moles_wtPercent
