@@ -92,8 +92,16 @@ class IaconoMarziano_configuration:
             f"_IaconoMarziano_configuration{i}"
             for i in ["__parameters", "__fugacity", "__activity", "__model"]
         ]
+        pad_left = 20
+        pad_right = 20
+        pad_total = pad_left + pad_right
+        print("Settings".ljust(pad_total, "_"))
         for param, model in zip(names, attributes):
-            print(f"{param:.<20}{getattr(IaconoMarziano_configuration, model):.>15}")
+            print(f"{param:.<{pad_left}}{getattr(IaconoMarziano_configuration, model):.>{pad_right}}")
+        print("\nCalibration range".ljust(pad_total, "_"))
+        T_string = f"1373-1673\N{DEGREE SIGN}K"
+        print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
+        print(f"{'Pressure':.<{pad_left}}{'0.1-10 kbar':.>{pad_right}}")
 
 
 H2O_coefficients = {
