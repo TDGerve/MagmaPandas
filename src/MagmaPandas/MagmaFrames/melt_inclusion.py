@@ -60,22 +60,23 @@ class melt_inclusion(melt):
         Isothermal and isobaric.
         """
         # Grab model parameters
-        converge = kwargs.get("converge", 0.02)
-        temperature_converge = kwargs.get("temperature_converge", 0.2)
-        stepsize = kwargs.get("stepsize", 0.001)
+        converge = kwargs.get("converge", 0.02) # In wt. %
+        temperature_converge = kwargs.get("temperature_converge", 0.2) # In degrees
+        stepsize = kwargs.get("stepsize", 0.001) # In molar fraction
         # Select Fe loss or gain
         if inclusion["FeO"] > FeO_initial:
             stepsize = -stepsize
         forsterite = kwargs.get("forsterite", 0.8)
         QFM_logshift = kwargs.get("QFM_logshift", 1)
-
+        # Parameters for the while loop
+        olivine_melted = 0
+        decrease_factor = 10
         # Collect configured models
         Fe3Fe2_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
         Kd_model = getattr(Kd_FeMg, configuration().Kd_model)
 
         # Normalise inclusion composition
         inclusion = inclusion.div(inclusion.sum()).mul(100)
-
         # Calculate temperature and fO2
         temperature = inclusion.melt_temperature(P_bar=P_bar)
         fO2 = fO2_QFM(QFM_logshift, temperature, P_bar)
@@ -90,10 +91,6 @@ class melt_inclusion(melt):
         FeMg_exchange.loc[["FeO", "MgO"]] = stepsize, -stepsize
         # Inclusion starting FeO
         FeO = inclusion["FeO"]
-
-        # Parameters for the while loop
-        olivine_melted = 0
-        decrease_factor = 10
 
         while not np.isclose(FeO, FeO_initial, atol=converge):
             # Exchange Fe and Mg
@@ -143,7 +140,6 @@ class melt_inclusion(melt):
             # Copy olivine corrected composition
             moles.iloc[-1] = add_olivine.values
 
-
             # New inclusion FeO
             FeO = moles.iloc[-1].convert_moles_wtPercent["FeO"]
 
@@ -171,21 +167,23 @@ class melt_inclusion(melt):
         Isothermal and isobaric.
         """
         # Grab model parameters
-        converge = kwargs.get("converge", 0.002)
-        temperature_converge = kwargs.get("temperature_converge", 0.2)
+        stepsize = kwargs.get("stepsize", 0.001) # In molar fraction
+        converge = kwargs.get("converge", 0.002) # In molar fraction
+        temperature_converge = kwargs.get("temperature_converge", 0.2) # In degrees
         QFM_logshift = kwargs.get("QFM_logshift", 1)
-
+        # Parameters for the while loop
+        olivine_crystallised = 0
+        decrease_factor = 10
         # Normalise inclusion composition
         inclusion = inclusion.div(inclusion.sum()).mul(100)
-
         # Calculate temperature and fO2
         temperature = inclusion.melt_temperature(P_bar=P_bar)
         fO2 = fO2_QFM(QFM_logshift, temperature, P_bar)
-
         # Collect configured models
         Fe3Fe2_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
         Kd_model = getattr(Kd_FeMg, configuration().Kd_model)
 
+        # Function for calculating equilibrium forsterite content
         def calc_forsterite(mol_fractions, T_K, P_bar, oxygen_fugacity, Fo_initial):
             # melt Fe3+/Fe2+
             Fe3Fe2 = Fe3Fe2_model(mol_fractions, T_K, oxygen_fugacity)
@@ -206,10 +204,8 @@ class melt_inclusion(melt):
         )
 
         # Equilibrium forsterite content
-        forsterite_EQ = calc_forsterite_EQ(inclusion.moles)
-
-        stepsize = kwargs.get("stepsize", 0.001)
-        # Model Fe loss or gain
+        forsterite_EQ = calc_forsterite_EQ(inclusion.moles)        
+        # Select Fe removal or addition
         if forsterite_EQ > forsterite_host:
             stepsize = -stepsize
 
@@ -221,11 +217,6 @@ class melt_inclusion(melt):
         # Fe-Mg exchange vector
         FeMg_exchange = pd.Series(0, index=moles.columns)
         FeMg_exchange.loc[["FeO", "MgO"]] = -stepsize, stepsize
-
-        # Parameters for the while loop
-        olivine_crystallised = 0
-        decrease_stepsize = True
-        decrease_factor = 10
 
         while not np.isclose(forsterite_EQ, forsterite_host, atol=converge):
             # Exchange Fe-Mg
