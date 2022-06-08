@@ -5,6 +5,7 @@ import elements as e
 from ..configuration import configuration
 from ..thermometers.melt import melt_thermometers
 
+
 def _MagmaSeries_expanddim(data=None, *args, **kwargs):
     from MagmaPandas.MagmaFrames import MagmaFrame
 
@@ -45,7 +46,6 @@ class MagmaSeries(pd.Series):
         super().__init__(data, *args, **kwargs)
 
         if not hasattr(self, "_weights"):
-            print("series failure")
             self._weights = pd.Series(name="weight", dtype=float)
             for idx in self.index:
                 try:
@@ -71,7 +71,9 @@ class MagmaSeries(pd.Series):
     @property
     def _constructor_expanddim(self):
         def _c(*args, weights=self._weights, **kwargs):
-            return _MagmaSeries_expanddim(*args, weights=weights, **kwargs).__finalize__(self)
+            return _MagmaSeries_expanddim(
+                *args, weights=weights, **kwargs
+            ).__finalize__(self)
 
         return _c
 
