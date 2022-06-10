@@ -1,8 +1,9 @@
-from dataclasses import dataclass
+from elements import calculate_weight
 from ...parse.validate import _check_setter
 import pandas as pd
 import numpy as np
 from scipy.optimize import root_scalar, root
+
 
 def calculate_saturation(oxide_wtPercents, T_K, **kwargs):
     """
@@ -13,6 +14,7 @@ def calculate_saturation(oxide_wtPercents, T_K, **kwargs):
     equation = globals()[model].calculate_saturation
 
     return equation(oxide_wtPercents, T_K, **kwargs)
+
 
 def calculate_solubility(oxide_wtPercents, P_bar, T_K, **kwargs):
     """
@@ -87,7 +89,12 @@ class IaconoMarziano_configuration:
     @staticmethod
     def print():
         """ """
-        names = ["Parameterisation", "Fugacity model", "Activity model", "Species model"]
+        names = [
+            "Parameterisation",
+            "Fugacity model",
+            "Activity model",
+            "Species model",
+        ]
         attributes = [
             f"_IaconoMarziano_configuration{i}"
             for i in ["__parameters", "__fugacity", "__activity", "__model"]
@@ -97,7 +104,9 @@ class IaconoMarziano_configuration:
         pad_total = pad_left + pad_right
         print("Settings".ljust(pad_total, "_"))
         for param, model in zip(names, attributes):
-            print(f"{param:.<{pad_left}}{getattr(IaconoMarziano_configuration, model):.>{pad_right}}")
+            print(
+                f"{param:.<{pad_left}}{getattr(IaconoMarziano_configuration, model):.>{pad_right}}"
+            )
         print("\nCalibration range".ljust(pad_total, "_"))
         T_string = f"1373-1673\N{DEGREE SIGN}K"
         print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
@@ -205,6 +214,7 @@ class h2o:
 
         mol_fractions = oxide_wtPercents.moles
         NBO_O = NBO_O_calculate(mol_fractions)
+        
 
         if IaconoMarziano_configuration().fugacity == "ideal":
             P_H2O = x_fluid * P_bar
@@ -232,10 +242,11 @@ class h2o:
             oxide_wtPercents=oxide_wtPercents, P_bar=P_bar, T_K=T_K, **kwargs
         )
 
+
 # Lower case names for classes, as to not mix up with variable names
 class co2:
     @staticmethod
-    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid):
+    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid=0.0):
         """
         Equation 12 from Iacono-Marziano (2012)
         """
@@ -259,7 +270,8 @@ class co2:
 
         composition = oxide_wtPercents.copy()
         composition["H2O"] = h2o.calculate_solubility(composition, P_bar, T_K, x_fluid)
-        mol_fractions = composition.moles
+        mol_fractions = oxide_wtPercents.moles
+        NBO_O = NBO_O_calculate(mol_fractions)
 
         if "Fe2O3" in mol_fractions.index:
             Fe2O3 = mol_fractions["Fe2O3"]
@@ -268,8 +280,6 @@ class co2:
 
         if IaconoMarziano_configuration().fugacity == "ideal":
             P_CO2 = (1 - x_fluid) * P_bar
-
-        NBO_O = NBO_O_calculate(mol_fractions)
 
         x_AI = mol_fractions["Al2O3"] / (
             mol_fractions["CaO"] + mol_fractions["K2O"] + mol_fractions["Na2O"]
@@ -394,28 +404,6 @@ def NBO_O_calculate(mol_fractions):
     Non-bridging oxygen / oxygen ratio, following Marrochhi & Toplis (2005).
     See also Iacono-Marziano (2012) appendix.
     """
-    # Masses used in VESIcal
-    # {'Al2O3': 101.96,
-    # 'CaO':    56.08,
-    # 'FeO':    71.85,
-    # 'K2O':    94.2,
-    # 'MgO':    40.32,
-    # 'Na2O':   61.98,
-    # 'SiO2':   60.09,
-    # 'TiO2':   79.9,
-    # 'H2O':    18.01}
-
-    # Masses used by me
-    # Al2O3    101.961
-    # CaO       56.077
-    # FeO       71.844
-    # K2O       94.195
-    # MgO       40.304
-    # Na2O      61.979
-    # SiO2      60.084
-    # TiO2      79.865
-    # H2O       18.013
-
     if isinstance(mol_fractions, pd.Series):
         elements = mol_fractions.index
     elif isinstance(mol_fractions, pd.DataFrame):

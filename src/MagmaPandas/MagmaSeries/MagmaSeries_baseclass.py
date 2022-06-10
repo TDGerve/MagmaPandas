@@ -197,13 +197,20 @@ class MagmaSeries(pd.Series):
 
     def recalculate(self):
         """
-        Recalculate total weight.
+        Recalculate element masses and total.
         """
 
-        if not self._total:
-            raise ValueError("no 'total' in Series")
-        else:
-            self["total"] = self[self.elements].sum()
+        weights = pd.Series(name="weight", dtype="float32")
+
+        for idx in self.index:
+            try:
+                weights[idx] = e.calculate_weight(idx)
+            except:
+                pass
+
+        self._weights = weights
+        if self._total:
+            self["total"] = self[self.elements].sum(axis=1)
 
     def normalise(self):
         """
