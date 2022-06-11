@@ -118,11 +118,12 @@ def muO2_QFM_P(T_K, P_bar):
             T_K = [np.array(T_K), it.cycle(np.array([T_K]))][T_K_is_int]
             P_bar = [np.array(P_bar), it.cycle(np.array([P_bar]))][P_bar_is_int]
 
-        muO2 = np.zeros(
-            shape=[
-                len(T_K),
-            ]
-        )
+        try:
+            length = len(T_K)
+        except TypeError:
+            length = len(P_bar)
+
+        muO2 = np.zeros(shape=[length,])
 
         for i, (temperature, pressure) in enumerate(zip(T_K, P_bar)):
             VdP_quartz, VdP_magnetite, VdP_fayalite = VdP_QFM_phaseTransitions(
