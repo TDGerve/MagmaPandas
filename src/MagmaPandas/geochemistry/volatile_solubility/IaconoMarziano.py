@@ -1,4 +1,3 @@
-from elements import calculate_weight
 from ...parse.validate import _check_setter
 import pandas as pd
 import numpy as np
@@ -189,7 +188,7 @@ class h2o:
         """ """
         if "H2O" not in oxide_wtPercents.index:
             raise ValueError("H2O not found in sample")
-        if oxide_wtPercents["H2O"] < 0:
+        if oxide_wtPercents["H2O"] <= 0:
             raise ValueError(f"H2O lower than 0: {oxide_wtPercents['H2O']}")
         # Upper limit of 15kbar
         upper_limit = 1.5e4
@@ -305,7 +304,7 @@ class co2:
         """ """
         if "CO2" not in oxide_wtPercents.index:
             raise ValueError("CO2 not found in sample")
-        if oxide_wtPercents["CO2"] < 0:
+        if oxide_wtPercents["CO2"] <= 0:
             raise ValueError(f"CO2 lower than 0: {oxide_wtPercents['CO2']}")
         # Upper limit of 100kbar
         upper_limit = 1e5
@@ -388,10 +387,10 @@ class mixed:
         sample_concentrations = np.array([H2O, CO2])
         calculated_concentrations = np.array(
             mixed.calculate_solubility(
-                x_fluid=x_fluid,
                 oxide_wtPercents=oxide_wtPercents,
                 P_bar=P_bar,
                 T_K=T_K,
+                x_fluid=x_fluid,
                 **kwargs,
             )
         )

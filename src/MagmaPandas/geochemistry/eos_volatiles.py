@@ -136,7 +136,7 @@ class hollowayBlank:
                 ZBP = 0.000001
             BPZ = 1 + BP / Z
             FP = Z - 1 - np.log(ZBP) - A2B * np.log(BPZ)
-            if FP < -37 or FP > 37:
+            if FP < -37 or FP > 37: # -37 > FP > 37
                 FP = 0.000001
 
         else:
