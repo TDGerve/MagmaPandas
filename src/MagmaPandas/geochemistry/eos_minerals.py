@@ -166,7 +166,7 @@ def tait_eos_pressure(phase, pkbar, t, tref=298.15, **kwargs):
 
     VdP = PV0 * (1 - a + a * (part1 - part2) / part3)
 
-    return [Pth, a, b, c, VdP]
+    return VdP
 
 
 def enthalpy(phase, t, tref=298.15):
@@ -418,7 +418,7 @@ def phaseTransition(pkbar, t, phase_1, phase_2):
         s = getattr(EOSparams, phase)["s"] / 1e3
 
         Gibbs = h + enthalpy(phase=phase, t=t) - t * (s + entropy(phase=phase, t=t))
-        *_, VdP = tait_eos_pressure(phase=phase, pkbar=pkbar, t=t)
+        VdP = tait_eos_pressure(phase=phase, pkbar=pkbar, t=t)
 
         Gibbs = Gibbs + VdP
 

@@ -1,4 +1,4 @@
-from . import eos
+from . import eos_minerals
 import scipy.optimize as opt
 import warnings as w
 import numpy as np
@@ -16,13 +16,13 @@ def VdP_QFM(T_K, P_bar):
     p_kbar = P_bar / 1e3
 
     # VdP SiO2
-    *_, VdP_qtz = eos.tait_eos_pressure(phase="quartz", pkbar=p_kbar, t=T_K)
-    Gibbs_landau = eos.landau_P_dependent(phase="quartz", pkbar=p_kbar, t=T_K)
+    VdP_qtz = eos_minerals.tait_eos_pressure(phase="quartz", pkbar=p_kbar, t=T_K)
+    Gibbs_landau = eos_minerals.landau_P_dependent(phase="quartz", pkbar=p_kbar, t=T_K)
     VdP_qtz = VdP_qtz + Gibbs_landau
 
-    *_, VdP_fay = eos.tait_eos_pressure(phase="fayalite", pkbar=p_kbar, t=T_K)
+    VdP_fay = eos_minerals.tait_eos_pressure(phase="fayalite", pkbar=p_kbar, t=T_K)
 
-    *_, VdP_mt = eos.tait_eos_pressure(phase="magnetite", pkbar=p_kbar, t=T_K)
+    VdP_mt = eos_minerals.tait_eos_pressure(phase="magnetite", pkbar=p_kbar, t=T_K)
 
     return VdP_qtz, VdP_mt, VdP_fay
 
@@ -37,19 +37,19 @@ def VdP_QFM_phaseTransitions(T_K, P_bar):
 
     # Calculate pressure of transition for SiO2 polymorphs
     # Quartz --> coesite
-    qtz_coe = lambda P: eos.phaseTransition(
+    qtz_coe = lambda P: eos_minerals.phaseTransition(
         P, t=T_K, phase_1="quartz", phase_2="coesite"
     )
     P_qtz_coe = opt.fsolve(qtz_coe, 8)
     # Coesite --> stishovite
-    coe_stish = lambda P: eos.phaseTransition(
+    coe_stish = lambda P: eos_minerals.phaseTransition(
         P, t=T_K, phase_1="coesite", phase_2="stishovite"
     )
     P_coe_stish = opt.fsolve(coe_stish, 8)
 
     # Calculate pressure of transition for polymorphs
     # Fayalite --> ringwoodite
-    fay_ring = lambda P: eos.phaseTransition(
+    fay_ring = lambda P: eos_minerals.phaseTransition(
         P, t=T_K, phase_1="fayalite", phase_2="ringwoodite"
     )
     P_fay_ring = opt.fsolve(fay_ring, 8)
@@ -57,45 +57,42 @@ def VdP_QFM_phaseTransitions(T_K, P_bar):
     # Integrate VdP for all polymorphs
     # SiO2 polymorphs
     # Quartz
-    VdP_SiO2 = eos.tait_eos_pressure(
+    VdP_SiO2 = eos_minerals.tait_eos_pressure(
         phase="quartz", pkbar=min(p_kbar, P_qtz_coe), t=T_K
-    )[4]
-    SiO2_landau = eos.landau_P_dependent(
+    )
+    SiO2_landau = eos_minerals.landau_P_dependent(
         phase="quartz", pkbar=min(p_kbar, P_qtz_coe), t=T_K
     )
     VdP_SiO2 = VdP_SiO2 + SiO2_landau
     if p_kbar > P_qtz_coe:
         # Coesite
-        VdP_coe = (
-            eos.tait_eos_pressure(
-                phase="coesite", pkbar=min(p_kbar, P_coe_stish), t=T_K
-            )[4]
-            - eos.tait_eos_pressure(phase="coesite", pkbar=P_qtz_coe, t=T_K)[4]
-        )
+        VdP_coe = eos_minerals.tait_eos_pressure(
+            phase="coesite", pkbar=min(p_kbar, P_coe_stish), t=T_K
+        ) - eos_minerals.tait_eos_pressure(phase="coesite", pkbar=P_qtz_coe, t=T_K)
         VdP_SiO2 = VdP_SiO2 + VdP_coe
         if p_kbar > P_coe_stish:
             # Stishovite
-            VdP_stish = (
-                eos.tait_eos_pressure(phase="stishovite", pkbar=p_kbar, t=T_K)[4]
-                - eos.tait_eos_pressure(phase="stishovite", pkbar=P_coe_stish, t=T_K)[4]
+            VdP_stish = eos_minerals.tait_eos_pressure(
+                phase="stishovite", pkbar=p_kbar, t=T_K
+            ) - eos_minerals.tait_eos_pressure(
+                phase="stishovite", pkbar=P_coe_stish, t=T_K
             )
             VdP_SiO2 = VdP_SiO2 + VdP_stish
 
     # Fe2SiO4 polymorphs
     # Fayalite
-    VdP_Fe2SiO4 = eos.tait_eos_pressure(
+    VdP_Fe2SiO4 = eos_minerals.tait_eos_pressure(
         phase="fayalite", pkbar=min(p_kbar, P_fay_ring), t=T_K
-    )[4]
+    )
     if p_kbar > P_fay_ring:
         # Ringwoodite
-        VdP_ring = (
-            eos.tait_eos_pressure(phase="ringwoodite", pkbar=p_kbar, t=T_K)[4]
-            - eos.tait_eos_pressure(phase="ringwoodite", pkbar=P_fay_ring, t=T_K)[4]
-        )
+        VdP_ring = eos_minerals.tait_eos_pressure(
+            phase="ringwoodite", pkbar=p_kbar, t=T_K
+        ) - eos_minerals.tait_eos_pressure(phase="ringwoodite", pkbar=P_fay_ring, t=T_K)
         VdP_Fe2SiO4 = VdP_Fe2SiO4 + VdP_ring
 
     # Magnetite
-    VdP_mt = eos.tait_eos_pressure(phase="magnetite", pkbar=p_kbar, t=T_K)[4]
+    VdP_mt = eos_minerals.tait_eos_pressure(phase="magnetite", pkbar=p_kbar, t=T_K)
 
     return VdP_SiO2, VdP_mt, VdP_Fe2SiO4
 
@@ -123,7 +120,11 @@ def muO2_QFM_P(T_K, P_bar):
         except TypeError:
             length = len(P_bar)
 
-        muO2 = np.zeros(shape=[length,])
+        muO2 = np.zeros(
+            shape=[
+                length,
+            ]
+        )
 
         for i, (temperature, pressure) in enumerate(zip(T_K, P_bar)):
             VdP_quartz, VdP_magnetite, VdP_fayalite = VdP_QFM_phaseTransitions(
