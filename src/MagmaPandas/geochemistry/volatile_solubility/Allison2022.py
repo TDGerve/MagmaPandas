@@ -276,8 +276,8 @@ class co2:
 
         cations = composition.cations
         # Rounding to 3 decimals because Allison did the same
+        # Results will be different if you don't
         cations = cations.round(3)
-        cations = cations.normalise()
 
         return cations
 
@@ -305,14 +305,9 @@ class mixed:
 
         saturation = root(
             mixed._saturation_rootFunction,
-            x0=[P_guess, 0.5],
+            x0=[P_guess, 0.],
             args=(composition, T_K),
         ).x
-
-        # Keep calculated x_fluid within range.
-        # Guessed x_fluids gets clipped in the root functions: 
-        # calculated values outside 0-1 are not real
-        saturation[1] = np.clip(saturation[1], 0.0, 1.0)
 
         return_dict = {"P": saturation[0], "x_fluid": saturation[1], "both": saturation}
         return return_dict[output]
@@ -330,7 +325,7 @@ class mixed:
         H2O = h2o.calculate_solubility(P_bar, T_K, x_fluid)
         CO2 = co2.calculate_solubility(composition, P_bar, T_K, x_fluid)
 
-        return_dict = {"both": (H2O, CO2), "H2O": H2O, "CO2": CO2}
+        return_dict = {"both": np.array([H2O, CO2]), "H2O": H2O, "CO2": CO2}
         return return_dict[output]
 
     @staticmethod
@@ -356,7 +351,7 @@ class mixed:
             )
         )
 
-        return calculated_concentrations - sample_concentrations
+        return abs(calculated_concentrations - sample_concentrations)
 
 
 def _root_fugacity_pressure(P_bar, T_K, fCO2, species):

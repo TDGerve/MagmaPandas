@@ -377,7 +377,7 @@ class mixed:
 
         saturation = root(
             mixed._saturation_rootFunction,
-            x0=[P_guess, 0.5],
+            x0=[P_guess, 0.],
             args=(composition, T_K),
         ).x
 
@@ -425,7 +425,7 @@ class mixed:
             )
         )
 
-        return calculated_concentrations - sample_concentrations
+        return abs(calculated_concentrations - sample_concentrations)
 
 
 def NBO_O_calculate(mol_fractions):
