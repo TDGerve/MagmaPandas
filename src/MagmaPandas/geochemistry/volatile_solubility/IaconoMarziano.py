@@ -3,6 +3,17 @@ import pandas as pd
 import numpy as np
 from scipy.optimize import root_scalar, root
 
+"""
+Equations from:
+
+G. Iacono-Marziano, Y. Morizet, E. Le Trong & F. Gaillard (2012)
+New experimental data and semi-empirical parameterization of H2O–CO2 solubility in mafic melts.
+Geochim. Gosmochim. Actca 97: 1-23
+
+Python code modified from VESIcal:
+https://github.com/kaylai/VESIcal
+"""
+
 
 def calculate_saturation(oxide_wtPercents, T_K, **kwargs):
     """
@@ -11,6 +22,7 @@ def calculate_saturation(oxide_wtPercents, T_K, **kwargs):
 
     model = IaconoMarziano_configuration().model
     equation = globals()[model].calculate_saturation
+    
 
     return equation(oxide_wtPercents, T_K, **kwargs)
 
@@ -161,6 +173,8 @@ class h2o:
     @staticmethod
     def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid=1):
         """
+        Solve quation 13
+
         x_fluid : float, int
             fluid mol fraction H2O
         """
@@ -171,14 +185,16 @@ class h2o:
         if any(i <= 0 for i in [P_bar, x_fluid]):
             return 0
 
+        composition = oxide_wtPercents.copy()
+
         if IaconoMarziano_configuration().parameters == "anhydrous":
-            # Esolve equation 13
-            return h2o._solubility(oxide_wtPercents, x_fluid, P_bar, T_K)
+            # Solve equation 13
+            return h2o._solubility(composition, x_fluid, P_bar, T_K)
         else:
             # Find equilibrium H2O content
             return root_scalar(
                 h2o._solubility_rootFunction,
-                args=(oxide_wtPercents, x_fluid, P_bar, T_K),
+                args=(composition, x_fluid, P_bar, T_K),
                 x0=1.0,
                 x1=2.0,
             ).root
@@ -190,12 +206,15 @@ class h2o:
             raise ValueError("H2O not found in sample")
         if oxide_wtPercents["H2O"] <= 0:
             raise ValueError(f"H2O lower than 0: {oxide_wtPercents['H2O']}")
+
+        composition = oxide_wtPercents.copy()
+
         # Upper limit of 15kbar
         upper_limit = 1.5e4
         try:
             P_saturation = root_scalar(
                 h2o._saturation_rootFunction,
-                args=(oxide_wtPercents, T_K, kwargs),
+                args=(composition, T_K, kwargs),
                 bracket=[1e-15, upper_limit],
             ).root
         except:
@@ -235,10 +254,13 @@ class h2o:
 
     @staticmethod
     def _saturation_rootFunction(P_bar, oxide_wtPercents, T_K, kwargs):
-        """ """
+        """ 
+        
+        """
+        composition = oxide_wtPercents.copy()
         #
-        return oxide_wtPercents["H2O"] - h2o.calculate_solubility(
-            oxide_wtPercents=oxide_wtPercents, P_bar=P_bar, T_K=T_K, **kwargs
+        return composition["H2O"] - h2o.calculate_solubility(
+            oxide_wtPercents=composition, P_bar=P_bar, T_K=T_K, **kwargs
         )
 
 
@@ -269,7 +291,7 @@ class co2:
 
         composition = oxide_wtPercents.copy()
         composition["H2O"] = h2o.calculate_solubility(composition, P_bar, T_K, x_fluid)
-        mol_fractions = oxide_wtPercents.moles
+        mol_fractions = composition.moles
         NBO_O = NBO_O_calculate(mol_fractions)
 
         if "Fe2O3" in mol_fractions.index:
@@ -307,11 +329,13 @@ class co2:
         if oxide_wtPercents["CO2"] <= 0:
             raise ValueError(f"CO2 lower than 0: {oxide_wtPercents['CO2']}")
         # Upper limit of 100kbar
+
+        composition = oxide_wtPercents.copy()
         upper_limit = 1e5
         try:
             P_saturation = root_scalar(
                 co2._saturation_rootFunction,
-                args=(oxide_wtPercents, T_K, kwargs),
+                args=(composition, T_K, kwargs),
                 bracket=[1e-10, upper_limit],
             ).root
         except:
@@ -323,9 +347,9 @@ class co2:
         """
         Compare calculated and sample CO2
         """
-        #
-        return oxide_wtPercents["CO2"] - co2.calculate_solubility(
-            oxide_wtPercents=oxide_wtPercents, P_bar=P_bar, T_K=T_K, **kwargs
+        composition = oxide_wtPercents.copy()
+        return composition["CO2"] - co2.calculate_solubility(
+            oxide_wtPercents=composition, P_bar=P_bar, T_K=T_K, **kwargs
         )
 
 
@@ -381,13 +405,15 @@ class mixed:
         x_fluid = np.clip(x_fluid, 0.0, 1.0)
         P_bar = np.clip(P_bar, a_min=1e-15, a_max=None)
 
-        H2O = oxide_wtPercents["H2O"]
-        CO2 = oxide_wtPercents["CO2"]
+        composition = oxide_wtPercents.copy()
+
+        H2O = composition["H2O"]
+        CO2 = composition["CO2"]
 
         sample_concentrations = np.array([H2O, CO2])
         calculated_concentrations = np.array(
             mixed.calculate_solubility(
-                oxide_wtPercents=oxide_wtPercents,
+                oxide_wtPercents=composition,
                 P_bar=P_bar,
                 T_K=T_K,
                 x_fluid=x_fluid,

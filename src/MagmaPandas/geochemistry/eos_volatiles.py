@@ -46,7 +46,8 @@ class hollowayBlank:
         PBLN = np.log(P_bar)
         T_C = T_K - 273.15
         RXT = R * T_K
-        RT = R * T_K ** 1.5 * 0.000001  # 1e-6
+        RT = R * T_K ** 1.5 * 0.000001
+        P_atmos = P_bar / 1.013  # 1e-6
 
         if species == "CO2":
             # Calculate T dependent MRK A parameter CO2
@@ -64,7 +65,7 @@ class hollowayBlank:
                 f"species: {species} not recognised, please choose 'CO2' or 'H2O'"
             )
 
-        BSUM = P_bar * BSUM / RXT
+        BSUM = P_atmos * BSUM / RXT
         XLNFP = hollowayBlank._REDKW(BSUM, ASUM)
         # Convert to LN fugacity
         PUREG = XLNFP + PBLN

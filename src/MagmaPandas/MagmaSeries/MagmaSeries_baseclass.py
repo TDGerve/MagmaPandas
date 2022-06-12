@@ -53,6 +53,8 @@ class MagmaSeries(pd.Series):
                     self._weights[idx] = e.calculate_weight(idx)
                 except:
                     pass
+        # self.recalculate()
+
 
     @property
     def _constructor(self):
@@ -199,18 +201,26 @@ class MagmaSeries(pd.Series):
         """
         Recalculate element masses and total.
         """
+        missing_elements = self.index.difference(self._weights.index)
+        extra_elements = self._weights.index.difference(self.index)
 
-        weights = pd.Series(name="weight", dtype="float32")
+        if all(i.size == 0 for i in[missing_elements, extra_elements]):
+            return
 
-        for idx in self.index:
-            try:
-                weights[idx] = e.calculate_weight(idx)
-            except:
-                pass
+        if extra_elements.size > 0:
+            self._weights = self._weights.drop(extra_elements)        
 
-        self._weights = weights
+        if missing_elements.size > 0:
+            new_weights = pd.Series(name="weight", dtype="float32")
+            for element in missing_elements:
+                try:
+                    new_weights[element] = e.calculate_weight(element)
+                except:
+                    pass
+            self._weights = pd.concat([self._weights, new_weights])        
+        
         if self._total:
-            self["total"] = self[self.elements].sum(axis=1)
+            self["total"] = self[self.elements].sum()
 
     def normalise(self):
         """

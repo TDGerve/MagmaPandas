@@ -195,15 +195,24 @@ class MagmaFrame(pd.DataFrame):
         """
         Recalculate element masses and total weight.
         """
-        weights = pd.Series(name="weight", dtype="float32")
+        missing_elements = self.columns.difference(self._weights.index)
+        extra_elements = self._weights.index.difference(self.columns)
 
-        for col in self.columns:
-            try:
-                weights[col] = e.calculate_weight(col)
-            except:
-                pass
+        if all(i.size == 0 for i in[missing_elements, extra_elements]):
+            return
 
-        self._weights = weights
+        if extra_elements.size > 0:
+            self._weights.drop(extra_elements, inplace=True)        
+
+        if missing_elements.size > 0:
+            new_weights = pd.Series(name="weight", dtype="float32")
+            for element in missing_elements:
+                try:
+                    new_weights[element] = e.calculate_weight(element)
+                except:
+                    pass
+            self._weights = pd.concat([self._weights, new_weights])        
+        
         if self._total:
             self["total"] = self[self.elements].sum(axis=1)
 
