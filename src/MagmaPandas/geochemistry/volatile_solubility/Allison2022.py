@@ -72,6 +72,7 @@ class Allison_configuration:
         pad_left = 20
         pad_right = 20
         pad_total = pad_left + pad_right
+        print(" Allison (2022) volatile solubility ".center(pad_total, "#"))
         print("Settings".ljust(pad_total, "_"))
         for param, model in zip(names, attributes):
             print(
@@ -256,25 +257,25 @@ class co2:
 
     @staticmethod
     def _cation_fractions_Allison(oxide_wtPercents):
-        """
-        
-        """
+        """ """
         elements = ["SiO2", "TiO2", "Al2O3", "FeO", "MgO", "CaO", "Na2O", "K2O"]
 
         composition = oxide_wtPercents.copy()
 
+        # All Fe2O3 as Fe2+
         if "Fe2O3" in composition.index:
             mass_ratio = Fe2O3_mass / FeO_mass
-            composition["FeO"] = (
-                composition["FeO"] + composition["Fe2O3"] / mass_ratio
-            )
+            composition["FeO"] = composition["FeO"] + composition["Fe2O3"] / mass_ratio
         try:
+            # For Series
             composition = composition.loc[elements]
         except KeyError:
+            # For Dataframes
             composition = composition.loc[:, elements]
-        composition.recalculate() 
+        composition.recalculate()
 
         cations = composition.cations
+        # Rounding to 3 decimals because Allison did the same
         cations = cations.round(3)
         cations = cations.normalise()
 
@@ -283,11 +284,12 @@ class co2:
 
 class mixed:
     @staticmethod
-    def calculate_saturation(oxide_wtPercents, T_K, **kwargs):
+    @_check_argument("output", [None, "both", "P", "x_fluid"])
+    def calculate_saturation(oxide_wtPercents, T_K, output="P"):
 
         composition = oxide_wtPercents.copy()
 
-        P_H2O_saturation = h2o.calculate_saturation(composition, T_K=T_K, x_fluid=1.0)        
+        P_H2O_saturation = h2o.calculate_saturation(composition, T_K=T_K, x_fluid=1.0)
         P_CO2_saturation = co2.calculate_saturation(composition, T_K=T_K, x_fluid=0.0)
 
         if oxide_wtPercents["H2O"] <= 0:
@@ -301,16 +303,23 @@ class mixed:
             if np.isfinite(species):
                 P_guess += species
 
-        P_saturation = root(
+        saturation = root(
             mixed._saturation_rootFunction,
             x0=[P_guess, 0.5],
-            args=(composition, T_K, kwargs),
-        ).x[0]
+            args=(composition, T_K),
+        ).x
 
-        return P_saturation
+        # Keep calculated x_fluid within range.
+        # Guessed x_fluids gets clipped in the root functions: 
+        # calculated values outside 0-1 are not real
+        saturation[1] = np.clip(saturation[1], 0.0, 1.0)
+
+        return_dict = {"P": saturation[0], "x_fluid": saturation[1], "both": saturation}
+        return return_dict[output]
 
     @staticmethod
-    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid):
+    @_check_argument("output", [None, "both", "CO2", "H2O"])
+    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid, output="both"):
         """ """
 
         if not 1 >= x_fluid >= 0:
@@ -321,10 +330,11 @@ class mixed:
         H2O = h2o.calculate_solubility(P_bar, T_K, x_fluid)
         CO2 = co2.calculate_solubility(composition, P_bar, T_K, x_fluid)
 
-        return (H2O, CO2)
+        return_dict = {"both": (H2O, CO2), "H2O": H2O, "CO2": CO2}
+        return return_dict[output]
 
     @staticmethod
-    def _saturation_rootFunction(P_x_fluid, oxide_wtPercents, T_K, kwargs):
+    def _saturation_rootFunction(P_x_fluid, oxide_wtPercents, T_K):
 
         P_bar, x_fluid = P_x_fluid
         # Keep x_fluid and P_bar within bounds
@@ -343,7 +353,6 @@ class mixed:
                 P_bar=P_bar,
                 T_K=T_K,
                 x_fluid=x_fluid,
-                **kwargs,
             )
         )
 

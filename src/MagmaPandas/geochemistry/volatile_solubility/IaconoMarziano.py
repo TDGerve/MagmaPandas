@@ -1,4 +1,4 @@
-from ...parse.validate import _check_setter
+from ...parse.validate import _check_setter, _check_argument
 import pandas as pd
 import numpy as np
 from scipy.optimize import root_scalar, root
@@ -113,6 +113,7 @@ class IaconoMarziano_configuration:
         pad_left = 20
         pad_right = 20
         pad_total = pad_left + pad_right
+        print(" Iacono-Marziano volatile solubility ".center(pad_total, "#"))
         print("Settings".ljust(pad_total, "_"))
         for param, model in zip(names, attributes):
             print(
@@ -355,7 +356,8 @@ class co2:
 
 class mixed:
     @staticmethod
-    def calculate_saturation(oxide_wtPercents, T_K, **kwargs):
+    @_check_argument("output", [None, "both", "P", "x_fluid"])
+    def calculate_saturation(oxide_wtPercents, T_K, output="P"):
 
         composition = oxide_wtPercents.copy()
 
@@ -373,16 +375,18 @@ class mixed:
             if np.isfinite(species):
                 P_guess += species
 
-        P_saturation = root(
+        saturation = root(
             mixed._saturation_rootFunction,
             x0=[P_guess, 0.5],
-            args=(composition, T_K, kwargs),
-        ).x[0]
+            args=(composition, T_K),
+        ).x
 
-        return P_saturation
+        return_dict = {"P": saturation[0], "x_fluid": saturation[1], "both": saturation}
+        return return_dict[output]
 
     @staticmethod
-    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid):
+    @_check_argument("output", [None, "both", "CO2", "H2O"])
+    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid, output="both"):
 
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
@@ -392,10 +396,11 @@ class mixed:
         composition["H2O"] = H2O
         CO2 = co2.calculate_solubility(composition, P_bar, T_K, x_fluid)
 
-        return (H2O, CO2)
+        return_dict = {"both": (H2O, CO2), "H2O": H2O, "CO2": CO2}
+        return return_dict[output]
 
     @staticmethod
-    def _saturation_rootFunction(P_x_fluid, oxide_wtPercents, T_K, kwargs):
+    def _saturation_rootFunction(P_x_fluid, oxide_wtPercents, T_K):
         """
         compare calculated with sample concentrations
         """
@@ -417,7 +422,6 @@ class mixed:
                 P_bar=P_bar,
                 T_K=T_K,
                 x_fluid=x_fluid,
-                **kwargs,
             )
         )
 
