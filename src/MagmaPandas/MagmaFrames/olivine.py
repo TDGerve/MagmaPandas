@@ -11,7 +11,7 @@ def read_olivine(
     total_col: str = None,
     keep_columns: List[str] = None,
     **kwargs
-) -> "olivine":
+) -> "Olivine":
     """
     Read olivine compositions in wt. % oxide from a .csv file
 
@@ -20,7 +20,7 @@ def read_olivine(
     return _read_file(
         filepath=filepath,
         *args,
-        phase="olivine",
+        phase="Olivine",
         index_col=index_col,
         total_col=total_col,
         keep_columns=keep_columns,
@@ -30,7 +30,7 @@ def read_olivine(
     )
 
 
-class olivine(MagmaFrame):
+class Olivine(MagmaFrame):
 
     @property
     def _constructor(self):
@@ -42,7 +42,7 @@ class olivine(MagmaFrame):
         that makes sure to call `__finalize__` every time."""
 
         def _c(*args, weights=self._weights, **kwargs):
-            return olivine(*args, weights=weights, **kwargs).__finalize__(self)
+            return Olivine(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
 

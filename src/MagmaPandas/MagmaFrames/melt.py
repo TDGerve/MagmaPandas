@@ -6,7 +6,7 @@ from ..geochemistry.fO2 import fO2_QFM
 from ..geochemistry.Kd_ol_melt import Kd_FeMg_vectorised
 from ..thermometers.melt import melt_thermometers
 from ..parse.validate import _check_argument
-from ..configuration import configuration
+from MagmaPandas.configuration import configuration
 
 
 
@@ -17,7 +17,7 @@ def read_melt(
     total_col: str = None,
     keep_columns: List[str] = None,
     **kwargs,
-) -> "melt":
+) -> "Melt":
     """
     Read olivine compositions in wt. % oxide from a .csv file
 
@@ -26,7 +26,7 @@ def read_melt(
     return _read_file(
         filepath=filepath,
         *args,
-        phase="melt",
+        phase="Melt",
         index_col=index_col,
         total_col=total_col,
         keep_columns=keep_columns,
@@ -36,7 +36,7 @@ def read_melt(
     )
 
 
-class melt(MagmaFrame):
+class Melt(MagmaFrame):
     @property
     def _constructor(self):
         """This is the key to letting Pandas know how to keep
@@ -47,15 +47,15 @@ class melt(MagmaFrame):
         that makes sure to call `__finalize__` every time."""
 
         def _c(*args, weights=self._weights, **kwargs):
-            return melt(*args, weights=weights, **kwargs).__finalize__(self)
+            return Melt(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
 
-    def temperature(self, **kwargs):
+    def temperature(self, *args, **kwargs):
 
         thermometer = getattr(melt_thermometers, configuration().melt_thermometer)
 
-        return thermometer(self, **kwargs)
+        return thermometer(self, *args, **kwargs)
 
     def Fe3Fe2_QFM(
         self, T_K=None, P_bar=None, logshift=0, inplace=False

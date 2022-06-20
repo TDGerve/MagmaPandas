@@ -11,7 +11,7 @@ def read_clinopyroxene(
     total_col: str = None,
     keep_columns: List[str] = None,
     **kwargs
-) -> "clinopyroxene":
+) -> "Clinopyroxene":
     """
     Read cpx compositions in wt. % oxide from a .csv file
 
@@ -20,7 +20,7 @@ def read_clinopyroxene(
     return _read_file(
         filepath=filepath,
         *args,
-        phase="olivine",
+        phase="Clinopyroxene",
         index_col=index_col,
         total_col=total_col,
         keep_columns=keep_columns,
@@ -30,7 +30,7 @@ def read_clinopyroxene(
     )
 
 
-class clinopyroxene(MagmaFrame):
+class Clinopyroxene(MagmaFrame):
 
     @property
     def _constructor(self):
@@ -42,7 +42,7 @@ class clinopyroxene(MagmaFrame):
         that makes sure to call `__finalize__` every time."""
 
         def _c(*args, weights=self._weights, **kwargs):
-            return clinopyroxene(*args, weights=weights, **kwargs).__finalize__(self)
+            return Clinopyroxene(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
 

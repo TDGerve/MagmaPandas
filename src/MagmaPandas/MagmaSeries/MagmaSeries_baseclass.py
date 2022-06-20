@@ -237,11 +237,11 @@ class MagmaSeries(pd.Series):
 
         return normalised
 
-    def melt_temperature(self, **kwargs):
+    def melt_temperature(self, *args, **kwargs):
         """
         calculate liquidus temperature for melts
         """
 
         thermometer = getattr(melt_thermometers, configuration().melt_thermometer)
 
-        return thermometer(self, **kwargs)
+        return thermometer(self, *args, **kwargs)

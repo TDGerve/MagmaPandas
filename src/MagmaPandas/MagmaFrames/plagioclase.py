@@ -11,7 +11,7 @@ def read_plagioclase(
     total_col: str = None,
     keep_columns: List[str] = None,
     **kwargs
-) -> "plagioclase":
+) -> "Plagioclase":
     """
     Read plagioclase compositions in wt. % oxide from a .csv file
 
@@ -30,7 +30,7 @@ def read_plagioclase(
     )
 
 
-class plagioclase(MagmaFrame):
+class Plagioclase(MagmaFrame):
 
     @property
     def _constructor(self):
@@ -42,7 +42,7 @@ class plagioclase(MagmaFrame):
         that makes sure to call `__finalize__` every time."""
 
         def _c(*args, weights=self._weights, **kwargs):
-            return plagioclase(*args, weights=weights, **kwargs).__finalize__(self)
+            return Plagioclase(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
 

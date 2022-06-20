@@ -1,8 +1,5 @@
-from typing import List, Type, Union
-
-from sympy import rem
+from typing import List, Union
 from ..parse.readers import _read_file
-from .melt import melt
 import pandas as pd
 import numpy as np
 from ..geochemistry.fO2 import fO2_QFM
@@ -10,6 +7,9 @@ from ..configuration import configuration
 from ..geochemistry.Kd_ol_melt import Kd_FeMg_vectorised
 from ..geochemistry.Fe_redox import Fe_redox
 from functools import partial
+from .olivine import Olivine
+from .melt import Melt
+from ..configuration import configuration
 
 
 def read_melt_inclusion(
@@ -19,16 +19,16 @@ def read_melt_inclusion(
     total_col: str = None,
     keep_columns: List[str] = None,
     **kwargs,
-) -> "melt_inclusion":
+) -> "Melt_inclusion":
     """
-    Read olivine compositions in wt. % oxide from a .csv file
+    Read melt inclusion compositions in wt. % oxide from a .csv file
 
     """
 
     return _read_file(
         filepath=filepath,
         *args,
-        phase="melt_inclusion",
+        phase="Melt_inclusion",
         index_col=index_col,
         total_col=total_col,
         keep_columns=keep_columns,
@@ -38,7 +38,7 @@ def read_melt_inclusion(
     )
 
 
-class melt_inclusion(melt):
+class Melt_inclusion(Melt):
     @property
     def _constructor(self):
         """This is the key to letting Pandas know how to keep
@@ -49,7 +49,7 @@ class melt_inclusion(melt):
         that makes sure to call `__finalize__` every time."""
 
         def _c(*args, weights=self._weights, **kwargs):
-            return melt_inclusion(*args, weights=weights, **kwargs).__finalize__(self)
+            return Melt_inclusion(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
 
@@ -86,7 +86,7 @@ class melt_inclusion(melt):
         stepsize = kwargs.get("stepsize", 0.005)  # In molar fraction
         converge = kwargs.get("converge", 0.002)  # In molar fraction
         olivine_stepsize_reduction = kwargs.get("olivine_stepsize_reduction", 4)
-        decrease_factor = kwargs.get("decrease_factor", 5)
+        decrease_factor = kwargs.get("decrease_factor", 10)
         temperature_converge = kwargs.get("temperature_converge", 0.1)  # In degrees
         QFM_logshift = kwargs.get("QFM_logshift", 1)
         # Calculate temperatures and fO2
@@ -142,7 +142,7 @@ class melt_inclusion(melt):
             Fo_host_loop = forsterite_host.loc[disequilibrium]
 
             # Exchange Fe and Mg
-            moles_loop = moles_loop + FeMg_loop.mul(stepsize_loop, axis=0)            
+            moles_loop = moles_loop + FeMg_loop.mul(stepsize_loop, axis=0)
             # Calculate new liquidus temperature
             temperatures_FeMg = moles_loop.convert_moles_wtPercent.temperature(
                 P_bar=P_bar
@@ -160,15 +160,19 @@ class melt_inclusion(melt):
                 Fo_initial=Fo_host_loop,
             )
             # Create olivine equilibrium compositions in oxide mol fractions
-            olivine = pd.DataFrame(
+            olivine = Olivine(
                 {
                     "MgO": forsterite_EQ_new * 2,
                     "FeO": (1 - forsterite_EQ_new) * 2,
                     "SiO2": 1,
                 },
-                columns=moles_loop.columns,
                 index=moles_loop.index,
+                units="mol fraction",
+                datatype="oxide",
             ).fillna(0.0)
+            olivine = olivine.normalise().reindex(
+                columns=moles_loop.columns, fill_value=0.0
+            )
 
             # Initialise data for the olivine melting/crystallisation loop
             olivine_stepsize = stepsize_loop.div(olivine_stepsize_reduction)
@@ -206,7 +210,8 @@ class melt_inclusion(melt):
                 # Find overcorrected inclusions
                 T_overstepped = ~np.equal(
                     np.sign(
-                        temperatures_loop.loc[temperatures_olivine.index] - temperatures_olivine
+                        temperatures_loop.loc[temperatures_olivine.index]
+                        - temperatures_olivine
                     ),
                     np.sign(olivine_stepsize),
                 )

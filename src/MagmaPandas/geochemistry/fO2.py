@@ -140,7 +140,7 @@ def muO2_QFM_P(T_K, P_bar):
     return muO2
 
 
-def muO2_QFM_1bar(T_K):
+def muO2_QFM_1bar(T_K, warning=False):
     """
     calculate chemical potential of oxygen at QFM a 1 bar. Equation from O'Neill 1987
 
@@ -157,10 +157,11 @@ def muO2_QFM_1bar(T_K):
     T = np.array([])
     T = np.append(T, T_K)
 
-    if (np.array(T_K) < 900).any():
-        w.warn("O'Neill fO2: temperatures below 900K present")
-    if (np.array(T_K) > 1420).any():
-        w.warn("O'Neill fO2: temperatures above 1420K present")
+    if warning:
+        if (np.array(T_K) < 900).any():
+            w.warn("O'Neill fO2: temperatures below 900K present")
+        if (np.array(T_K) > 1420).any():
+            w.warn("O'Neill fO2: temperatures above 1420K present")
 
     muO2 = -587474 + 1584.427 * T - 203.3164 * T * np.log(T) + 0.092710 * T ** 2
 
