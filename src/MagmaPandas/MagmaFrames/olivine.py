@@ -52,6 +52,7 @@ class Olivine(MagmaFrame):
         Docstrings
         """
         cations = self.cations
+        self.recalculate()
         return pd.Series(
             cations["Mg"] / (cations["Fe"] + cations["Mg"]), name="Fo#"
         )

@@ -153,7 +153,7 @@ def Fe_restore(
     return wtPercent, temperature, temperature_new, olivine_melted
 
 
-def Fe_equilibrate(
+def Fe_equilibrate_OLD(
     inclusion: Union[Melt_inclusion, Melt],
     forsterite_host: float,
     P_bar: float,
@@ -291,21 +291,21 @@ def crystallisation_correction(
     Correct a melt inclusion for post entrapment crystallisation or melting by respectively melting or crystallising host olivine.
     Expects the melt inclusion is completely equilibrated with the host crystal.
     The models exits when the user input original melt inclusion FeO content is reached.
-    Based on the postentrapment reequilibration procedure in Petrolog:
+    Loosely based on the postentrapment reequilibration procedure in Petrolog:
 
     L. V. Danyushesky and P. Plechov (2011)
     Petrolog3: Integrated software for modeling crystallization processes
     Geochemistry, Geophysics, Geosystems, vol 12
     """
     # Grab model parameters
-    stepsize = kwargs.get("stepsize", 0.005)  # In molar fraction
-    converge = kwargs.get("converge", 0.001)  # Kd convergence
-    FeMg_converge = kwargs.get("temperature_converge", 0.01)  # In degrees
+    stepsize = kwargs.get("stepsize", 0.05)  # In molar fraction
+    converge = kwargs.get("converge", 0.05)  # Kd convergence
+    Kd_converge = kwargs.get("temperature_converge", 0.005)  # In degrees
     QFM_logshift = kwargs.get("QFM_logshift", 1)
     # Parameters for the while loop
     olivine_melted = 0
     FeMg_exchange_reduction = 4
-    decrease_factor = 10
+    decrease_factor = 5
     # Normalise inclusion composition
     inclusion = inclusion[inclusion.elements].copy()
     inclusion = inclusion.normalise()
@@ -319,6 +319,7 @@ def crystallisation_correction(
         columns=inclusion.elements, units="mol fraction", datatype="oxide"
     )
     mi_moles.loc[0] = inclusion.moles[inclusion.elements].values
+    mi_moles = mi_moles.normalise()
     # Get olivine molar oxide fractions
     if isinstance(olivine_host, float):
         if olivine_host < 0 or olivine_host > 1:
@@ -356,59 +357,70 @@ def crystallisation_correction(
 
         return Kd_model(melt, Fo, T_K, P_bar, Fe3Fe2), Fe2_FeTotal
 
-    Kd, Fe2_FeTotal = calculate_Kd(mi_moles.iloc[-1])
+    Kd_equilibrium, Fe2_FeTotal = calculate_Kd(mi_moles.iloc[-1])
     Kd_real = mi_moles.loc[0, "MgO"] / (mi_moles.loc[0, "FeO"] * Fe2_FeTotal) / olivine_MgFe
-    print(f"{Kd}, {Kd_real}\n\n")
 
     if FeO > FeO_initial:
         stepsize = -stepsize
 
     ##### OLIVINE MELTING/CRYSTALLISATION LOOP #####
-    if not np.isclose(FeO, FeO_initial, atol=converge):
+    while not np.isclose(FeO, FeO_initial, atol=converge):
 
-        idx = mi_moles.index[-1] + stepsize
+        idx = round(mi_moles.index[-1] + stepsize, 4)
         mi_moles.loc[idx] = (mi_moles.iloc[-1] + olivine.mul(stepsize)).values
         mi_moles = mi_moles.normalise()
 
         olivine_melted += stepsize
 
-        Kd_new, Fe2_FeTotal = calculate_Kd(mi_moles.iloc[-1])
+        Kd_equilibrium, Fe2_FeTotal = calculate_Kd(mi_moles.loc[idx])
         melt_MgFe = mi_moles.loc[idx, "MgO"] / (mi_moles.loc[idx, "FeO"] * Fe2_FeTotal)
-        Kd_calculated = melt_MgFe / olivine_MgFe
+        Kd_real = melt_MgFe / olivine_MgFe
 
 
-        temperature = mi_moles.iloc[-1].convert_moles_wtPercent.melt_temperature(P_bar)
+        temperature = mi_moles.loc[idx].convert_moles_wtPercent.melt_temperature(P_bar)
         ###### FE-MG EXCHANGE LOOP #####
         stepsize_FeMg = stepsize / FeMg_exchange_reduction
-        FeMg_exchange = mi_moles.iloc[-1]
-        while not np.isclose(Kd_new, Kd_calculated, atol=FeMg_converge):
+        FeMg_exchange = mi_moles.loc[idx]
+        while not np.isclose(Kd_equilibrium, Kd_real, atol=Kd_converge):
 
             FeMg_exchange += FeMg_vector.mul(stepsize_FeMg)
             FeMg_exchange = FeMg_exchange.normalise()
-            Kd_new, Fe2_FeTotal = calculate_Kd(FeMg_exchange)
+            Kd_equilibrium, Fe2_FeTotal = calculate_Kd(FeMg_exchange)
             melt_MgFe =  FeMg_exchange["MgO"] / (FeMg_exchange["FeO"] * Fe2_FeTotal)
-            Kd_calculated = melt_MgFe / olivine_MgFe   
-            print(Kd_new, Kd_calculated)     
+            Kd_real = melt_MgFe / olivine_MgFe        
 
-            FeMg_overstepped = np.sign(melt_MgFe - (Kd_new / olivine_MgFe)) != np.sign(stepsize)
-            FeMg_mismatch = ~np.isclose(melt_MgFe, Kd_new / olivine_MgFe, atol=FeMg_converge)
+            FeMg_overstepped = np.sign(Kd_real - Kd_equilibrium) != np.sign(stepsize)
+            FeMg_mismatch = ~np.isclose(Kd_equilibrium, Kd_real, atol=Kd_converge)
             decrease_stepsize_FeMg = np.logical_and(FeMg_overstepped, FeMg_mismatch)
 
             if decrease_stepsize_FeMg:
                 FeMg_exchange -= FeMg_vector.mul(stepsize_FeMg)
                 stepsize_FeMg = stepsize_FeMg / decrease_factor
 
-        mi_moles.iloc[-1] = FeMg_exchange
-        Kd_final, _ = calculate_Kd(mi_moles.iloc[-1])
-        temperature_new = mi_moles.iloc[-1].convert_moles_wtPercent.melt_temperature(P_bar)
-        print(mi_moles.convert_moles_wtPercent)
+        mi_moles.loc[idx] = FeMg_exchange
+        mi_moles = mi_moles.normalise()
 
-        print(Kd, Kd_new, Kd_final, temperature, temperature_new)
+        mi_wtPercent = mi_moles.convert_moles_wtPercent
+        FeO = mi_wtPercent.loc[idx, "FeO"]
 
-    return 
+        temperature_new = mi_wtPercent.loc[idx].melt_temperature(P_bar)
+
+        disequilibrium = ~np.isclose(FeO, FeO_initial, atol=converge)
+        overstepped = np.sign(FeO_initial - FeO) != np.sign(stepsize)
+        decrease_stepsize = np.logical_and(disequilibrium, overstepped)
+        # Reverse one iteration and reduce stepsize if forsterite content
+        # gets oversteppend by more than the convergence value
+        if decrease_stepsize:
+            mi_moles.drop(index=idx, inplace=True)
+            mi_wtPercent = mi_moles.convert_moles_wtPercent
+            idx = mi_wtPercent.index[-1]
+            FeO = mi_wtPercent.loc[idx, "FeO"]
+            stepsize = stepsize / decrease_factor
+
+    return mi_wtPercent, olivine_melted, (Kd_real, Kd_equilibrium), (temperature_new, temperature_old)
 
 
-def Fe_equilibrate_2(
+def Fe_equilibrate(
     inclusion: Union[Melt_inclusion, Melt],
     forsterite_host: float,
     P_bar: float,
@@ -417,8 +429,6 @@ def Fe_equilibrate_2(
     """
     Equilibrate a melt inclusion with it's host olivine through Fe-Mg exchange.
     Isothermal and isobaric.
-
-    REWRITE THIS TO CONVERGE KD INSTEAD OF FORSTERITE
     """
     # Grab model parameters
     stepsize = kwargs.get("stepsize", 0.005)  # In molar fraction
@@ -440,7 +450,7 @@ def Fe_equilibrate_2(
     Kd_model = getattr(Kd_FeMg, configuration().Kd_model)
 
     # Function for calculating equilibrium forsterite content
-    def calc_forsterite_EQ(
+    def calculate_Kd(
         mol_fractions,
         T_K=temperature,
         P_bar=P_bar,
@@ -453,44 +463,53 @@ def Fe_equilibrate_2(
         # FeMg Kd
         Kd = Kd_model(mol_fractions, Fo_initial, T_K, P_bar, Fe3Fe2)
         Fe2_FeTotal = 1 / (1 + Fe3Fe2)
-        Fe2Mg = mol_fractions["FeO"] * Fe2_FeTotal / mol_fractions["MgO"]
-        # Equilibrium forsterite content
-        return 1 / (1 + Kd * Fe2Mg)
 
-    # Equilibrium forsterite content
-    forsterite_EQ = calc_forsterite_EQ(inclusion.moles)
-    # Select Fe removal or addition
-    if forsterite_EQ < forsterite_host:
-        stepsize = -stepsize
+        return Kd, Fe2_FeTotal
 
     # Set up initial data
-    moles = Melt_inclusion(
+    mi_moles = Melt_inclusion(
         columns=inclusion.elements, units="mol fraction", datatype="oxide"
     )
-    moles.loc[0] = inclusion.moles[inclusion.elements].values
+    mi_moles.loc[0] = inclusion.moles[inclusion.elements].values
+    mi_moles = mi_moles.normalise()
+    # Equilibrium Kd
+    Kd_equilibrium, Fe2_FeTotal = calculate_Kd(mi_moles.loc[0])
+    # Readl Kd
+    olivine_MgFe = forsterite_host / (1 - forsterite_host)
+    melt_MgFe = mi_moles.loc[0, "MgO"] / (mi_moles.loc[0, "FeO"] * Fe2_FeTotal)   
+    Kd_real = melt_MgFe / olivine_MgFe    
     # Fe-Mg exchange vector
-    FeMg_exchange = pd.Series(0, index=moles.columns)
-    FeMg_exchange.loc[["FeO", "MgO"]] = 1, -1
+    FeMg_vector = pd.Series(0, index=mi_moles.columns)
+    FeMg_vector.loc[["FeO", "MgO"]] = 1, -1
+    # Select Fe removal or addition
+    if Kd_real < Kd_equilibrium:
+        stepsize = -stepsize
 
-    while not np.isclose(forsterite_EQ, forsterite_host, atol=converge):
+    ##### MAIN LOOP #####
+    #####################
+    while not np.isclose(Kd_real, Kd_equilibrium, atol=converge):
         # Exchange Fe-Mg
-        idx = moles.index[-1] + stepsize
-        moles.loc[idx] = (moles.iloc[-1] + FeMg_exchange.mul(stepsize)).values
+        idx = mi_moles.index[-1] + stepsize
+        mi_moles.loc[idx] = (mi_moles.iloc[-1] + FeMg_vector.mul(stepsize)).values
+        mi_moles = mi_moles.normalise()
         # New model temperature after Fe-Mg exchange
-        temperature_new = moles.iloc[-1].convert_moles_wtPercent.melt_temperature(
+        temperature_new = mi_moles.loc[idx].convert_moles_wtPercent.melt_temperature(
             P_bar=P_bar
         )
 
-        # Equilibrium forsterite content for new composition
-        forsterite_EQ = calc_forsterite_EQ(moles.iloc[-1])
+        # Equilibrium Kd and Fe speciation for new composition
+        Kd_equilibrium, Fe2_FeTotal = calculate_Kd(mi_moles.loc[idx ])
+        melt_FeMg = (mi_moles.loc[idx, "FeO"] * Fe2_FeTotal) / mi_moles.loc[idx, "MgO"] 
         # Equilibrium olivine composition in oxide mol fractions
+        Fo_equilibrium = 1 / (1 + Kd_equilibrium * melt_FeMg)       
         olivine = MagmaSeries(
-            {"MgO": forsterite_EQ * 2, "FeO": (1 - forsterite_EQ) * 2, "SiO2": 1}
+            {"MgO": Fo_equilibrium * 2, "FeO": (1 - Fo_equilibrium) * 2, "SiO2": 1}
         )
-        olivine = olivine.normalise().reindex(moles.columns, fill_value=0.0)
+        olivine = olivine.normalise().reindex(mi_moles.columns, fill_value=0.0)
 
-        # Crystallise or melt olivine to remain isothermal
-        remove_olivine = moles.iloc[-1]
+        ##### OLIVINE CRYSTALLISATION LOOP #####
+        ########################################
+        remove_olivine = mi_moles.loc[idx]
         # Set stepsize
         olivine_stepsize = stepsize / olivine_stepsize_reduction
         while not np.isclose(temperature_new, temperature, atol=temperature_converge):
@@ -515,22 +534,26 @@ def Fe_equilibrate_2(
                 olivine_stepsize = olivine_stepsize / decrease_factor
 
         # Copy olivine corrected composition
-        moles.iloc[-1] = remove_olivine.values
+        mi_moles.loc[idx] = remove_olivine.values
+        mi_moles = mi_moles.normalise()
 
-        # New equilibrium forsterite content
-        forsterite_EQ = calc_forsterite_EQ(moles.iloc[-1])
+        # New equilibrium Kd and Fe speciation
+        Kd_equilibrium, Fe2_FeTotal = calculate_Kd(mi_moles.loc[idx])
+        # Real Kd
+        melt_MgFe = mi_moles.loc[idx, "MgO"] / (mi_moles.loc[idx, "FeO"] * Fe2_FeTotal)
+        Kd_real = melt_MgFe / olivine_MgFe
 
-        disequilibrium = ~np.isclose(forsterite_EQ, forsterite_host, atol=converge)
-        overstepped = np.sign(forsterite_EQ - forsterite_host) != np.sign(stepsize)
+        disequilibrium = ~np.isclose(Kd_equilibrium, Kd_real, atol=converge)
+        overstepped = np.sign(Kd_real - Kd_equilibrium) != np.sign(stepsize)
         decrease_stepsize = np.logical_and(disequilibrium, overstepped)
         # Reverse one iteration and reduce stepsize if forsterite content
         # gets oversteppend by more than the convergence value
         if decrease_stepsize:
-            moles.drop([idx], inplace=True)
-            forsterite_EQ = calc_forsterite_EQ(moles.iloc[-1])
+            mi_moles.drop(index=idx, inplace=True)
+            Kd_equilibrium, _ = calculate_Kd(mi_moles.iloc[-1])
             stepsize = stepsize / decrease_factor
 
     # Recalculate compositions to oxide wt. %
-    wtPercent = moles.convert_moles_wtPercent
+    wtPercent = mi_moles.convert_moles_wtPercent
 
-    return wtPercent, temperature_new, forsterite_EQ, olivine_crystallised
+    return wtPercent, temperature_new, (Kd_real, Kd_equilibrium), olivine_crystallised
