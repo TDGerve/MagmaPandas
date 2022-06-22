@@ -83,10 +83,10 @@ class Melt_inclusion(Melt):
             P_bar = pd.Series(P_bar, index=self.index)
 
         # Grab default values
-        stepsize = kwargs.get("stepsize", 0.005)  # In molar fraction
+        stepsize = kwargs.get("stepsize", 0.001)  # In molar fraction
         converge = kwargs.get("converge", 0.002)  # In molar fraction
         olivine_stepsize_reduction = kwargs.get("olivine_stepsize_reduction", 4)
-        decrease_factor = kwargs.get("decrease_factor", 10)
+        decrease_factor = kwargs.get("decrease_factor", 5)
         temperature_converge = kwargs.get("temperature_converge", 0.1)  # In degrees
         QFM_logshift = kwargs.get("QFM_logshift", 1)
         # Calculate temperatures and fO2
