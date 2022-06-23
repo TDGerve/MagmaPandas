@@ -206,7 +206,7 @@ class Kd_FeMg_vectorised:
 
     def toplis(
         melt_mol_fractions: pd.DataFrame,
-        forsterite,
+        forsterite_initial,
         T_K,
         P_bar,
         Fe3Fe2,
@@ -229,15 +229,17 @@ class Kd_FeMg_vectorised:
             melt Fe3+/Fe2+ ratio
         """
 
-        for name in ["T_K", "P_bar", "forsterite"]:
+        for name in ["T_K", "P_bar", "forsterite_initial"]:
             param = locals()[name]
             if isinstance(param, pd.Series):
                 if not melt_mol_fractions.index.equals(param.index):
                     raise RuntimeError(f"Melt and {name} indices don't match")
 
         # Convert everything to Series for easier looping
-        if isinstance(forsterite, (int, float)):
-            forsterite = pd.Series(forsterite, index=melt_mol_fractions.index)
+        if isinstance(forsterite_initial, (int, float)):
+            forsterite = pd.Series(forsterite_initial, index=melt_mol_fractions.index)
+        else:
+            forsterite = forsterite_initial.copy()
         if isinstance(T_K, (int, float)):
             T_K = pd.Series(T_K, index=melt_mol_fractions.index)
         if isinstance(Fe3Fe2, (int, float)):
@@ -254,7 +256,7 @@ class Kd_FeMg_vectorised:
         # Liquid Fe2+/Fe(total)
         Fe2Fe_total = 1 / (1 + Fe3Fe2)
         # liquid Fe2+/Mg
-        Fe2Mg = (melt_mol_fractions["FeO"] / melt_mol_fractions["MgO"]) * Fe2Fe_total
+        Fe2Mg = (melt_mol_fractions["FeO"] * Fe2Fe_total)/ melt_mol_fractions["MgO"]
         # Equilibrium forsterite content according to Kd
         forsterite_EQ = 1 / (1 + Kd * Fe2Mg)
         # Difference between observed Fo and equilibrium Fo
@@ -310,7 +312,7 @@ class Kd_FeMg:
         Kd = FeMg_blundy(forsterite, Fe3Fe2, T_K)
         # Liquid Fe2+/Fe(total)
         Fe2Fe_total = 1 / (1 + Fe3Fe2)
-        Fe2Mg = (melt_mol_fractions["FeO"] / melt_mol_fractions["MgO"]) * Fe2Fe_total
+        Fe2Mg = (melt_mol_fractions["FeO"] * Fe2Fe_total)/ melt_mol_fractions["MgO"]
         # Equilibrium forsterite content according to Kd
         forsterite_EQ = 1 / (1 + Kd * Fe2Mg)
         # Difference between observed Fo and equilibrium Fo
@@ -363,7 +365,7 @@ class Kd_FeMg:
         # Liquid Fe2+/Fe(total)
         Fe2Fe_total = 1 / (1 + Fe3Fe2)
         # liquid Fe2+/Mg
-        Fe2Mg = (melt_mol_fractions["FeO"] / melt_mol_fractions["MgO"]) * Fe2Fe_total
+        Fe2Mg = (melt_mol_fractions["FeO"] * Fe2Fe_total)/ melt_mol_fractions["MgO"]
         # Equilibrium forsterite content according to Kd
         forsterite_EQ = 1 / (1 + Kd * Fe2Mg)
 
