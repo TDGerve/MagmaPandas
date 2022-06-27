@@ -458,37 +458,42 @@ def crystallisation_correction(
 
 
 class PEC_olivine:
-
     def __init__(
         self,
         inclusions: Melt_inclusion,
         olivines: Union[Olivine, pd.Series, float],
         P_bar: Union[float, int, pd.Series],
-        FeO_target: Union[float, pd.Series, callable]
+        FeO_target: Union[float, pd.Series, callable],
+        **kwargs,
     ):
 
         # Some glabal model parameters
-        self.stepsize = 0.001
+        self.stepsize = kwargs.get("stepsize", 0.001)
         stepsize = pd.Series(stepsize, index=self.index)
-        
         self.decrease_factor = 5
         # Convergence values
-        self.FeO_converge = 0.05
-        self.Kd_converge = 0.001
+        self.FeO_converge = kwargs.get("FeO_converge", 0.05)
+        self.Kd_converge = kwargs.get("Kd_converge", 0.001)
         self.temperature_converge = 0.1
         # fO2 buffer
-        self.QFMlogshift = 1
+        self.QFMlogshift = kwargs.get("QFM_logshift", 1)
         # Collect configured models
         Fe3Fe2_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
         Kd_model = getattr(Kd_FeMg_vectorised, configuration().Kd_model)
-
-        # Processes attributes
-        # For inclusions
+        # Initialise variables:
+        self.olivine_corrected = pd.Series(0, index=inclusions.index)
+        self._FeO_as_function = False
+        ######################
+        # Process attributes #
+        ######################
+        # For inclusions #
+        ##################
         if not isinstance(inclusions, Melt):
             raise TypeError("Inclusions is not a Melt MagmaFrame")
         else:
             self.inclusions = inclusions
-        # For olivine
+        # For olivine #
+        ###############
         if hasattr(olivines, "index"):
             if not olivines.index.equals(self.index):
                 raise ValueError("Inclusions and olivines indeces don't match")
@@ -513,8 +518,8 @@ class PEC_olivine:
         else:
             self.olivine = olivines.moles
         self.olivine = self.olivine.reindex(columns=self.columns, fill_value=0.0)
-
-        # For pressure
+        # For pressure #
+        ################
         try:
             if len(P_bar) != self.shape[0]:
                 raise ValueError(
@@ -525,56 +530,67 @@ class PEC_olivine:
         if hasattr(P_bar, "index"):
             if not P_bar.index.equals(self.index):
                 raise ValueError("Pressure inputs and inclusion indeces don't match")
+            self.P_bar = P_bar
         else:
             self.P_bar = pd.Series(P_bar, index=self.index)
-        # For FeO
+        # For FeO #
+        ###########
         try:
             if len(FeO_target) != len(self):
-                raise ValueError("Number of initial FeO inputs and inclusions does not match")
+                raise ValueError(
+                    "Number of initial FeO inputs and inclusions does not match"
+                )
             if hasattr(FeO_target, "index"):
                 if not FeO_target.equals(self.index):
-                    raise ValueError("FeO target inputs and inclusion indeces don't match")
+                    raise ValueError(
+                        "FeO target inputs and inclusion indeces don't match"
+                    )
+                self.FeO_target = FeO_target
             else:
-                FeO_target = pd.Series(FeO_target, index=self.index)
+                self.FeO_target = pd.Series(FeO_target, index=self.index)
         except TypeError:
             if isinstance(FeO_target, (int, float)):
-                FeO_target = pd.Series(FeO_target, index=self.index)
+                self.FeO_target = pd.Series(FeO_target, index=self.index)
             elif hasattr(FeO_target, "__call__"):
-                FeO_as_function = True
-                FeO_function = FeO_target
-                FeO_target = FeO_function(self).inclusions
+                self.FeO_as_function = True
+                self.FeO_function = FeO_target
+                self.FeO_target = self.FeO_function(self).inclusions
 
-        # Initialise variables:
-        self._equilibrated = False
-        self.olivine_corrected = pd.Series(0, index=inclusions.index)
+    @property
+    def equilibrated(self):
+        return
 
-        
-
-
-
+    @property
+    def FeO_restored(self):
+        return all(
+            np.isclose(
+                self.FeO_target,
+                self.inclusion.convert_moles_wtPercent["FeO"],
+                self.FeO_converge,
+            )
+        )
 
     def Fe_equilibrate(self, inplace=False):
-        
+
         if inplace:
             self.inclusions = 0
             self._equilibrated = True
         else:
-            return 0 #
+            return 0  #
 
-    def olivine_correct(self, inplace=True, *args, **kwargs):
+    def olivine_correct(self, inplace=False, *args, **kwargs):
 
         if not self._equilibrated:
-            raise RuntimeError("Inclusion compositions have not been equilibrated")
+            raise RuntimeError("Inclusion compositions have not yet been equilibrated")
 
         if inplace:
-            self._olivine_corrected = True
+            self._FeO_restored = True
             self.inclusions = 0
-            return self.inclusions
         else:
             return 0
 
     def correct(self):
 
-        i = self.Fe_equilibrate(inplace=True)        
+        i = self.Fe_equilibrate(inplace=True)
 
         return self.crystallisation_correction(i)
