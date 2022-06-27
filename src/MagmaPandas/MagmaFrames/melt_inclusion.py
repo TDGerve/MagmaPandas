@@ -1,6 +1,4 @@
 from typing import List, Union
-
-from pyrsistent import m
 from ..parse.readers import _read_file
 import pandas as pd
 import numpy as np
@@ -55,7 +53,7 @@ class Melt_inclusion(Melt):
 
         return _c
 
-    def Fe_restore(self, FeO_initial: Union[int, float], P_bar: float, **kwargs):
+    def Fe_restore(self, FeO_target: Union[int, float], P_bar: float, **kwargs):
         """
         Reverse melt inclusion Fe loss (or gain) through Fe-Mg exchange until a set initial melt FeO is reached.
         Isothermal and isobaric.
@@ -63,25 +61,40 @@ class Melt_inclusion(Melt):
 
         return
 
-    def Fe_equilibrate(self, forsterite_host: float, P_bar: float, **kwargs):
+    def _Fe_equilibrate(self, forsterite_host: float, P_bar: float, **kwargs):
         """
         Equilibrate a melt inclusion with it's host olivine through Fe-Mg exchange.
-        Isothermal and isobaric.
+        Exchange continues until the observed and modelled Fe-Mg Kd converge within
+        the model convergence value. After each step of Fe-Mg exchange olivine is either melted
+        or crystallised until the liquidus temperature of the inclusion is back to the
+        original temperature.
+
+        Isobaric.
         """
         # Data checks
+        #
         try:
             if len(forsterite_host) != self.shape[0]:
-                raise ValueError(
-                    "Host forsterite array length does not match the amount of melt inclusions"
-                )
+                raise ValueError("Amount of olivines and inclusions does not match")
         except TypeError:
+            pass
+        if hasattr(forsterite_host, "index"):
+            if not forsterite_host.index.equals(self.index):
+                raise ValueError("Inclusions and olivines indeces don't match")
+        else:
             forsterite_host = pd.Series(forsterite_host, index=self.index)
+
         try:
             if len(P_bar) != self.shape[0]:
                 raise ValueError(
                     "Pressure array length does not match the amount of melt inclusions"
                 )
         except TypeError:
+            pass
+        if hasattr(P_bar, "index"):
+            if not P_bar.index.equals(self.index):
+                raise ValueError("Pressure inputs and olivines indeces don't match")
+        else:
             P_bar = pd.Series(P_bar, index=self.index)
 
         # Grab default values
@@ -295,3 +308,89 @@ class Melt_inclusion(Melt):
             olivine_crystallised,
             {"Equilibrium": Kd_equilibrium, "Real": Kd_real},
         )
+
+    def _crystallisation_correction(self, olivine_host, FeO_target, P_bar, **kwargs):
+        """
+        Correct olivine hosted melt inclusions for post entrapment crystallisation
+        or melting by respectively melting or crystallising host olivine.
+        Expects the melt inclusion is completely equilibrated with the host crystal.
+        The models exits when the user input original melt inclusion FeO content is reached.
+        Loosely based on the postentrapment reequilibration procedure in Petrolog:
+
+        L. V. Danyushesky and P. Plechov (2011)
+        Petrolog3: Integrated software for modeling crystallization processes
+        Geochemistry, Geophysics, Geosystems, vol 12
+        """
+        # Model parameters
+        FeO_as_function = False
+        stepsize = kwargs.get(
+            "stepsize", 0.001
+        )  # In molar fraction, 0.001 is the maximum recommended value
+        stepsize = pd.Series(stepsize, index=self.index)
+        converge = kwargs.get("converge", 0.05)  # FeO convergence
+        Kd_converge = kwargs.get("Kd_converge", 0.001)  # Kd converge
+        QFM_logshift = kwargs.get("QFM_logshift", 1)
+        # Parameters for the while loop
+        olivine_corrected = pd.Series(0, self.index)
+        FeMg_exchange_reduction = 4
+        decrease_factor = 5
+        # Collect configured models
+        Fe3Fe2_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
+        Kd_model = getattr(Kd_FeMg_vectorised, configuration().Kd_model)
+
+        # Data checks
+        # For olivine
+        if hasattr(olivine_host, "index"):
+            if not olivine_host.index.equals(self.index):
+                raise ValueError("Inclusions and olivines indeces don't match")
+        if not isinstance(olivine_host, Olivine):
+            try:
+                if len(olivine_host) != self.shape[0]:
+                    raise ValueError("Number of olivines and inclusions does not match")
+            except TypeError:
+                pass
+            forsterite = pd.Series(olivine_host, index=self.index)
+            if (~forsterite.between(0, 1)).any:
+                raise ValueError(
+                    "olivine host forsterite contents are not all between 0 and 1"
+                )
+            olivine = Olivine(
+                {"MgO": forsterite * 2, "FeO": (1 - forsterite) * 2, "SiO2": 1},
+                index=self.index,
+                units="mol fraction",
+                datatype="oxide",
+            )
+            olivine = olivine.normalise()
+        else:
+            olivine = olivine_host.moles
+        olivine = olivine.reindex(columns=self.columns, fill_value=0.0)
+        
+        # For pressure
+        try:
+            if len(P_bar) != self.shape[0]:
+                raise ValueError(
+                    "Number of pressure inputs and melt inclusions does not match"
+                )
+        except TypeError:
+            pass
+        if hasattr(P_bar, "index"):
+            if not P_bar.index.equals(self.index):
+                raise ValueError("Pressure inputs and inclusion indeces don't match")
+        else:
+            P_bar = pd.Series(P_bar, index=self.index)
+        # For FeO
+        try:
+            if len(FeO_target) != len(self):
+                raise ValueError("Number of initial FeO inputs and inclusions does not match")
+            elif hasattr(FeO_target, "index"):
+                if not FeO_target.equals(self.index):
+                    raise ValueError("FeO target inputs and inclusion indeces don't match")
+            else:
+                FeO_target = pd.Series(FeO_target, index=self.index)
+        except TypeError:
+            if isinstance(FeO_target, (int, float)):
+                FeO_target = pd.Series(FeO_target, index=self.index)
+            elif hasattr(FeO_target, "__call__"):
+                FeO_as_function = True
+                FeO_function = FeO_target
+                FeO_target = FeO_function(self)

@@ -141,7 +141,7 @@ def equilibrium_forsterite(Kd, Fe2Mg):
 class Kd_FeMg_vectorised:
     def blundy(
         melt_mol_fractions: pd.DataFrame,
-        forsterite,
+        forsterite_initial,
         T_K,
         Fe3Fe2,
         **kwargs,
@@ -162,15 +162,17 @@ class Kd_FeMg_vectorised:
             melt Fe2+/Fe3+ ratio
         """
 
-        for name in ["T_K", "forsterite"]:
+        for name in ["T_K", "forsterite_initial"]:
             param = locals()[name]
             if isinstance(param, pd.Series):
                 if not melt_mol_fractions.index.equals(param.index):
                     raise RuntimeError(f"Melt and {name} indices don't match")
 
         # Convert everything to Series for easier looping
-        if isinstance(forsterite, (int, float)):
-            forsterite = pd.Series(forsterite, index=melt_mol_fractions.index)
+        if isinstance(forsterite_initial, (int, float)):
+            forsterite = pd.Series(forsterite_initial, index=melt_mol_fractions.index)
+        else:
+            forsterite = forsterite_initial.copy()
         if isinstance(T_K, (int, float)):
             T_K = pd.Series(T_K, index=melt_mol_fractions.index)
         if isinstance(Fe3Fe2, (int, float)):
