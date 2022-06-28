@@ -3,6 +3,7 @@ from numpy import isin
 import pandas as pd
 import numpy as np
 from functools import partial
+from MagmaPandas.MagmaFrames import olivine
 import elements as e
 from typing import Union
 from ..configuration import configuration
@@ -59,7 +60,7 @@ class PEC_configuration:
 
 def calculate_olivine(forsterite):
     """
-    Calculate olivine wt. % composition from forsterite contents
+    Calculate olivine wt. % composition from forsterite content
     """
     if isinstance(forsterite, pd.Series):
         idx = forsterite.index
@@ -443,14 +444,18 @@ def crystallisation_correction(
         T_K = melt.convert_moles_wtPercent.melt_temperature(pressure)
         fO2 = fO2_QFM(fObuffer_shift, T_K, pressure)
         Fe3Fe2 = Fe3Fe2_model(melt, T_K, fO2)
+
         Fe2_FeTotal = 1 / (1 + Fe3Fe2)
+        melt_MgFe = melt["MgO"] / (melt["FeO"] * Fe2_FeTotal)
+        olivine_MgFe = Fo / (1 - Fo)
+        Kd_observed = melt_MgFe
 
-        return Kd_model(melt, Fo, T_K, P_bar, Fe3Fe2), Fe2_FeTotal
+        Kd_eq =  Kd_model(melt, Fo, T_K, P_bar, Fe3Fe2)
 
-    Kd_equilibrium, Fe2_FeTotal = calculate_Kd(mi_moles.iloc[-1])
-    Kd_real = (
-        mi_moles.loc[0, "MgO"] / (mi_moles.loc[0, "FeO"] * Fe2_FeTotal) / olivine_MgFe
-    )
+        return Kd_eq, Kd_observed        
+
+
+    # Kd_equilibrium, Kd_real = calculate_Kd(mi_moles.iloc[-1])
 
     if FeO > FeO_target:
         stepsize = -stepsize
@@ -464,9 +469,7 @@ def crystallisation_correction(
 
         olivine_corrected += stepsize
 
-        Kd_equilibrium, Fe2_FeTotal = calculate_Kd(mi_moles.loc[idx])
-        melt_MgFe = mi_moles.loc[idx, "MgO"] / (mi_moles.loc[idx, "FeO"] * Fe2_FeTotal)
-        Kd_real = melt_MgFe / olivine_MgFe
+        Kd_equilibrium, Kd_real = calculate_Kd(mi_moles.loc[idx])
 
         ###### FE-MG EXCHANGE LOOP #####
         stepsize_FeMg = stepsize / FeMg_exchange_reduction
@@ -475,13 +478,11 @@ def crystallisation_correction(
 
             FeMg_exchange += FeMg_vector.mul(stepsize_FeMg)
             FeMg_exchange = FeMg_exchange.normalise()
-            Kd_equilibrium, Fe2_FeTotal = calculate_Kd(FeMg_exchange)
-            melt_MgFe = FeMg_exchange["MgO"] / (FeMg_exchange["FeO"] * Fe2_FeTotal)
-            Kd_real = melt_MgFe / olivine_MgFe
+            Kd_equilibrium, Kd_real = calculate_Kd(FeMg_exchange)
 
-            FeMg_overstepped = np.sign(Kd_real - Kd_equilibrium) != np.sign(stepsize)
-            FeMg_mismatch = ~np.isclose(Kd_equilibrium, Kd_real, atol=Kd_converge)
-            decrease_stepsize_FeMg = np.logical_and(FeMg_overstepped, FeMg_mismatch)
+            Kd_overstepped = np.sign(Kd_real - Kd_equilibrium) != np.sign(stepsize)
+            Kd_mismatch = ~np.isclose(Kd_equilibrium, Kd_real, atol=Kd_converge)
+            decrease_stepsize_FeMg = np.logical_and(Kd_overstepped, Kd_mismatch)
             # Reverse one iteration and reduce stepsize if Kd
             # gets oversteppend by more than the convergence value
             if decrease_stepsize_FeMg:
@@ -630,17 +631,16 @@ class PEC_olivine:
             # Calculate temperature and fO2
             temperatures = self.inclusions.temperature(P_bar=self.P_bar)
             fO2 = fO2_QFM(dQFM, temperatures, self.P_bar)
-
             forsterite = self.olivine.forsterite
             # melt Fe3+/Fe2+
             Fe3Fe2 = Fe3Fe2_model(moles, temperatures, fO2)
-            # Equilibrium Kd
-            Kd_equilibrium = Kd_model(moles, forsterite, temperatures, self.P_bar, Fe3Fe2)
             # Real Kd
             olivine_MgFe = forsterite / (1 - forsterite)
             Fe2_FeTotal = 1 / (1 + Fe3Fe2)
             melt_MgFe = moles["MgO"] / (moles["FeO"] * Fe2_FeTotal)
             Kd_real = melt_MgFe / olivine_MgFe
+            # Equilibrium Kd
+            Kd_equilibrium = Kd_model(moles, forsterite, temperatures, self.P_bar, Fe3Fe2)
 
             return {"equilibrium": Kd_equilibrium, "real": Kd_real}
 
@@ -697,7 +697,7 @@ class PEC_olivine:
         # Find disequilibrium inclusions
         disequilibrium = ~np.isclose(Kd_real, Kd_equilibrium, atol=Kd_converge)
         # Set stepsizes acoording to Kd disequilibrium
-        stepsize.loc[Kd_real < Kd_equilibrium] = -stepsize
+        stepsize.loc[Kd_real < Kd_equilibrium] = -stepsize.loc[Kd_real < Kd_equilibrium].copy()
 
         ##### Main Fe-Mg exhange loop #####
         ###################################
@@ -709,11 +709,11 @@ class PEC_olivine:
                 temperatures_loop = temperatures.loc[disequilibrium]
                 P_loop = P_bar.loc[disequilibrium]
                 FeMg_loop = FeMg_exchange.loc[disequilibrium, :]
-                mi_moles_loop = mi_moles.loc[disequilibrium, :]
+                mi_moles_loop = mi_moles.loc[disequilibrium, :].copy()
                 fO2_loop = fO2.loc[disequilibrium]
                 Fo_host_loop = forsterite_host.loc[disequilibrium]
-                Kd_eq_loop = Kd_equilibrium.loc[disequilibrium]
-                Kd_real_loop = Kd_real.loc[disequilibrium]
+                Kd_eq_loop = Kd_equilibrium.loc[disequilibrium].copy()
+                Kd_real_loop = Kd_real.loc[disequilibrium].copy()
 
             # Exchange Fe and Mg
             mi_moles_loop = mi_moles_loop + FeMg_loop.mul(stepsize_loop, axis=0)
@@ -763,7 +763,7 @@ class PEC_olivine:
                     olivine_correction = mi_moles_loop.loc[temperature_mismatch, :]
                     olivine_loop = olivine.loc[temperature_mismatch, :]
                     ol_stepsize_loop = olivine_stepsize.loc[temperature_mismatch]
-                    idx_olivine = mi_moles_loop.index[temperature_mismatch]
+                    idx_olivine = olivine_correction.index
 
                 # Crystallise or melt olivine
                 mi_moles_loop.loc[
@@ -863,7 +863,7 @@ class PEC_olivine:
                 {"Equilibrium": Kd_equilibrium, "Real": Kd_real},
             )
 
-    def olivine_correct(self, inplace=False, *args, **kwargs):
+    def correct_olivine(self, inplace=False, *args, **kwargs):
         """
         
         """
@@ -878,19 +878,132 @@ class PEC_olivine:
         FeMg_exchange_reduction = 4
         Kd_converge = getattr(PEC_configuration, "Kd_converge")
         FeO_converge = kwargs.get("FeO_converge", getattr(PEC_configuration, "FeO_converge"))
-
         dQFM = configuration().QFMlogshift
         P_bar = self.P_bar
         # Get configured models
         Fe3Fe2_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
         Kd_model = getattr(Kd_FeMg_vectorised, configuration().Kd_model)
+        # Inclusion compositions in oxide mol fractions
+        mi_moles = self.inclusions.moles
+        mi_moles = mi_moles.normalise()
+        # Olivine forsterite and Mg/Fe
+        forsterite = self.olivine.forsterite
+        olivine_MgFe = self.olivine["MgO"] / self.olivine["FeO"]
+        # Fe-Mg exchange vectors
+        FeMg_vector = pd.DataFrame(0, index=mi_moles.index, columns=mi_moles.columns)
+        FeMg_vector.loc[:, ["FeO", "MgO"]] = [1, -1]
+        # Starting FeO and termperature
+        FeO = self.inclusions["FeO"]
+        FeO_target = self.FeO_target
+        temperature_old = self.inclusions.convert_moles_wtPercent.temperature(P_bar=P_bar)
 
+        def calculate_Kd(melt, pressure=P_bar, fObuffer_shift=dQFM, Fo=forsterite):
+            """
+            Calculate observed and modelled Kds
+            """
+
+            T_K = melt.convert_moles_wtPercent.temperature(pressure)
+            fO2 = fO2_QFM(fObuffer_shift, T_K, pressure)
+            Fe3Fe2 = Fe3Fe2_model(melt, T_K, fO2)
+
+            Fe2_FeTotal = 1 / (1 + Fe3Fe2)
+            melt_MgFe = melt["MgO"] / (melt["FeO"] * Fe2_FeTotal)
+            olivine_MgFe = Fo / (1 - Fo)
+            Kd_observed = melt_MgFe
+
+            Kd_eq = Kd_model(melt, Fo.copy(), T_K, pressure, Fe3Fe2)
+
+            return Kd_eq, Kd_observed
+        
+        # Kd_equilibrium, Kd_real = calculate_Kd(mi_moles)
+
+        stepsize.loc[FeO > FeO_target] = -stepsize.loc[FeO > FeO_target].copy()
+
+        FeO_mismatch = ~np.isclose(FeO, FeO_target, atol=FeO_converge)
+
+        ##### OLIVINE MELTING/CRYSTALLISATION LOOP #####
+        reslice = True
+        while sum(FeO_mismatch) > 0:
+
+            if reslice:
+                stepsize_loop = stepsize.loc[FeO_mismatch]
+                P_loop = P_bar.loc[FeO_mismatch]
+                mi_moles_loop = mi_moles.loc[FeO_mismatch, :].copy()
+                olivine_loop = self.olivine.loc[FeO_mismatch,:]
+                Fo_loop = forsterite.loc[FeO_mismatch]
+                idx_olivine = mi_moles_loop.index
+
+            mi_moles_loop = mi_moles_loop + olivine_loop.mul(stepsize)
+            mi_moles_loop = mi_moles_loop.normalise()
+
+            self.olivine_corrected.loc[idx_olivine] += stepsize_loop
+
+            Kd_eq_loop, Kd_real_loop = calculate_Kd(mi_moles_loop, pressure=P_loop, Fo=Fo_loop)
+            Kd_mismatch = ~np.isclose(Kd_eq_loop, Kd_real_loop, atol=Kd_converge)
+
+            ##### FE-MG EXCHANGE LOOP #####
+            stepsize_FeMg = stepsize_loop.div(FeMg_exchange_reduction)
+            reslice_FeMg = True
+            while sum(Kd_mismatch) > 0:
+                # collect loop variables
+                if reslice_FeMg:
+                    FeMg_exchange = mi_moles_loop.loc[Kd_mismatch, :]
+                    FeMg_vector_loop = FeMg_vector.loc[Kd_mismatch, :]
+                    stepsize_FeMg_loop = stepsize_FeMg.loc[Kd_mismatch, :]
+                
+                mi_moles_loop.loc[Kd_mismatch, :] = FeMg_exchange + FeMg_vector_loop.mul(stepsize_FeMg_loop)
+                mi_moles_loop = mi_moles_loop.normalise()
+                Kd_eq_loop, Kd_real_loop = calculate_Kd(mi_moles_loop, pressure=P_loop, Fo=Fo_loop)
+
+                Kd_mismatch_new = ~np.isclose(Kd_eq_loop, Kd_real_loop, atol=Kd_converge)
+                Kd_overstepped = ~np.equal(np.sign(Kd_real_loop - Kd_eq_loop), np.sign(stepsize))
+                decrease_stepsize_Kd = np.logical_and(Kd_overstepped, Kd_mismatch_new)
+
+                if sum(decrease_stepsize_Kd) > 0:
+                    reverse_FeMg = mi_moles_loop.index[decrease_stepsize_Kd]
+                    # Reverse Fe-Mg exchange                     
+                    reverse_FeMg = FeMg_exchange - FeMg_vector_loop.loc[reverse_FeMg, :].mul(stepsize_FeMg_loop.loc[reverse_FeMg])
+                    mi_moles_loop.loc[reverse_FeMg, :] = mi_moles_loop.loc[reverse_FeMg, :] - reverse_FeMg
+                    stepsize_FeMg.loc[reverse_FeMg] = stepsize_FeMg.loc[reverse_FeMg].div(decrease_factor)
+                
+                reslice_FeMg = ~np.array_equal(Kd_mismatch, Kd_mismatch_new)
+                Kd_mismatch = Kd_mismatch_new
+
+            # Recalculate FeO
+            mi_wtPercent = mi_moles_loop.convert_moles_wtPercent
+            FeO = mi_wtPercent["FeO"]
+            if self.FeO_as_function:
+                FeO_target = self.FeO_function(mi_wtPercent)
+            FeO_mismatch_loop = ~np.isclose(FeO, FeO_target, atol=FeO_converge)
+            FeO_overstepped = ~np.equal(np.sign(FeO_target - FeO) != np.sign(stepsize))
+            decrease_stepsize_FeO = np.logical_and(FeO_overstepped, FeO_mismatch_loop)
+
+            if sum(decrease_stepsize_FeO) > 0:
+                reverse_FeO = mi_moles_loop.index[decrease_stepsize_FeO]
+                mi_moles_loop.drop(labels=reverse_FeO, axis=0, inplace=True)
+                stepsize.loc[decrease_stepsize_FeO] = stepsize.loc[decrease_stepsize_FeO].div(decrease_factor)
+
+            mi_moles.loc[mi_moles_loop.index, :] = mi_moles_loop.copy()
+            mi_wtPercent = mi_moles.convert_moles_wtPercent
+            FeO = mi_wtPercent["FeO"]
+            if self.FeO_as_function:
+                FeO_target = self.FeO_function(mi_wtPercent)
+                self.FeO_target = FeO_target
+            FeO_mismatch_new = ~np.isclose(FeO, FeO_target, atol=FeO_converge)
+            reslice = ~np.array_equal(FeO_mismatch_new, FeO_mismatch)
+            FeO_mismatch = FeO_mismatch_new
+
+        corrected_compositions = mi_moles.convert_moles_wtPercent            
 
         if inplace:
             self._FeO_restored = True
-            self.inclusions = 0
+            self.inclusions = corrected_compositions
         else:
-            return 0
+            return (
+                corrected_compositions,
+                self.olivine_corrected,
+                {"old": temperature_old, "new": corrected_compositions.temperature(P_bar)},
+            )
 
     def correct(self):
 
