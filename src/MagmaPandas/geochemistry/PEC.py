@@ -865,7 +865,15 @@ class PEC_olivine:
 
     def correct_olivine(self, inplace=False, *args, **kwargs):
         """
-        
+        Correct an olivine hosted melt inclusion for post entrapment crystallisation or melting by
+        respectively melting or crystallising host olivine.
+        Expects the melt inclusion is completely equilibrated with the host crystal.
+        The models exits when the user input original melt inclusion FeO content is reached.
+        Loosely based on the postentrapment reequilibration procedure in Petrolog:
+
+        L. V. Danyushesky and P. Plechov (2011)
+        Petrolog3: Integrated software for modeling crystallization processes
+        Geochemistry, Geophysics, Geosystems, vol 12
         """
 
         if not self._equilibrated:
