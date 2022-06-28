@@ -51,10 +51,15 @@ class Olivine(MagmaFrame):
         """
         Docstrings
         """
-        cations = self.cations
+        if self._datatype == "wt. %":
+            moles = self.moles
+        else:
+            moles = self
+        Mg = {"oxide": "MgO", "cation": "Mg"}
+        Fe = {"oxide": "FeO", "cation": "Fe"}
         self.recalculate()
         return pd.Series(
-            cations["Mg"] / (cations["Fe"] + cations["Mg"]), name="Fo#"
+            moles[Mg[self._datatype]] / (moles[Fe[self._datatype]] + moles[Mg[self._datatype]]), name="Fo#"
         )
 
     @property

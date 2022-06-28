@@ -98,8 +98,8 @@ class Melt_inclusion(Melt):
             P_bar = pd.Series(P_bar, index=self.index)
 
         # Grab default values
-        stepsize = kwargs.get("stepsize", 0.001)  # In molar fraction
-        converge = kwargs.get("converge", 0.002)  # Kd converge
+        stepsize = kwargs.get("stepsize", 0.002)  # In molar fraction
+        converge = kwargs.get("converge", 0.001)  # Kd converge
         temperature_converge = kwargs.get("temperature_converge", 0.1)  # In degrees
         QFM_logshift = kwargs.get("QFM_logshift", 1)
         # Parameters for while loop
@@ -117,7 +117,7 @@ class Melt_inclusion(Melt):
         Fe3Fe2_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
         Kd_model = getattr(Kd_FeMg_vectorised, configuration().Kd_model)
 
-        # Function for calculating equilibrium forsterite content
+        # Function for calculating equilibrium forsterite content and Fe2+/Fe(total)
         def calculate_Kd(
             mol_fractions,
             T_K,

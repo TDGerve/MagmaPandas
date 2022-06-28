@@ -153,7 +153,7 @@ class MagmaFrame(pd.DataFrame):
         Convert moles to wt. % or vice versa
         """
 
-        converted = self.loc[:, self.elements]
+        converted = self[self.elements].copy()
         if self._units == "wt. %":
             converted = converted.div(converted.weights)
         elif self._units == "mol fraction":
@@ -214,19 +214,20 @@ class MagmaFrame(pd.DataFrame):
             self._weights = pd.concat([self._weights, new_weights])        
         
         if self._total:
-            self["total"] = self[self.elements].sum(axis=1)
+            totals = self.loc[:, self.elements].sum(axis=1)
+            self.loc[:, "total"] = totals.values
 
     def normalise(self):
         """
         Normalise composition.
         """
         self.recalculate()
-        normalised = self.copy()[self.elements]
+        normalised = self[self.elements].copy()
         total = normalised.sum(axis=1)
 
         normalised = normalised.div(total, axis=0)
         if self._units == "wt. %":
             normalised = normalised.mul(100)
-        normalised["total"] = normalised.sum(axis=1)
+        normalised.loc[:, "total"] = normalised.sum(axis=1)
 
         return normalised

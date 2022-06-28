@@ -56,73 +56,76 @@ class IaconoMarziano_configuration:
 
     @property
     def parameters(cls):
-        return IaconoMarziano_configuration.__parameters
+        return cls.__parameters
 
     @parameters.setter
     @_check_setter(parameter_options)
     def parameters(cls, model: str):
-        IaconoMarziano_configuration.__parameters = model
+        cls.__parameters = model
 
     @property
     def fugacity(cls):
-        return IaconoMarziano_configuration.__fugacity
+        return cls.__fugacity
 
     @fugacity.setter
     @_check_setter(fugacity_options)
     def fugacity(cls, model: str):
-        IaconoMarziano_configuration.__fugacity = model
+        cls.__fugacity = model
 
     @property
     def activity(cls):
-        return IaconoMarziano_configuration.__activity
+        return cls.__activity
 
     @activity.setter
     @_check_setter(activity_options)
     def activity(cls, model: str):
-        IaconoMarziano_configuration.__activity = model
+        cls.__activity = model
 
     @property
     def model(cls):
-        return IaconoMarziano_configuration.__model
+        return cls.__model
 
     @model.setter
     @_check_setter(model_options)
     def model(cls, model: str):
-        IaconoMarziano_configuration.__model = model
+        cls.__model = model
 
-    @staticmethod
-    def reset():
-        IaconoMarziano_configuration.__parameters = "hydrous_webapp"
-        IaconoMarziano_configuration.__fugacity = "ideal"
-        IaconoMarziano_configuration.__activity = "ideal"
-        IaconoMarziano_configuration.__model = "mixed"
+    @classmethod
+    def reset(cls):
+        cls.__parameters = "hydrous_webapp"
+        cls.__fugacity = "ideal"
+        cls.__activity = "ideal"
+        cls.__model = "mixed"
 
-    @staticmethod
-    def print():
-        """ """
-        names = [
-            "Parameterisation",
-            "Fugacity model",
-            "Activity model",
-            "Species model",
-        ]
-        attributes = [
-            f"_IaconoMarziano_configuration{i}"
-            for i in ["__parameters", "__fugacity", "__activity", "__model"]
-        ]
+    @classmethod
+    def print(cls):
+        """ 
+        
+        """
+
+        variables = {
+            "Parameterisation": "__parameters",
+            "Fugacity model": "__fugacity",
+            "Activity model": "__activity",
+            "Species model": "__model",
+        }
+
         pad_left = 20
         pad_right = 20
         pad_total = pad_left + pad_right
+
         print(" Iacono-Marziano volatile solubility ".center(pad_total, "#"))
+        print("".ljust(pad_total, "#"))
         print("Settings".ljust(pad_total, "_"))
-        for param, model in zip(names, attributes):
+        for param, model in variables.items():
+            model_attr = f"_IaconoMarziano_configuration{model}"
             print(
-                f"{param:.<{pad_left}}{getattr(IaconoMarziano_configuration, model):.>{pad_right}}"
+                f"{param:.<{pad_left}}{getattr(cls, model_attr):.>{pad_right}}"
             )
         print("\nCalibration range".ljust(pad_total, "_"))
         T_string = f"1373-1673\N{DEGREE SIGN}K"
         print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
-        print(f"{'Pressure':.<{pad_left}}{'0.1-10 kbar':.>{pad_right}}")
+        print(f"{'Pressure':.<{pad_left}}{'0.1-5 kbar':.>{pad_right}}")
 
 
 H2O_coefficients = {
