@@ -1,5 +1,5 @@
-from numpy import isin
 import pandas as pd
+import numpy as np
 
 
 class melt_thermometers:
@@ -24,6 +24,9 @@ class melt_thermometers:
         """
         import MagmaPandas as mp
 
+        composition = self.copy()
+        composition = composition.fillna(0.0)
+
         if isinstance(self, mp.MagmaFrame):
             elements = self.columns
         elif isinstance(self, mp.MagmaSeries):
@@ -35,22 +38,23 @@ class melt_thermometers:
         if "H2O" not in elements:
             H2O = 0.0
         else:
-            H2O = self["H2O"]
+            H2O = composition["H2O"]
+  
 
         if len(absentOxides) > 0:
             raise KeyError(f"{absentOxides} not found in melt")
 
         # Calculate molar oxide fractions
-        mol_fractions = self.moles
+        mol_fractions = composition.moles
         # Melt Mg#
         Mg_no = mol_fractions["MgO"] / (mol_fractions["MgO"] + mol_fractions["FeO"]) # SHOULD PROBABLY BE STRICTLY Fe2+
 
         T_K = (
             754
             + 190.6 * Mg_no
-            + 25.52 * self["MgO"]
-            + 9.585 * self["FeO"]
-            + 14.87 * (self["Na2O"] + self["K2O"])
+            + 25.52 * composition["MgO"]
+            + 9.585 * composition["FeO"]
+            + 14.87 * (composition["Na2O"] + composition["K2O"])
             - 9.176 * H2O
         ) + 273.15
 
@@ -100,6 +104,7 @@ class melt_thermometers:
 
         # Calculate molar oxide fractions
         mol_fractions = self.moles
+        mol_fractions = mol_fractions.fillna(0.0)
 
         part_1 = (
             -583

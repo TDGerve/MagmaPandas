@@ -88,8 +88,7 @@ class configuration:
         print(" MagmaPandas ".center(pad_total, "#"))
         print("".ljust(pad_total, "#"))
         print("\nGeneral settings".ljust(pad_total, "_"))
-        # print("".center(pad_total, "-"))
-
+        print(f"{'fO2 buffer':.<{names_length}}{'QFM':.>{pad_right}}")
         for param, model in variables.items():
             model_attr = f"_configuration{model}"
             print(f"{param:.<{names_length}}{getattr(cls, model_attr):.>{pad_right}}")
