@@ -117,12 +117,14 @@ class MagmaFrame(pd.DataFrame):
 
     @property
     @_check_attribute("_datatype", ["oxide"])
-    @_check_attribute("_units", ["wt. %"])
     def moles(self):
         """
         Calculate molar fractions from oxide concentrations
         """
-        return self.convert_moles_wtPercent
+        if self._units != "mol fraction":
+            return self.convert_moles_wtPercent
+        else:
+            return self
 
     @property
     @_check_attribute("_datatype", ["oxide"])
