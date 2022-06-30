@@ -13,7 +13,7 @@ class PEC_configuration:
 
     # Initial stepsize
     stepsize_equilibration = 0.002
-    stepsize_crystallisation = 0.005
+    stepsize_crystallisation = 0.05
     # Reduction factor for stepsize after overstepping
     decrease_factor = 5
     # Convergence values
@@ -24,7 +24,7 @@ class PEC_configuration:
     @staticmethod
     def reset():
         PEC_configuration.stepsize_equilibration = 0.002
-        PEC_configuration.stepsize_crystallisation = 0.005
+        PEC_configuration.stepsize_crystallisation = 0.05
         PEC_configuration.decrease_factor = 5
         PEC_configuration.FeO_converge = 0.05
         PEC_configuration.Kd_converge = 1e-4
@@ -980,8 +980,11 @@ class PEC_olivine:
 
             plt.plot(equilibrated["MgO"], equilibrated["FeO"], "-o", label="equilibration")
             plt.plot(corrected["MgO"], corrected["FeO"], "-D", label="correction")
+
+            middle = sum(ax.get_xlim()) / 2
+
             plt.axhline(FeO_target, linestyle="--", color="k", linewidth=1.5)
-            plt.text(corrected["MgO"].median(), FeO_target, s="FeO target", size=fontsize, backgroundcolor=ax.get_facecolor())
+            plt.text(middle, FeO_target, s="FeO target", size=fontsize, backgroundcolor=ax.get_facecolor())
             plt.text(0.6, 0.15, s=f"{total_corrected * 100:.1f} mol %\ncrystallisation correction", size=fontsize, transform=ax.transAxes)
 
             ax.set_ylim(ax.get_ylim()[0], FeO_target * 1.03)
