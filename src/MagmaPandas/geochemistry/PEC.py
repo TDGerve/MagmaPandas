@@ -513,7 +513,7 @@ class PEC_olivine:
         Check which inclusions are in equilibrium with their host olivine
         based on modelled and observed Fe-Mg exchange Kd's.
         """
-        Kd_converge = getattr(PEC_configuration, "Kd_converge")
+        Kd_converge = getattr(PEC_configuration, "Kd_converge") * 1.5
         Kd_equilibrium, Kd_real = self.calculate_Kds()
 
         return pd.Series(
@@ -610,7 +610,7 @@ class PEC_olivine:
         FeMg_exchange = pd.DataFrame(0, index=mi_moles.index, columns=mi_moles.columns)
         FeMg_exchange.loc[:, ["FeO", "MgO"]] = [1, -1]
         # Find disequilibrium inclusions
-        disequilibrium = ~np.isclose(Kd_real, Kd_equilibrium, atol=Kd_converge)
+        disequilibrium = ~np.isclose(Kd_equilibrium, Kd_real, atol=Kd_converge)
         # Set stepsizes acoording to Kd disequilibrium
         stepsize.loc[Kd_real < Kd_equilibrium] = -stepsize.loc[
             Kd_real < Kd_equilibrium
