@@ -114,7 +114,7 @@ class Fe_redox():
         return 10**(part1 + part2 + part3)
 
 
-def FeRedox_QFM(mol_fractions, T_K, P_bar, logshift=0):
+def FeRedox_QFM(mol_fractions, T_K, P_bar, logshift=0, **kwargs):
     """
     Calculate Fe-redox equilibrium at QFM oxygen buffer for silicate liquids.
     Uses either equation 7 from Kress and Carmichael (1991) or equation 4 from Borisov et al. (2018).
@@ -139,6 +139,6 @@ def FeRedox_QFM(mol_fractions, T_K, P_bar, logshift=0):
     """
     Fe_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
 
-    fO2_bar = fO2.fO2_QFM(logshift, T_K, P_bar)
+    fO2_bar = kwargs.get("fO2", fO2.fO2_QFM(logshift, T_K, P_bar))
 
     return Fe_model(mol_fractions, T_K, fO2_bar, P_bar)

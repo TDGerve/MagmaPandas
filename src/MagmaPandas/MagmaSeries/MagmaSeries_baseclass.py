@@ -12,8 +12,8 @@ def _MagmaSeries_expanddim(data=None, *args, **kwargs):
     df = MagmaFrame(*args, **kwargs)
 
     if isinstance(data, MagmaSeries):
-        df._units = data._units
-        df._datatype = data._datatype
+        df._units = data._units.copy(deep=True)
+        df._datatype = data._datatype.copy(deep=True)
 
     return df
 
@@ -41,7 +41,7 @@ class MagmaSeries(pd.Series):
         self._units = units
         self._datatype = datatype
         if "weights" in kwargs.keys():
-            self._weights = kwargs.pop("weights")
+            self._weights = kwargs.pop("weights").copy(deep=True)
 
         super().__init__(data, *args, **kwargs)
 
@@ -65,14 +65,18 @@ class MagmaSeries(pd.Series):
         not carried over.  We can fix that by constructing a callable
         that makes sure to call `__finalize__` every time."""
 
-        def _c(*args, weights=self._weights, **kwargs):
+        def _c(*args, weights=None, **kwargs):
+            if weights is None:
+                weights = self._weights.copy(deep=True)
             return MagmaSeries(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
 
     @property
     def _constructor_expanddim(self):
-        def _c(*args, weights=self._weights, **kwargs):
+        def _c(*args, weights=None, **kwargs):
+            if weights is None:
+                weights = self._weights.copy(deep=True)
             return _MagmaSeries_expanddim(
                 *args, weights=weights, **kwargs
             ).__finalize__(self)

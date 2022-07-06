@@ -5,6 +5,14 @@ from MagmaPandas.parse.validate import _check_argument, _check_setter
 from MagmaPandas.geochemistry.eos_volatiles import hollowayBlank
 from elements.elements import compound_weights
 
+"""
+ALL CONFIGURATION OBJECTS NEED TO BE REWRITTEN BECAUSE CLASS PROPERTIES DON'T WORK LIKE THIS.
+IT EITHER NEEDS:
+    - A METACLASS WHERE ALL CLASS VARIABLES AND PROPERTIES ARE DEFINED
+    - A CUSTOM CLASSPROPERTY DECORATOR
+    - ALL CONFIGURATION OBJECTS INITIALISED INSIDE THE MODULE __INIT__ WITH ALL ATTRIBUTES AS INSTANCE ATTRIBUTES
+"""
+
 
 def calculate_saturation(*args, **kwargs):
     """

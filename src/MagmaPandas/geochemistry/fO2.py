@@ -35,6 +35,11 @@ def VdP_QFM_phaseTransitions(T_K, P_bar):
 
     p_kbar = P_bar / 1e3
 
+    if isinstance(p_kbar, pd.Series):
+        p_kbar = p_kbar.squeeze()
+    if isinstance(T_K, pd.Series):
+        T_K = T_K.squeeze()
+
     # Calculate pressure of transition for SiO2 polymorphs
     # Quartz --> coesite
     qtz_coe = lambda P: eos_minerals.phaseTransition(
@@ -102,8 +107,16 @@ def muO2_QFM_P(T_K, P_bar):
     calculate chemical potential of oxygen at QFM and pressure P with equations of state
     """
 
-    P_bar_is_int = isinstance(P_bar, (int, float))
-    T_K_is_int = isinstance(T_K, (int, float))
+    try:
+        int(P_bar)
+        P_bar_is_int = True
+    except TypeError:
+        P_bar_is_int = False
+    try:
+        int(T_K)
+        T_K_is_int = True
+    except TypeError:
+        T_K_is_int = False
 
     # If P and T are not both numbers
     if not (P_bar_is_int and T_K_is_int):
@@ -133,9 +146,11 @@ def muO2_QFM_P(T_K, P_bar):
             # kiloJoule to Joule
             muO2[i] = 1e3 * (3 * VdP_quartz + 2 * VdP_magnetite - 3 * VdP_fayalite)
 
+
     else:
         VdP_quartz, VdP_magnetite, VdP_fayalite = VdP_QFM_phaseTransitions(T_K, P_bar)
         muO2 = 1e3 * (3 * VdP_quartz + 2 * VdP_magnetite - 3 * VdP_fayalite)
+
 
     return muO2
 
@@ -198,8 +213,22 @@ def fO2_QFM(logshift, T_K, P_bar):
     """ """
     offset = 10 ** logshift
 
-    muO2_pressure = muO2_QFM_P(T_K, P_bar) - muO2_QFM_P(T_K, 1)
+    # Chemical potential of oxygen
+    # 1 bar contribution from O'Neill
+    muO2_1bar_Oneill = muO2_QFM_1bar(T_K)
+    # Pressue contribution from equations of state
+    muO2_pressure_eos = muO2_QFM_P(T_K, P_bar)
+    # Remove any 1 bar contribution from the equation of state formulation, 
+    # since the O'Neill emperical formulation is used for this
+    VdP_quartz, VdP_magnetite, VdP_fayalite = VdP_QFM(T_K, 1)
+    muO2_1bar_eos = 1e3 * (3 * VdP_quartz + 2 * VdP_magnetite - 3 * VdP_fayalite)
+    muO2_pressure = muO2_pressure_eos - muO2_1bar_eos
+    # Total chemical potential
+    muO2 = muO2_1bar_Oneill + muO2_pressure
 
-    muO2_1bar = muO2_QFM_1bar(T_K)
+    fO2 = np.exp(muO2 / (R * T_K)) * offset
 
-    return np.exp((muO2_1bar + muO2_pressure) / (R * T_K)) * offset
+    if isinstance(fO2, pd.Series):
+        return fO2.squeeze()
+    else:
+        return fO2

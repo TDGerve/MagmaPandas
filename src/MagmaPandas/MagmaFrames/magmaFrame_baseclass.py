@@ -28,7 +28,7 @@ class MagmaFrame(pd.DataFrame):
         self._units = units
         self._datatype = datatype
         if "weights" in kwargs.keys():
-            self._weights = kwargs.pop("weights")
+            self._weights = kwargs.pop("weights").copy(deep=True)
 
         super().__init__(data, *args, **kwargs)
 
@@ -52,7 +52,9 @@ class MagmaFrame(pd.DataFrame):
         not carried over.  We can fix that by constructing a callable
         that makes sure to call `__finalize__` every time."""
 
-        def _c(*args, weights=self._weights, **kwargs):
+        def _c(*args, weights=None, **kwargs):
+            if weights is None:
+                weights = self._weights.copy(deep=True)
             return MagmaFrame(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
@@ -65,7 +67,9 @@ class MagmaFrame(pd.DataFrame):
 
         from MagmaPandas.MagmaSeries import MagmaSeries
 
-        def _c(*args, weights=self._weights, **kwargs):
+        def _c(*args, weights=None, **kwargs):
+            if weights is None:
+                weights = self._weights.copy(deep=True)
             return MagmaSeries(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
@@ -106,14 +110,14 @@ class MagmaFrame(pd.DataFrame):
         """
         Molar mass of the elements in the dataframe
         """
-        return self._weights
+        return self._weights.copy()
 
     @property
     def elements(self) -> List:
         """
         Names of the elements in the dataframe
         """
-        return list(self._weights.index)
+        return list(self._weights.index).copy()
 
     @property
     @_check_attribute("_datatype", ["oxide"])
@@ -124,7 +128,7 @@ class MagmaFrame(pd.DataFrame):
         if self._units != "mol fraction":
             return self.convert_moles_wtPercent
         else:
-            return self
+            return self.copy()
 
     @property
     @_check_attribute("_datatype", ["oxide"])
@@ -204,7 +208,7 @@ class MagmaFrame(pd.DataFrame):
             return
 
         if extra_elements.size > 0:
-            self._weights.drop(extra_elements, inplace=True)        
+            self._weights = self._weights.drop(extra_elements)        
 
         if missing_elements.size > 0:
             new_weights = pd.Series(name="weight", dtype="float32")

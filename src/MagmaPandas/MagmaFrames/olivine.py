@@ -41,7 +41,9 @@ class Olivine(MagmaFrame):
         not carried over.  We can fix that by constructing a callable
         that makes sure to call `__finalize__` every time."""
 
-        def _c(*args, weights=self._weights, **kwargs):
+        def _c(*args, weights=None, **kwargs):
+            if weights is None:
+                weights = self._weights.copy(deep=True)
             return Olivine(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
@@ -51,7 +53,7 @@ class Olivine(MagmaFrame):
         """
         Docstrings
         """
-        if self._datatype == "wt. %":
+        if self._units == "wt. %":
             moles = self.moles
         else:
             moles = self

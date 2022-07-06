@@ -48,7 +48,9 @@ class Melt_inclusion(Melt):
         not carried over.  We can fix that by constructing a callable
         that makes sure to call `__finalize__` every time."""
 
-        def _c(*args, weights=self._weights, **kwargs):
+        def _c(*args, weights=None, **kwargs):
+            if weights is None:
+                weights = self._weights.copy()
             return Melt_inclusion(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c

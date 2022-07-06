@@ -2,9 +2,17 @@ from .parse.validate import _check_setter
 from .parse.validate import _check_argument
 
 
+"""
+ALL CONFIGURATION OBJECTS NEED TO BE REWRITTEN BECAUSE CLASS PROPERTIES DON'T WORK LIKE THIS.
+IT EITHER NEEDS:
+    - A METACLASS WHERE ALL CLASS VARIABLES AND PROPERTIES ARE DEFINED
+    - A CUSTOM CLASSPROPERTY DECORATOR
+    - ALL CONFIGURATION OBJECTS INITIALISED INSIDE THE MODULE __INIT__ WITH ALL ATTRIBUTES AS INSTANCE ATTRIBUTES
+"""
+
 Fe3Fe2_models = ["borisov", "kressCarmichael"]
 Kd_ol_FeMg_models = ["toplis", "blundy"]
-melt_thermometers = ["putirka2008_14", "putirka2008_16"]
+melt_thermometers = ["putirka2008_14", "putirka2008_15", "putirka2008_16"]
 volatile_solubility_models = ["IaconoMarziano"]
 
 
