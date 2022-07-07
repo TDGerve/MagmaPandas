@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.optimize import root_scalar, root, minimize
+from scipy.optimize import root_scalar, root
 from scipy.constants import R
 from MagmaPandas.parse.validate import _check_argument, _check_setter
 from MagmaPandas.geochemistry.eos_volatiles import hollowayBlank
