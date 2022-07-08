@@ -17,6 +17,9 @@ from MagmaPandas.parse.validate import _check_setter
 Fe2_options = ["buffered", "incompatible"]
 
 class _meta_PEC_configuration(type):
+    """
+    Metaclass for setting class properties
+    """
 
     def __init__(cls, *args, **kwargs):
         cls._Fe2_behaviour = "buffered"
@@ -24,7 +27,7 @@ class _meta_PEC_configuration(type):
         cls.stepsize_equilibration = 0.002
         cls.stepsize_crystallisation = 0.05
         # Reduction factor for stepsize after overstepping
-        cls.decrease_factor = 2
+        cls.decrease_factor = 5
         # Convergence values
         cls.FeO_converge = 0.05
         cls.Kd_converge = 1e-3
@@ -585,13 +588,13 @@ class PEC_olivine:
 
         return Kd_equilibrium, Kd_observed
 
-    def Fe_equilibrate(self, inplace=False):
+    def Fe_equilibrate(self, inplace=False, **kwargs):
         """
         Docstring
         """
 
         # Get settings
-        stepsize = getattr(PEC_configuration, "stepsize_equilibration")
+        stepsize = kwargs.get("stepsize", getattr(PEC_configuration, "stepsize_equilibration"))
         stepsize = pd.Series(stepsize, index=self.inclusions.index)
         decrease_factor = getattr(PEC_configuration, "decrease_factor")
         Kd_converge = getattr(PEC_configuration, "Kd_converge")
@@ -690,7 +693,7 @@ class PEC_olivine:
                     x1=1,
                 ).root
                 mi_moles_loop.loc[sample] = mi_moles_loop.loc[sample] + olivine.loc[sample].mul(olivine_amount)
-                # current itaration
+                # current iteration
                 olivine_corrected_loop.loc[sample] = olivine_amount
                 # Running total
                 self.olivine_corrected.loc[sample] += olivine_amount
@@ -772,7 +775,7 @@ class PEC_olivine:
             raise RuntimeError("Inclusion compositions have not all been equilibrated")
 
         # Get settings
-        stepsize = getattr(PEC_configuration, "stepsize_crystallisation")
+        stepsize = kwargs.get("stepsize", getattr(PEC_configuration, "stepsize_crystallisation"))
         stepsize = pd.Series(stepsize, index=self.inclusions.index)
         decrease_factor = getattr(PEC_configuration, "decrease_factor")
         FeO_converge = kwargs.get(
@@ -878,7 +881,7 @@ class PEC_olivine:
         self.inclusions = corrected_compositions
         if not inplace:
             return (
-                corrected_compositions,
+                corrected_compositions.copy(),
                 self.olivine_corrected.copy(),
                 {
                     "old": temperature_old,
@@ -886,11 +889,11 @@ class PEC_olivine:
                 },
             )
 
-    def correct(self):
+    def correct(self, **kwargs):
 
-        self.Fe_equilibrate(inplace=True)
+        self.Fe_equilibrate(inplace=True, **kwargs)
         corrected_compositions, olivine_corrected, temperatures = self.correct_olivine(
-            inplace=False
+            inplace=False, **kwargs
         )
         return corrected_compositions, olivine_corrected, temperatures
 
