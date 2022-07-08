@@ -137,7 +137,7 @@ def FeRedox_QFM(mol_fractions, T_K, P_bar, logshift=0, **kwargs):
     melt Fe3+/Fe2+ ratio
 
     """
-    Fe_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
+    Fe_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
 
     fO2_bar = kwargs.get("fO2", fO2.fO2_QFM(logshift, T_K, P_bar))
 

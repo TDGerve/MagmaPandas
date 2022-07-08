@@ -116,8 +116,8 @@ class Melt_inclusion(Melt):
         temperatures = inclusions.temperature(P_bar=P_bar)
         fO2 = fO2_QFM(QFM_logshift, temperatures, P_bar)
         # Collect configured models
-        Fe3Fe2_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
-        Kd_model = getattr(Kd_FeMg_vectorised, configuration().Kd_model)
+        Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
+        Kd_model = getattr(Kd_FeMg_vectorised, configuration.Kd_model)
 
         # Function for calculating equilibrium forsterite content and Fe2+/Fe(total)
         def calculate_Kd(
@@ -337,8 +337,8 @@ class Melt_inclusion(Melt):
         FeMg_exchange_reduction = 4
         decrease_factor = 5
         # Collect configured models
-        Fe3Fe2_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
-        Kd_model = getattr(Kd_FeMg_vectorised, configuration().Kd_model)
+        Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
+        Kd_model = getattr(Kd_FeMg_vectorised, configuration.Kd_model)
 
         # Data checks
         # For olivine

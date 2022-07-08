@@ -28,7 +28,7 @@ def calculate_saturation(oxide_wtPercents, T_K, **kwargs):
     Docstring
     """
 
-    model = IaconoMarziano_configuration().model
+    model = IaconoMarziano_configuration.model
     equation = globals()[model].calculate_saturation
     
 
@@ -40,7 +40,7 @@ def calculate_solubility(oxide_wtPercents, P_bar, T_K, **kwargs):
     Docstring
     """
 
-    model = IaconoMarziano_configuration().model
+    model = IaconoMarziano_configuration.model
     equation = globals()[model].calculate_solubility
 
     return equation(oxide_wtPercents, P_bar, T_K, **kwargs)
@@ -49,61 +49,68 @@ def calculate_solubility(oxide_wtPercents, P_bar, T_K, **kwargs):
 parameter_options = ["hydrous_webapp", "hydrous_manuscript", "anhydrous"]
 fugacity_options = ["ideal"]
 activity_options = ["ideal"]
-model_options = ["mixed", "h20", "co2"]
+model_options = ["mixed", "h2o", "co2"]
 
+class _meta_IaconoMarziano_configuration(type):
 
-class IaconoMarziano_configuration:
-    """
-    Configure settings for the Iacono-Marziano volatile solubility model
-    """
-
-    __parameters = "hydrous_webapp"
-    __fugacity = "ideal"
-    __activity = "ideal"
-    __model = "mixed"
+    def __init__(cls, *args, **kwargs):
+        cls._parameters = "hydrous_webapp"
+        cls._fugacity = "ideal"
+        cls._activity = "ideal"
+        cls._model = "mixed"
 
     @property
     def parameters(cls):
-        return cls.__parameters
+        return cls._parameters
 
     @parameters.setter
     @_check_setter(parameter_options)
     def parameters(cls, model: str):
-        cls.__parameters = model
+        cls._parameters = model
 
     @property
     def fugacity(cls):
-        return cls.__fugacity
+        return cls._fugacity
 
     @fugacity.setter
     @_check_setter(fugacity_options)
     def fugacity(cls, model: str):
-        cls.__fugacity = model
+        cls._fugacity = model
 
     @property
     def activity(cls):
-        return cls.__activity
+        return cls._activity
 
     @activity.setter
     @_check_setter(activity_options)
     def activity(cls, model: str):
-        cls.__activity = model
+        cls._activity = model
 
     @property
     def model(cls):
-        return cls.__model
+        return cls._model
 
     @model.setter
     @_check_setter(model_options)
     def model(cls, model: str):
-        cls.__model = model
+        cls._model = model
 
     @classmethod
     def reset(cls):
-        cls.__parameters = "hydrous_webapp"
-        cls.__fugacity = "ideal"
-        cls.__activity = "ideal"
-        cls.__model = "mixed"
+        cls._parameters = "hydrous_webapp"
+        cls._fugacity = "ideal"
+        cls._activity = "ideal"
+        cls._model = "mixed"
+
+
+class IaconoMarziano_configuration(metaclass=_meta_IaconoMarziano_configuration):
+
+    @classmethod
+    def reset(cls):
+        cls._parameters = "hydrous_webapp"
+        cls._fugacity = "ideal"
+        cls._activity = "ideal"
+        cls._model = "mixed"
 
     @classmethod
     def print(cls):
@@ -112,10 +119,10 @@ class IaconoMarziano_configuration:
         """
 
         variables = {
-            "Parameterisation": "__parameters",
-            "Fugacity model": "__fugacity",
-            "Activity model": "__activity",
-            "Species model": "__model",
+            "Parameterisation": "_parameters",
+            "Fugacity model": "_fugacity",
+            "Activity model": "_activity",
+            "Species model": "_model",
         }
 
         pad_left = 20
@@ -126,14 +133,97 @@ class IaconoMarziano_configuration:
         print("".ljust(pad_total, "#"))
         print("Settings".ljust(pad_total, "_"))
         for param, model in variables.items():
-            model_attr = f"_IaconoMarziano_configuration{model}"
+            # model_attr = f"_IaconoMarziano_configuration{model}"
             print(
-                f"{param:.<{pad_left}}{getattr(cls, model_attr):.>{pad_right}}"
+                f"{param:.<{pad_left}}{getattr(cls, model):.>{pad_right}}"
             )
         print("\nCalibration range".ljust(pad_total, "_"))
         T_string = f"1373-1673\N{DEGREE SIGN}K"
         print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
         print(f"{'Pressure':.<{pad_left}}{'0.1-5 kbar':.>{pad_right}}")
+
+# class IaconoMarziano_configuration:
+#     """
+#     Configure settings for the Iacono-Marziano volatile solubility model
+#     """
+
+#     __parameters = "hydrous_webapp"
+#     __fugacity = "ideal"
+#     __activity = "ideal"
+#     __model = "mixed"
+
+#     @property
+#     def parameters(cls):
+#         return cls.__parameters
+
+#     @parameters.setter
+#     @_check_setter(parameter_options)
+#     def parameters(cls, model: str):
+#         cls.__parameters = model
+
+#     @property
+#     def fugacity(cls):
+#         return cls.__fugacity
+
+#     @fugacity.setter
+#     @_check_setter(fugacity_options)
+#     def fugacity(cls, model: str):
+#         cls.__fugacity = model
+
+#     @property
+#     def activity(cls):
+#         return cls.__activity
+
+#     @activity.setter
+#     @_check_setter(activity_options)
+#     def activity(cls, model: str):
+#         cls.__activity = model
+
+#     @property
+#     def model(cls):
+#         return cls.__model
+
+#     @model.setter
+#     @_check_setter(model_options)
+#     def model(cls, model: str):
+#         cls.__model = model
+
+#     @classmethod
+#     def reset(cls):
+#         cls.__parameters = "hydrous_webapp"
+#         cls.__fugacity = "ideal"
+#         cls.__activity = "ideal"
+#         cls.__model = "mixed"
+
+#     @classmethod
+#     def print(cls):
+#         """ 
+        
+#         """
+
+#         variables = {
+#             "Parameterisation": "__parameters",
+#             "Fugacity model": "__fugacity",
+#             "Activity model": "__activity",
+#             "Species model": "__model",
+#         }
+
+#         pad_left = 20
+#         pad_right = 20
+#         pad_total = pad_left + pad_right
+
+#         print(" Iacono-Marziano volatile solubility ".center(pad_total, "#"))
+#         print("".ljust(pad_total, "#"))
+#         print("Settings".ljust(pad_total, "_"))
+#         for param, model in variables.items():
+#             model_attr = f"_IaconoMarziano_configuration{model}"
+#             print(
+#                 f"{param:.<{pad_left}}{getattr(cls, model_attr):.>{pad_right}}"
+#             )
+#         print("\nCalibration range".ljust(pad_total, "_"))
+#         T_string = f"1373-1673\N{DEGREE SIGN}K"
+#         print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
+#         print(f"{'Pressure':.<{pad_left}}{'0.1-5 kbar':.>{pad_right}}")
 
 
 H2O_coefficients = {
@@ -199,7 +289,7 @@ class h2o:
 
         composition = oxide_wtPercents.copy()
 
-        if IaconoMarziano_configuration().parameters == "anhydrous":
+        if IaconoMarziano_configuration.parameters == "anhydrous":
             # Solve equation 13
             return h2o._solubility(composition, x_fluid, P_bar, T_K)
         else:
@@ -239,14 +329,14 @@ class h2o:
         Equation 13 from Iacono-Marziano et al. (2012)
         """
 
-        coefficients = H2O_coefficients[IaconoMarziano_configuration().parameters]
+        coefficients = H2O_coefficients[IaconoMarziano_configuration.parameters]
         a, b, B, C = [coefficients[key] for key in ["a", "b", "B", "C"]]
 
         mol_fractions = oxide_wtPercents.moles
         NBO_O = NBO_O_calculate(mol_fractions)
         
 
-        if IaconoMarziano_configuration().fugacity == "ideal":
+        if IaconoMarziano_configuration.fugacity == "ideal":
             P_H2O = x_fluid * P_bar
 
         H2O = np.exp(a * np.log(P_H2O) + b * NBO_O + B + C * P_bar / T_K)
@@ -290,7 +380,7 @@ class co2:
         if any(i <= 0 for i in [P_bar, (1 - x_fluid)]):
             return 0
 
-        if "anhydrous" in IaconoMarziano_configuration().parameters:
+        if "anhydrous" in IaconoMarziano_configuration.parameters:
             parameterisation = "anhydrous"
         else:
             parameterisation = "hydrous"
@@ -311,7 +401,7 @@ class co2:
         else:
             Fe2O3 = 0.0
 
-        if IaconoMarziano_configuration().fugacity == "ideal":
+        if IaconoMarziano_configuration.fugacity == "ideal":
             P_CO2 = (1 - x_fluid) * P_bar
 
         x_AI = mol_fractions["Al2O3"] / (
@@ -476,7 +566,7 @@ def NBO_O_calculate(mol_fractions):
         + mol_fractions["K2O"]
     )
 
-    if not IaconoMarziano_configuration().parameters == "anhydrous":
+    if not IaconoMarziano_configuration.parameters == "anhydrous":
         NBO = NBO + 2 * mol_fractions["H2O"]
         O = O + mol_fractions["H2O"]
 

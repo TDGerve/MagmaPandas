@@ -144,6 +144,7 @@ class Kd_FeMg_vectorised:
         forsterite_initial,
         T_K,
         Fe3Fe2,
+        *args,
         **kwargs,
     ):
 
@@ -210,8 +211,8 @@ class Kd_FeMg_vectorised:
         melt_mol_fractions: pd.DataFrame,
         forsterite_initial,
         T_K,
-        P_bar,
         Fe3Fe2,
+        P_bar,
         **kwargs,
     ):
         """
@@ -289,6 +290,7 @@ class Kd_FeMg:
         forsterite: float,
         T_K: float,
         Fe3Fe2: float,
+        *args,
         **kwargs,
     ):
 
@@ -335,8 +337,9 @@ class Kd_FeMg:
         melt_mol_fractions: pd.Series,
         forsterite: float,
         T_K: float,
-        P_bar: float,
         Fe3Fe2: float,
+        P_bar: float,
+        *args,
         **kwargs,
     ):
         """

@@ -55,7 +55,7 @@ class Melt(MagmaFrame):
 
     def temperature(self, *args, **kwargs):
 
-        thermometer = getattr(melt_thermometers, configuration().melt_thermometer)
+        thermometer = getattr(melt_thermometers, configuration.melt_thermometer)
 
         return thermometer(self, *args, **kwargs)
 
@@ -95,7 +95,7 @@ class Melt(MagmaFrame):
 
         mol_fractions = self.moles
 
-        Fe3Fe2_model = configuration().Fe3Fe2
+        Fe3Fe2_model = configuration.Fe3Fe2
 
         fO2_bar = fO2_QFM(logshift, T_K, P_bar)
 
@@ -156,7 +156,7 @@ class Melt(MagmaFrame):
 
         [Fe(ol) / Fe(m)] * [Mg(m) / Mg(ol)]
         """
-        Kd_model = getattr(Kd_FeMg_vectorised, configuration().Kd_model)
+        Kd_model = getattr(Kd_FeMg_vectorised, configuration.Kd_model)
 
         mol_fractions = self.moles
 

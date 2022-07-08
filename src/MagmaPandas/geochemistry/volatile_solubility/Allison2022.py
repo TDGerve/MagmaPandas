@@ -1,3 +1,4 @@
+from typing import List
 import numpy as np
 from scipy.optimize import root_scalar, root
 from scipy.constants import R
@@ -5,20 +6,13 @@ from MagmaPandas.parse.validate import _check_argument, _check_setter
 from MagmaPandas.geochemistry.eos_volatiles import hollowayBlank
 from elements.elements import compound_weights
 
-"""
-ALL CONFIGURATION OBJECTS NEED TO BE REWRITTEN BECAUSE CLASS PROPERTIES DON'T WORK LIKE THIS.
-IT EITHER NEEDS:
-    - A METACLASS WHERE ALL CLASS VARIABLES AND PROPERTIES ARE DEFINED
-    - A CUSTOM CLASSPROPERTY DECORATOR
-    - ALL CONFIGURATION OBJECTS INITIALISED INSIDE THE MODULE __INIT__ WITH ALL ATTRIBUTES AS INSTANCE ATTRIBUTES
-"""
 
 
 def calculate_saturation(*args, **kwargs):
     """
     Docstring
     """
-    model = Allison_configuration().model
+    model = Allison_configuration.model
     equation = globals()[model].calculate_saturation
 
     return equation(*args, **kwargs)
@@ -28,68 +22,124 @@ def calculate_solubility(*args, **kwargs):
     """
     Docstring
     """
-    model = Allison_configuration().model
+    model = Allison_configuration.model
     equation = globals()[model].calculate_solubility
 
     return equation(*args, **kwargs)
 
 
 fugacity_options = ["hollowayBlank"]
-model_options = ["mixed", "h20", "co2"]
+model_options = ["mixed", "h2o", "co2"]
 
+class _meta_Allison_configuration(type):
 
-class Allison_configuration:
-    """
-    Configure settings for the Allison (2022) volatile solubility model
-    """
-
-    __fugacity = "hollowayBlank"
-    __model = "mixed"
+    def __init__(cls, *args, **kwargs):
+        cls._fugacity = "hollowayBlank"
+        cls._model = "mixed"
 
     @property
     def fugacity(cls):
-        return Allison_configuration.__fugacity
+        return cls._fugacity
 
     @fugacity.setter
     @_check_setter(fugacity_options)
     def fugacity(cls, model: str):
-        Allison_configuration.__fugacity = model
+        cls._fugacity = model
 
     @property
     def model(cls):
-        return Allison_configuration.__model
+        return cls._model
 
     @model.setter
     @_check_setter(model_options)
     def model(cls, model: str):
-        Allison_configuration.__model = model
+        cls._model = model
 
-    @staticmethod
-    def reset():
-        Allison_configuration.__fugacity = "hollowayBlank"
-        Allison_configuration.__model = "mixed"
+    
 
-    @staticmethod
-    def print():
+class Allison_configuration(metaclass=_meta_Allison_configuration):
+
+    @classmethod
+    def reset(cls):
+        cls._fugacity = "hollowayBlank"
+        cls._model = "mixed"
+
+    @classmethod
+    def print(cls):
         """ """
-        names = [
-            "Fugacity model",
-            "Species model",
-        ]
-        attributes = [f"_Allison_configuration{i}" for i in ["__fugacity", "__model"]]
+
+        variables = {"Fugacity model": "_fugacity",
+        "Species model": "_model"
+
+        }
         pad_left = 20
         pad_right = 20
         pad_total = pad_left + pad_right
         print(" Allison (2022) volatile solubility ".center(pad_total, "#"))
+        print("".ljust(pad_total, "#"))
         print("Settings".ljust(pad_total, "_"))
-        for param, model in zip(names, attributes):
+        for param, model in variables.items():
             print(
-                f"{param:.<{pad_left}}{getattr(Allison_configuration, model):.>{pad_right}}"
+                f"{param:.<{pad_left}}{getattr(cls, model):.>{pad_right}}"
             )
         print("\nCalibration range".ljust(pad_total, "_"))
         T_string = f"{1000+273.15:.0f}-{1400+273.14:.0f}\N{DEGREE SIGN}K"
         print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
         print(f"{'Pressure':.<{pad_left}}{'< 7 kbar':.>{pad_right}}")
+
+
+# class Allison_configuration:
+#     """
+#     Configure settings for the Allison (2022) volatile solubility model
+#     """
+
+#     __fugacity = "hollowayBlank"
+#     __model = "mixed"
+
+#     @property
+#     def fugacity(cls):
+#         return Allison_configuration.__fugacity
+
+#     @fugacity.setter
+#     @_check_setter(fugacity_options)
+#     def fugacity(cls, model: str):
+#         Allison_configuration.__fugacity = model
+
+#     @property
+#     def model(cls):
+#         return Allison_configuration.__model
+
+#     @model.setter
+#     @_check_setter(model_options)
+#     def model(cls, model: str):
+#         Allison_configuration.__model = model
+
+#     @staticmethod
+#     def reset():
+#         Allison_configuration.__fugacity = "hollowayBlank"
+#         Allison_configuration.__model = "mixed"
+
+#     @staticmethod
+#     def print():
+#         """ """
+#         names = [
+#             "Fugacity model",
+#             "Species model",
+#         ]
+#         attributes = [f"_Allison_configuration{i}" for i in ["__fugacity", "__model"]]
+#         pad_left = 20
+#         pad_right = 20
+#         pad_total = pad_left + pad_right
+#         print(" Allison (2022) volatile solubility ".center(pad_total, "#"))
+#         print("Settings".ljust(pad_total, "_"))
+#         for param, model in zip(names, attributes):
+#             print(
+#                 f"{param:.<{pad_left}}{getattr(Allison_configuration, model):.>{pad_right}}"
+#             )
+#         print("\nCalibration range".ljust(pad_total, "_"))
+#         T_string = f"{1000+273.15:.0f}-{1400+273.14:.0f}\N{DEGREE SIGN}K"
+#         print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
+#         print(f"{'Pressure':.<{pad_left}}{'< 7 kbar':.>{pad_right}}")
 
 
 FeO_mass, Fe2O3_mass = compound_weights(["FeO", "Fe2O3"])
@@ -313,11 +363,16 @@ class mixed:
 
         saturation = root(
             mixed._saturation_rootFunction,
-            x0=[P_guess, 0.],
+            x0=[P_guess, 0.01],
             args=(composition, T_K),
         ).x
 
+        if saturation[1] <= 0.:
+            saturation[0] = P_CO2_saturation
+            saturation[1] = 0.
+
         return_dict = {"P": saturation[0], "x_fluid": saturation[1], "both": saturation}
+
         return return_dict[output]
 
     @staticmethod
@@ -337,7 +392,7 @@ class mixed:
         return return_dict[output]
 
     @staticmethod
-    def _saturation_rootFunction(P_x_fluid, oxide_wtPercents, T_K):
+    def _saturation_rootFunction(P_x_fluid: List, oxide_wtPercents, T_K):
 
         P_bar, x_fluid = P_x_fluid
         # Keep x_fluid and P_bar within bounds

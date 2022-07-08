@@ -11,54 +11,57 @@ from MagmaPandas.geochemistry.Fe_redox import Fe_redox
 from MagmaPandas.geochemistry.fO2 import fO2_QFM
 from MagmaPandas import MagmaSeries, Olivine, Melt_inclusion, Melt
 from MagmaPandas.configuration import configuration
+from MagmaPandas.parse.validate import _check_setter
 
 
-Fe3_options = ["buffered", "incompatible"]
+Fe2_options = ["buffered", "incompatible"]
 
-"""
-ALL CONFIGURATION OBJECTS NEED TO BE REWRITTEN BECAUSE CLASS PROPERTIES DON'T WORK LIKE THIS.
-IT EITHER NEEDS:
-    - A METACLASS WHERE ALL CLASS VARIABLES AND PROPERTIES ARE DEFINED
-    - A CUSTOM CLASSPROPERTY DECORATOR
-    - ALL CONFIGURATION OBJECTS INITIALISED INSIDE THE MODULE __INIT__ WITH ALL ATTRIBUTES AS INSTANCE ATTRIBUTES
-"""
+class _meta_PEC_configuration(type):
+
+    def __init__(cls, *args, **kwargs):
+        cls._Fe2_behaviour = "buffered"
+        # Initial stepsize
+        cls.stepsize_equilibration = 0.002
+        cls.stepsize_crystallisation = 0.05
+        # Reduction factor for stepsize after overstepping
+        cls.decrease_factor = 2
+        # Convergence values
+        cls.FeO_converge = 0.05
+        cls.Kd_converge = 1e-3
+    
+    @property
+    def Fe2_behaviour(cls):
+        return cls._Fe2_behaviour
+
+    @Fe2_behaviour.setter
+    @_check_setter(Fe2_options)
+    def Fe2_behaviour(cls, value):
+        cls._Fe2_behaviour = value
 
 
-class PEC_configuration:
 
-    Fe2_behaviour = "buffered"
-    # Initial stepsize
-    stepsize_equilibration = 0.002
-    stepsize_crystallisation = 0.05
-    # Reduction factor for stepsize after overstepping
-    decrease_factor = 5
-    # Convergence values
-    FeO_converge = 0.05
-    Kd_converge = 1e-3
-    temperature_converge = 0.1
+class PEC_configuration(metaclass=_meta_PEC_configuration):
 
     @classmethod
     def reset(cls):
-        cls.Fe2_behaviour = "buffered"
+        cls._Fe2_behaviour = "buffered"
         cls.stepsize_equilibration = 0.002
         cls.stepsize_crystallisation = 0.05
-        cls.decrease_factor = 5
+        cls.decrease_factor = 2
         cls.FeO_converge = 0.05
-        cls.Kd_converge = 1e-4
-        cls.temperature_converge = 0.1
+        cls.Kd_converge = 1e-3
 
     @classmethod
     def print(cls):
         """ """
 
         variables = {
-            "Fe2+ behaviour": "Fe2_behaviour",
+            "Fe2+ behaviour": "_Fe2_behaviour",
             "Stepsize equilibration (moles)": "stepsize_equilibration",
             "Stepsize crystallisation (moles)": "stepsize_crystallisation",
             "Decrease factor": "decrease_factor",
             "FeO convergence (wt. %)": "FeO_converge",
             "Kd convergence": "Kd_converge",
-            "Temperature convergence (\N{DEGREE SIGN})": "temperature_converge",
         }
 
         names_length = max([len(i) for i in variables.keys()]) + 5
@@ -89,10 +92,10 @@ def Fe_equilibrate(
         "stepsize", getattr(PEC_configuration, "stepsize_equilibration")
     )  # In molar fraction, this is the maximum recommende stepsize.
     Kd_converge = kwargs.get(
-        "converge", getattr(PEC_configuration, "Kd_converge")
+        "Kd_converge", getattr(PEC_configuration, "Kd_converge")
     )  # Kd converge
-    Fe2_behaviour = kwargs.get("Fe2_behaviour", PEC_configuration().Fe2_behaviour)
-    QFM_logshift = kwargs.get("QFM_logshift", configuration().QFMlogshift)
+    Fe2_behaviour = getattr(PEC_configuration, "_Fe2_behaviour")
+    QFM_logshift = kwargs.get("dQFM", configuration.dQFM)
     # Parameters for the while loop
     olivine_crystallised = np.array([0.0])
     decrease_factor = getattr(PEC_configuration, "decrease_factor")
@@ -104,8 +107,8 @@ def Fe_equilibrate(
     temperature = inclusion.melt_temperature(P_bar=P_bar)
     fO2 = fO2_QFM(QFM_logshift, temperature, P_bar)
     # Collect configured models
-    Fe3Fe2_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
-    Kd_model = getattr(Kd_FeMg, configuration().Kd_model)
+    Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
+    Kd_model = getattr(Kd_FeMg, configuration.Kd_model)
     # Get olivine molar oxide fractions
     if isinstance(olivine, float):
         if olivine < 0 or olivine > 1:
@@ -276,10 +279,10 @@ def crystallisation_correction(
     converge = kwargs.get(
         "converge", getattr(PEC_configuration, "FeO_converge")
     )  # FeO convergence
-    dQFM = kwargs.get("QFM_logshift", configuration().QFMlogshift)
+    dQFM = kwargs.get("QFM_logshift", configuration.dQFM)
     calculate_FeO_target = False
     # Parameters for the while loop
-    decrease_factor = 5
+    decrease_factor = getattr(PEC_configuration, "decrease_factor")
     # Normalise inclusion composition
     inclusion = inclusion[inclusion.elements].copy()
     inclusion = inclusion.fillna(0.0)
@@ -335,13 +338,13 @@ def crystallisation_correction(
     ##### OLIVINE MELTING/CRYSTALLISATION LOOP #####
     while not np.isclose(FeO, FeO_target, atol=converge, rtol=0):
 
-        idx = round(mi_moles.index[-1] + stepsize, 4)
+        idx = mi_moles.index[-1] + stepsize
         mi_moles.loc[idx] = (mi_moles.iloc[-1] + olivine.mul(stepsize)).values
         mi_moles = mi_moles.normalise()
         ###### FE-MG EXCHANGE UNTIL KD EQUILIBRIIUM #####
         exchange_amount = root_scalar(
             _root_Kd,
-            args=(mi_moles.loc[idx], FeMg_vector, forsterite, P_bar),
+            args=(mi_moles.loc[idx], FeMg_vector, forsterite, P_bar, {"dQFM": dQFM}),
             x0=0,
             x1=0.1,
         ).root
@@ -388,20 +391,20 @@ def _root_temperature(olivine_amount, melt_x_moles, olivine_x_moles, T_K, P_bar)
 
     return T_K - temperature_new
 
-def _root_Kd(exchange_amount, melt_x_moles, exchange_vector, forsterite, P_bar):
+def _root_Kd(exchange_amount, melt_x_moles, exchange_vector, forsterite, P_bar, kwargs):
 
     melt_x_new = melt_x_moles + exchange_vector.mul(exchange_amount)
     melt_x_new = melt_x_new.normalise()
-    Kd_equilibrium, Kd_real = calculate_Kds(melt_x_new, P_bar, forsterite)
+    Kd_equilibrium, Kd_real = calculate_Kds(melt_x_new, P_bar, forsterite, **kwargs)
 
     return Kd_equilibrium - Kd_real
 
 
-def calculate_Kds(melt_x_moles, P_bar, forsterite):
+def calculate_Kds(melt_x_moles, P_bar, forsterite, **kwargs):
 
-    Fe3Fe2_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
-    Kd_model = getattr(Kd_FeMg, configuration().Kd_model)
-    dQFM = configuration().QFMlogshift
+    Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
+    Kd_model = getattr(Kd_FeMg, configuration.Kd_model)
+    dQFM = kwargs.get("dQFM", configuration.dQFM)
 
     T_K = melt_x_moles.convert_moles_wtPercent.melt_temperature(P_bar)
     fO2 = fO2_QFM(dQFM, T_K, P_bar)
@@ -412,7 +415,7 @@ def calculate_Kds(melt_x_moles, P_bar, forsterite):
     olivine_MgFe = forsterite / (1 - forsterite)
     Kd_observed = melt_MgFe / olivine_MgFe
 
-    Kd_eq = Kd_model(melt_x_moles, forsterite, T_K, P_bar, Fe3Fe2)
+    Kd_eq = Kd_model(melt_x_moles, forsterite, T_K, Fe3Fe2, P_bar)
 
     return Kd_eq, Kd_observed
 
@@ -557,9 +560,9 @@ class PEC_olivine:
         """
         Calculate observed and modelled Kds
         """
-        Fe3Fe2_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
-        Kd_model = getattr(Kd_FeMg_vectorised, configuration().Kd_model)
-        dQFM = configuration().QFMlogshift
+        Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
+        Kd_model = getattr(Kd_FeMg_vectorised, configuration.Kd_model)
+        dQFM = kwargs.get("dQFM", configuration.dQFM)
 
         melt = kwargs.get("melt", self.inclusions.moles)
         pressure = kwargs.get("P_bar", self.P_bar)
@@ -576,7 +579,7 @@ class PEC_olivine:
         Kd_observed.rename("real", inplace=True)
         Kd_observed.index.name = "sample"
 
-        Kd_equilibrium = Kd_model(melt, forsterite, T_K, pressure, Fe3Fe2)
+        Kd_equilibrium = Kd_model(melt, forsterite, T_K, Fe3Fe2, pressure)
         Kd_equilibrium.rename("equilibrium", inplace=True)
         Kd_equilibrium.index.name = "sample"
 
@@ -592,10 +595,10 @@ class PEC_olivine:
         stepsize = pd.Series(stepsize, index=self.inclusions.index)
         decrease_factor = getattr(PEC_configuration, "decrease_factor")
         Kd_converge = getattr(PEC_configuration, "Kd_converge")
-        dQFM = configuration().QFMlogshift
+        dQFM = configuration.dQFM
         P_bar = self.P_bar
         # Get configured models
-        Fe3Fe2_model = getattr(Fe_redox, configuration().Fe3Fe2_model)
+        Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
         # Calculate temperature and fO2
         temperatures = self.inclusions.temperature(P_bar=P_bar)
         fO2 = fO2_QFM(dQFM, temperatures, P_bar)
@@ -625,6 +628,8 @@ class PEC_olivine:
         stepsize.loc[Kd_real < Kd_equilibrium] = -stepsize.loc[
             Kd_real < Kd_equilibrium
         ].copy()
+        # Store olivine correction for the current itaration
+        olivine_corrected_loop = pd.Series(0, index=mi_moles.index )
 
         ##### Main Fe-Mg exhange loop #####
         ###################################
@@ -685,6 +690,9 @@ class PEC_olivine:
                     x1=1,
                 ).root
                 mi_moles_loop.loc[sample] = mi_moles_loop.loc[sample] + olivine.loc[sample].mul(olivine_amount)
+                # current itaration
+                olivine_corrected_loop.loc[sample] = olivine_amount
+                # Running total
                 self.olivine_corrected.loc[sample] += olivine_amount
             mi_moles_loop = mi_moles_loop.normalise()    
             ######################################################################        
@@ -711,6 +719,7 @@ class PEC_olivine:
                 mi_moles_loop.drop(labels=idx_FeMg, axis=0, inplace=True)
                 Kd_eq_loop.drop(labels=idx_FeMg, axis=0, inplace=True)
                 Kd_real_loop.drop(labels=idx_FeMg, axis=0, inplace=True)
+                self.olivine_corrected.loc[idx_FeMg] -= olivine_corrected_loop.loc[idx_FeMg]
                 stepsize.loc[idx_FeMg] = stepsize_loop.loc[idx_FeMg].div(
                     decrease_factor
                 )
@@ -742,7 +751,7 @@ class PEC_olivine:
         if not inplace:
             return (
                 corrected_compositions,
-                self.olivine_corrected,
+                self.olivine_corrected.copy(),
                 {"Equilibrium": Kd_equilibrium, "Real": Kd_real},
             )
 
@@ -769,6 +778,7 @@ class PEC_olivine:
         FeO_converge = kwargs.get(
             "FeO_converge", getattr(PEC_configuration, "FeO_converge")
         )
+        dQFM = getattr(configuration, "dQFM")
         P_bar = self.P_bar
         # Inclusion compositions in oxide mol fractions
         mi_moles = self.inclusions.moles
@@ -779,8 +789,8 @@ class PEC_olivine:
         FeMg_vector = pd.Series(0, index=mi_moles.columns)
         FeMg_vector.loc[["FeO", "MgO"]] = [1, -1]
         # Starting FeO and temperature
-        FeO = self.inclusions["FeO"]
-        FeO_target = self.FeO_target
+        FeO = self.inclusions["FeO"].copy()
+        FeO_target = self.FeO_target.copy()
         temperature_old = self.inclusions.temperature(P_bar=P_bar)
 
         stepsize.loc[FeO > FeO_target] = -stepsize.loc[FeO > FeO_target]
@@ -809,7 +819,7 @@ class PEC_olivine:
             for sample in mi_moles_loop.index:
                 exchange_amount = root_scalar(
                     _root_Kd,
-                    args=(mi_moles_loop.loc[sample], FeMg_vector, forsterite.loc[sample], P_bar.loc[sample]),
+                    args=(mi_moles_loop.loc[sample], FeMg_vector, forsterite.loc[sample], P_bar.loc[sample], {"dQFM": dQFM}),
                     x0=0,
                     x1=0.1,
                 ).root
@@ -869,7 +879,7 @@ class PEC_olivine:
         if not inplace:
             return (
                 corrected_compositions,
-                self.olivine_corrected,
+                self.olivine_corrected.copy(),
                 {
                     "old": temperature_old,
                     "new": corrected_compositions.temperature(P_bar),

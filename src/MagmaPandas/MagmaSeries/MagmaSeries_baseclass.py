@@ -248,6 +248,6 @@ class MagmaSeries(pd.Series):
         calculate liquidus temperature for melts
         """
 
-        thermometer = getattr(melt_thermometers, configuration().melt_thermometer)
+        thermometer = getattr(melt_thermometers, configuration.melt_thermometer)
 
         return thermometer(self, *args, **kwargs)
