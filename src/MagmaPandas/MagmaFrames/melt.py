@@ -16,6 +16,8 @@ def read_melt(
     index_col: List[str],
     total_col: str = None,
     keep_columns: List[str] = None,
+    units="wt. %",
+    datatype="oxide",
     **kwargs,
 ) -> "Melt":
     """
@@ -30,8 +32,8 @@ def read_melt(
         index_col=index_col,
         total_col=total_col,
         keep_columns=keep_columns,
-        units="wt. %",
-        Type="oxide",
+        units=units,
+        datatype=datatype,
         **kwargs,
     )
 

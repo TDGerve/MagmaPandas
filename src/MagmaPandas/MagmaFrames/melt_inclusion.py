@@ -33,7 +33,7 @@ def read_melt_inclusion(
         total_col=total_col,
         keep_columns=keep_columns,
         units="wt. %",
-        Type="oxide",
+        datatype="oxide",
         **kwargs,
     )
 

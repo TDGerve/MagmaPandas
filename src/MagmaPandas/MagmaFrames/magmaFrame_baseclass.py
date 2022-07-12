@@ -22,7 +22,7 @@ class MagmaFrame(pd.DataFrame):
     @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
     @_check_argument("datatype", [None, "cation", "oxide"])
     def __init__(
-        self, data=None, *args, units: str = None, datatype: str = None, **kwargs
+        self, data=None, *args, units: str = None, datatype: str = None, total_col: str = None, **kwargs
     ) -> None:        
 
         self._units = units
@@ -31,6 +31,7 @@ class MagmaFrame(pd.DataFrame):
             self._weights = kwargs.pop("weights").copy(deep=True)
 
         super().__init__(data, *args, **kwargs)
+        
 
         if not hasattr(self, "_weights"):
             self._weights = pd.Series(name="weight", dtype=float)
@@ -40,7 +41,7 @@ class MagmaFrame(pd.DataFrame):
                     self._weights[col] = e.calculate_weight(col)
                 except:
                     pass
-
+            self = self.loc[:, self.elements]
 
 
     @property
@@ -89,10 +90,9 @@ class MagmaFrame(pd.DataFrame):
         """
         Dataframe contains column with totals
         """
-        if "total" in self.columns:
-            return True
-        else:
-            return False
+
+        return "total" in self.columns
+
 
     @property
     def units(self) -> str:

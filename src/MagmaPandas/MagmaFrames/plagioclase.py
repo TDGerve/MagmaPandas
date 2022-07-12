@@ -25,7 +25,7 @@ def read_plagioclase(
         total_col=total_col,
         keep_columns=keep_columns,
         units="wt. %",
-        Type="oxide",
+        datatype="oxide",
         **kwargs
     )
 
