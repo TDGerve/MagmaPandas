@@ -9,7 +9,7 @@ from ..thermometers.melt import melt_thermometers
 def _MagmaSeries_expanddim(data=None, *args, **kwargs):
     from MagmaPandas.MagmaFrames import MagmaFrame
 
-    df = MagmaFrame(*args, **kwargs)
+    df = MagmaFrame(data, *args, **kwargs)
 
     if isinstance(data, MagmaSeries):
         df._units = data._units.copy(deep=True)
@@ -32,18 +32,18 @@ class MagmaSeries(pd.Series):
     # New attributes
     _metadata = ["_weights", "_units", "_datatype"]
 
-    @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
-    @_check_argument("datatype", [None, "cation", "oxide"])
+    # @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
+    # @_check_argument("datatype", [None, "cation", "oxide"])
     def __init__(
-        self, data=None, *args, units: str = None, datatype: str = None, **kwargs
+        self, data=None, *args, units: str = None, datatype: str = None, weights: pd.Series = None, **kwargs
     ) -> None:
 
         self._units = units
         self._datatype = datatype
-        if "weights" in kwargs.keys():
-            self._weights = kwargs.pop("weights").copy(deep=True)
+        if weights is not None:
+            self._weights = weights.copy()
 
-        super().__init__(data, *args, **kwargs)
+        super().__init__(data, **kwargs)
 
         if not hasattr(self, "_weights"):
             self._weights = pd.Series(name="weight", dtype=float)
@@ -51,19 +51,24 @@ class MagmaSeries(pd.Series):
                 try:
                     # Calculate element/oxide weight
                     self._weights[idx] = e.calculate_weight(idx)
-                except:
+                except (ValueError, KeyError):
                     pass
+
+        
+
         # self.recalculate()
 
 
     @property
     def _constructor(self):
-        """This is the key to letting Pandas know how to keep
+        """
+        This is the key to letting Pandas know how to keep
         derivatives of `MagmaBase` the same type as yours.  It should
         be enough to return the name of the Class.  However, in
         some cases, `__finalize__` is not called and `new attributes` are
-        not carried over.  We can fix that by constructing a callable
-        that makes sure to call `__finalize__` every time."""
+        not carried over. We can fix that by constructing a callable
+        that makes sure to call `__finalize__` every time.
+        """
 
         def _c(*args, weights=None, **kwargs):
             if weights is None:

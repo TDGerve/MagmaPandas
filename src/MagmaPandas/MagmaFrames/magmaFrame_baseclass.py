@@ -19,19 +19,18 @@ class MagmaFrame(pd.DataFrame):
     _metadata = ["_weights", "_units", "_datatype"]
 
 
-    @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
-    @_check_argument("datatype", [None, "cation", "oxide"])
+    # @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
+    # @_check_argument("datatype", [None, "cation", "oxide"])
     def __init__(
-        self, data=None, *args, units: str = None, datatype: str = None, total_col: str = None, **kwargs
+        self, data=None, *args, units: str = None, datatype: str = None, total_col: str = None, weights: pd.Series = None, **kwargs
     ) -> None:        
 
         self._units = units
         self._datatype = datatype
-        if "weights" in kwargs.keys():
-            self._weights = kwargs.pop("weights").copy(deep=True)
+        if weights is not None:
+            self._weights = weights.copy()
 
-        super().__init__(data, *args, **kwargs)
-        
+        super().__init__(data, **kwargs) 
 
         if not hasattr(self, "_weights"):
             self._weights = pd.Series(name="weight", dtype=float)
@@ -39,9 +38,12 @@ class MagmaFrame(pd.DataFrame):
                 try:
                     # Calculate element/oxide weight
                     self._weights[col] = e.calculate_weight(col)
-                except:
+                except (ValueError, KeyError):
                     pass
-            self = self.loc[:, self.elements]
+
+        
+        
+            # self = self.loc[:, self.elements]
 
 
     @property
@@ -152,6 +154,17 @@ class MagmaFrame(pd.DataFrame):
         cations.recalculate()
 
         return cations
+
+    def convert_ppm_wtPercent(self):
+        """
+        Convert ppm to wt. % and vice versa
+        """
+        convert_dict = {"wt. %": [1e4, "ppm"], "ppm": [1e-4, "wt. %"]}
+
+        converted = self.mul(convert_dict[self._units][0])
+        converted._units = convert_dict[self._units][1]
+
+        return converted
 
     @property
     def convert_moles_wtPercent(self):
