@@ -9,7 +9,7 @@ from scipy.optimize import root_scalar
 from MagmaPandas.geochemistry.Kd_ol_melt import Kd_FeMg, Kd_FeMg_vectorised
 from MagmaPandas.geochemistry.Fe_redox import Fe_redox
 from MagmaPandas.geochemistry.fO2 import fO2_QFM
-from MagmaPandas import MagmaSeries, Olivine, Melt_inclusion, Melt
+from MagmaPandas import MagmaSeries, Olivine, Melt
 from MagmaPandas.configuration import configuration
 from MagmaPandas.parse.validate import _check_setter
 
@@ -81,7 +81,7 @@ class PEC_configuration(metaclass=_meta_PEC_configuration):
 
 
 def Fe_equilibrate(
-    inclusion: Union[Melt_inclusion, Melt],
+    inclusion: Melt,
     olivine: Union[float, MagmaSeries],
     P_bar: float,
     **kwargs,
@@ -156,9 +156,9 @@ def Fe_equilibrate(
         inclusion["Fe2O3"] = Fe2O3 * (FeO_mass * 2 / Fe2O3_mass)
         # Recalculate FeO
         inclusion["FeO"] = inclusion["FeO"] * (1 - Fe3_FeTotal)
-        inclusion.recalculate()
+        inclusion.recalculate(inplace=True)
     # Calculate moles
-    mi_moles = Melt_inclusion(
+    mi_moles = Melt(
         columns=inclusion.elements, units="mol fraction", datatype="oxide"
     )
     mi_moles.loc[0] = inclusion.moles[inclusion.elements].values
@@ -257,7 +257,7 @@ def Fe_equilibrate(
 
 
 def crystallisation_correction(
-    inclusion: Union[Melt_inclusion, Melt],
+    inclusion: Melt,
     olivine_host: Union[float, MagmaSeries],
     FeO_target: Union[int, float, callable],
     P_bar: float,
@@ -292,7 +292,7 @@ def crystallisation_correction(
     inclusion = inclusion.normalise()
     # SET UP INITIAL DATA
     # Dataframe with new compositions
-    mi_moles = Melt_inclusion(
+    mi_moles = Melt(
         columns=inclusion.elements, units="mol fraction", datatype="oxide"
     )
     mi_moles.loc[0] = inclusion.moles[inclusion.elements].values
@@ -318,7 +318,7 @@ def crystallisation_correction(
         olivine = olivine_host.moles
         olivine = olivine.reindex(mi_moles.columns)
         olivine = olivine.fillna(0.0)
-        olivine.recalculate()
+        olivine.recalculate(inplace=True)
         forsterite = olivine["MgO"] / (olivine["MgO"] + olivine["FeO"])
     # Fe-Mg exchange vector
     FeMg_vector = pd.Series(0, index=mi_moles.columns)
@@ -426,7 +426,7 @@ def calculate_Kds(melt_x_moles, P_bar, forsterite, **kwargs):
 class PEC_olivine:
     def __init__(
         self,
-        inclusions: Melt_inclusion,
+        inclusions: Melt,
         olivines: Union[Olivine, pd.Series, float],
         P_bar: Union[float, int, pd.Series],
         FeO_target: Union[float, pd.Series, callable],

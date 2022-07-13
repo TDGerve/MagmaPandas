@@ -19,8 +19,8 @@ class MagmaFrame(pd.DataFrame):
     _metadata = ["_weights", "_units", "_datatype"]
 
 
-    # @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
-    # @_check_argument("datatype", [None, "cation", "oxide"])
+    @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
+    @_check_argument("datatype", [None, "cation", "oxide"])
     def __init__(
         self, data=None, *args, units: str = None, datatype: str = None, total_col: str = None, weights: pd.Series = None, **kwargs
     ) -> None:        
@@ -151,7 +151,7 @@ class MagmaFrame(pd.DataFrame):
         cations["total"] = cations.sum(axis=1)
         # Set the right datatype and elements
         cations._datatype = "cation"
-        cations.recalculate()
+        cations.recalculate(inplace=True)
 
         return cations
 
@@ -210,18 +210,20 @@ class MagmaFrame(pd.DataFrame):
 
         return cations
 
-    def recalculate(self):
+    def recalculate(self, inplace=False):
         """
         Recalculate element masses and total weight.
         """
-        missing_elements = self.columns.difference(self._weights.index)
-        extra_elements = self._weights.index.difference(self.columns)
+        df = self if inplace else self.copy()
+
+        missing_elements = df.columns.difference(df._weights.index)
+        extra_elements = df._weights.index.difference(df.columns)
 
         if all(i.size == 0 for i in[missing_elements, extra_elements]):
             return
 
         if extra_elements.size > 0:
-            self._weights = self._weights.drop(extra_elements)        
+            df._weights = df._weights.drop(extra_elements)        
 
         if missing_elements.size > 0:
             new_weights = pd.Series(name="weight", dtype="float32")
@@ -230,17 +232,20 @@ class MagmaFrame(pd.DataFrame):
                     new_weights[element] = e.calculate_weight(element)
                 except:
                     pass
-            self._weights = pd.concat([self._weights, new_weights])        
+            df._weights = pd.concat([df._weights, new_weights])        
         
-        if self._total:
-            totals = self.loc[:, self.elements].sum(axis=1)
-            self.loc[:, "total"] = totals.values
+        if df._total:
+            totals = df.loc[:, df.elements].sum(axis=1)
+            df.loc[:, "total"] = totals.values
+        
+        if not inplace:
+            return df
 
     def normalise(self):
         """
         Normalise composition.
         """
-        self.recalculate()
+        self.recalculate(inplace=True)
         normalised = self[self.elements].copy()
         total = normalised.sum(axis=1)
 

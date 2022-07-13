@@ -4,12 +4,12 @@ import elements as e
 import pandas as pd
 from .. import MagmaFrames as mf
 
-@_check_argument("phase", [None, "Melt", "Melt_inclusion", "Olivine", "Clinopyroxene", "Plagioclase"])
+@_check_argument("phase", [None, "Melt", "Olivine", "Clinopyroxene", "Plagioclase"])
 def _read_file(
     filepath: str,
     *args,
-    index_col: List[str],
     total_col: str,
+    index_col: List[str] = None,
     keep_columns: List[str] = None,
     phase: str = None,    
     units: str = None,
@@ -48,7 +48,10 @@ def _read_file(
     if total_col is not None:
         df.rename(columns={total_col: "total"})
         df["total"] = df[elements].sum(axis=1)
+        
+    if "total" in df.columns:
         keep_columns.append("total")
+
 
     # Drop all columns without chemical data, unless explicitely specified otherwise in 'keep_columns'
     df = df.drop(delete_columns.difference(set(keep_columns)), axis=1)

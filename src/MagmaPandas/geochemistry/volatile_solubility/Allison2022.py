@@ -330,7 +330,7 @@ class co2:
         except KeyError:
             # For Dataframes
             composition = composition.loc[:, elements]
-        composition.recalculate()
+        composition.recalculate(inplace=True)
 
         cations = composition.cations
         # Rounding to 3 decimals because Allison did the same

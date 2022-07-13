@@ -7,7 +7,7 @@ from ..parse.readers import _read_file
 def read_olivine(
     filepath: str,
     *args,
-    index_col: List[str],
+    index_col: List[str] = None,
     total_col: str = None,
     keep_columns: List[str] = None,
     **kwargs
@@ -59,7 +59,7 @@ class Olivine(MagmaFrame):
             moles = self
         Mg = {"oxide": "MgO", "cation": "Mg"}
         Fe = {"oxide": "FeO", "cation": "Fe"}
-        self.recalculate()
+        self.recalculate(inplace=True)
         return pd.Series(
             moles[Mg[self._datatype]] / (moles[Fe[self._datatype]] + moles[Mg[self._datatype]]), name="Fo#"
         )

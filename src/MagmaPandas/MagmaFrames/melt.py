@@ -13,7 +13,7 @@ from MagmaPandas.configuration import configuration
 def read_melt(
     filepath: str,
     *args,
-    index_col: List[str],
+    index_col: List[str] = None,
     total_col: str = None,
     keep_columns: List[str] = None,
     units="wt. %",
@@ -123,9 +123,6 @@ class Melt(MagmaFrame):
             column in melt_mol_fractions with total Fe
         """
 
-        if len(set(("FeO", "Fe2O3")).intersection(self.columns)) == 2:
-            raise RuntimeError("FeO and Fe2O3 columns already exist")
-
         Fe2Fe_total = 1 / (1 + Fe3Fe2)
         melt_mol_fractions = self.moles
 
@@ -138,18 +135,18 @@ class Melt(MagmaFrame):
 
         melt_mol_fractions["FeO"] = Fe2
         melt_mol_fractions["Fe2O3"] = Fe3
-        melt_mol_fractions.recalculate()
+        melt_mol_fractions.recalculate(inplace=True)
 
         # Recalculate to wt. % (normalised)
-        melt_mol_fractions = melt_mol_fractions.convert_moles_wtPercent
+        melt = melt_mol_fractions.convert_moles_wtPercent
 
         if inplace:
-            self["FeO"] = melt_mol_fractions["FeO"]
-            self["Fe2O3"] = melt_mol_fractions["Fe2O3"]
-            self.recalculate()
+            self["FeO"] = melt["FeO"]
+            self["Fe2O3"] = melt["Fe2O3"]
+            self.recalculate(inplace=True)
 
         else:
-            return melt_mol_fractions
+            return melt
 
 
     def Kd_olivine_FeMg(self, forsterite, T_K, Fe3Fe2, **kwargs):

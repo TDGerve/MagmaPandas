@@ -7,7 +7,7 @@ from ..parse.readers import _read_file
 def read_clinopyroxene(
     filepath: str,
     *args,
-    index_col: List[str],
+    index_col: List[str] = None,
     total_col: str = None,
     keep_columns: List[str] = None,
     **kwargs

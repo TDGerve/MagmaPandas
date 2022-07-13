@@ -32,8 +32,8 @@ class MagmaSeries(pd.Series):
     # New attributes
     _metadata = ["_weights", "_units", "_datatype"]
 
-    # @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
-    # @_check_argument("datatype", [None, "cation", "oxide"])
+    @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
+    @_check_argument("datatype", [None, "cation", "oxide"])
     def __init__(
         self, data=None, *args, units: str = None, datatype: str = None, weights: pd.Series = None, **kwargs
     ) -> None:
@@ -56,7 +56,7 @@ class MagmaSeries(pd.Series):
 
         
 
-        # self.recalculate()
+        # self.recalculate(inplace=True)
 
 
     @property
@@ -160,7 +160,7 @@ class MagmaSeries(pd.Series):
         cations["total"] = cations.sum()
         # Set the right datatype and elements
         cations._datatype = "cation"
-        cations.recalculate()
+        cations.recalculate(inplace=True)
 
         return cations
 
@@ -208,18 +208,21 @@ class MagmaSeries(pd.Series):
 
         return cations
 
-    def recalculate(self):
+    def recalculate(self, inplace=False):
         """
         Recalculate element masses and total.
         """
-        missing_elements = self.index.difference(self._weights.index)
-        extra_elements = self._weights.index.difference(self.index)
+
+        series = self if inplace else self.copy()
+
+        missing_elements = series.index.difference(series._weights.index)
+        extra_elements = series._weights.index.difference(series.index)
 
         if all(i.size == 0 for i in[missing_elements, extra_elements]):
             return
 
         if extra_elements.size > 0:
-            self._weights = self._weights.drop(extra_elements)        
+            series._weights = series._weights.drop(extra_elements)        
 
         if missing_elements.size > 0:
             new_weights = pd.Series(name="weight", dtype="float32")
@@ -228,16 +231,19 @@ class MagmaSeries(pd.Series):
                     new_weights[element] = e.calculate_weight(element)
                 except:
                     pass
-            self._weights = pd.concat([self._weights, new_weights])        
+            series._weights = pd.concat([series._weights, new_weights])        
         
-        if self._total:
-            self["total"] = self[self.elements].sum()
+        if series._total:
+            series["total"] = series[series.elements].sum()
+
+        if not inplace:
+            return series
 
     def normalise(self):
         """
         Normalise composition.
         """
-        self.recalculate()
+        self.recalculate(inplace=True)
         normalised = self.copy()[self.elements]
         total = normalised.sum()
 
