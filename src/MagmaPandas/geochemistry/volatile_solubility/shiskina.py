@@ -26,7 +26,7 @@ def calculate_saturation(oxide_wtPercents, **kwargs):
     return equation(oxide_wtPercents, **kwargs)
 
 
-def calculate_solubility(oxide_wtPercents, P_bar, T_K, **kwargs):
+def calculate_solubility(oxide_wtPercents, P_bar, **kwargs):
     """
     Docstring
     """
@@ -164,6 +164,7 @@ class h2o:
         volatiles = {"H2O", "CO2"}.intersection(oxide_wtPercents.index)
         if volatiles:
             oxide_wtPercents = oxide_wtPercents.drop(volatiles)
+            oxide_wtPercents.recalculate(inplace=True)
 
         mol_fractions = oxide_wtPercents.cations
 
@@ -172,7 +173,7 @@ class h2o:
         # Partial pressure (ideal gas fugacity)
         fH2O = x_fluid * P_MPa
 
-        a = 3.36e-7 * fH2O - 2.33e-4 * fH2O**2 + 0.0711 * fH2O - 1.1309
+        a = 3.36e-7 * fH2O**3 - 2.33e-4 * fH2O**2 + 0.0711 * fH2O - 1.1309
         b = mol_fractions["Na"] + mol_fractions["K"]
         c = -1.2e-5 * fH2O**2 + 0.0196 * fH2O + 1.1297
 
@@ -276,12 +277,12 @@ class co2:
 class mixed:
     @staticmethod
     @_check_argument("output", [None, "both", "P", "x_fluid"])
-    def calculate_saturation(oxide_wtPercents, T_K, output="P"):
+    def calculate_saturation(oxide_wtPercents, output="P"):
 
         composition = oxide_wtPercents.copy()
 
-        P_H2O_saturation = h2o.calculate_saturation(composition, T_K=T_K, x_fluid=1.0)
-        P_CO2_saturation = co2.calculate_saturation(composition, T_K=T_K, x_fluid=0.0)
+        P_H2O_saturation = h2o.calculate_saturation(composition, x_fluid=1.0)
+        P_CO2_saturation = co2.calculate_saturation(composition, x_fluid=0.0)
 
         if oxide_wtPercents["H2O"] <= 0:
             return P_CO2_saturation
@@ -297,7 +298,7 @@ class mixed:
         saturation = root(
             mixed._saturation_rootFunction,
             x0=[P_guess, 0.01],
-            args=(composition, T_K),
+            args=(composition),
         ).x
 
         if saturation[1] <= 0.0:

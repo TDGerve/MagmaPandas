@@ -195,6 +195,9 @@ class h2o:
         if P_bar < 0:
             raise ValueError(f"Pressure is negative: '{P_bar}'")
 
+        if any(i <= 0 for i in [P_bar, x_fluid]):
+            return 0
+
         composition = oxide_wtPercents.copy()
 
         if IaconoMarziano_configuration.parameters == "anhydrous":
@@ -286,6 +289,9 @@ class co2:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
         if P_bar < 0:
             raise ValueError(f"Pressure is negative: '{P_bar}'")
+
+        if any(i <= 0 for i in [P_bar, (1 - x_fluid)]):
+            return 0
 
 
         if "anhydrous" in IaconoMarziano_configuration.parameters:
