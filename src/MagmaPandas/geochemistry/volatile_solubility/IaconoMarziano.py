@@ -10,16 +10,8 @@ G. Iacono-Marziano, Y. Morizet, E. Le Trong & F. Gaillard (2012)
 New experimental data and semi-empirical parameterization of H2O–CO2 solubility in mafic melts.
 Geochim. Gosmochim. Actca 97: 1-23
 
-Python code modified from VESIcal:
+Code modified from VESIcal:
 https://github.com/kaylai/VESIcal
-"""
-
-"""
-ALL CONFIGURATION OBJECTS NEED TO BE REWRITTEN BECAUSE CLASS PROPERTIES DON'T WORK LIKE THIS.
-IT EITHER NEEDS:
-    - A METACLASS WHERE ALL CLASS VARIABLES AND PROPERTIES ARE DEFINED
-    - A CUSTOM CLASSPROPERTY DECORATOR
-    - ALL CONFIGURATION OBJECTS INITIALISED INSIDE THE MODULE __INIT__ WITH ALL ATTRIBUTES AS INSTANCE ATTRIBUTES
 """
 
 
@@ -142,89 +134,6 @@ class IaconoMarziano_configuration(metaclass=_meta_IaconoMarziano_configuration)
         print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
         print(f"{'Pressure':.<{pad_left}}{'0.1-5 kbar':.>{pad_right}}")
 
-# class IaconoMarziano_configuration:
-#     """
-#     Configure settings for the Iacono-Marziano volatile solubility model
-#     """
-
-#     __parameters = "hydrous_webapp"
-#     __fugacity = "ideal"
-#     __activity = "ideal"
-#     __model = "mixed"
-
-#     @property
-#     def parameters(cls):
-#         return cls.__parameters
-
-#     @parameters.setter
-#     @_check_setter(parameter_options)
-#     def parameters(cls, model: str):
-#         cls.__parameters = model
-
-#     @property
-#     def fugacity(cls):
-#         return cls.__fugacity
-
-#     @fugacity.setter
-#     @_check_setter(fugacity_options)
-#     def fugacity(cls, model: str):
-#         cls.__fugacity = model
-
-#     @property
-#     def activity(cls):
-#         return cls.__activity
-
-#     @activity.setter
-#     @_check_setter(activity_options)
-#     def activity(cls, model: str):
-#         cls.__activity = model
-
-#     @property
-#     def model(cls):
-#         return cls.__model
-
-#     @model.setter
-#     @_check_setter(model_options)
-#     def model(cls, model: str):
-#         cls.__model = model
-
-#     @classmethod
-#     def reset(cls):
-#         cls.__parameters = "hydrous_webapp"
-#         cls.__fugacity = "ideal"
-#         cls.__activity = "ideal"
-#         cls.__model = "mixed"
-
-#     @classmethod
-#     def print(cls):
-#         """ 
-        
-#         """
-
-#         variables = {
-#             "Parameterisation": "__parameters",
-#             "Fugacity model": "__fugacity",
-#             "Activity model": "__activity",
-#             "Species model": "__model",
-#         }
-
-#         pad_left = 20
-#         pad_right = 20
-#         pad_total = pad_left + pad_right
-
-#         print(" Iacono-Marziano volatile solubility ".center(pad_total, "#"))
-#         print("".ljust(pad_total, "#"))
-#         print("Settings".ljust(pad_total, "_"))
-#         for param, model in variables.items():
-#             model_attr = f"_IaconoMarziano_configuration{model}"
-#             print(
-#                 f"{param:.<{pad_left}}{getattr(cls, model_attr):.>{pad_right}}"
-#             )
-#         print("\nCalibration range".ljust(pad_total, "_"))
-#         T_string = f"1373-1673\N{DEGREE SIGN}K"
-#         print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
-#         print(f"{'Pressure':.<{pad_left}}{'0.1-5 kbar':.>{pad_right}}")
-
 
 H2O_coefficients = {
     "hydrous_webapp": {
@@ -283,9 +192,8 @@ class h2o:
 
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
-
-        if any(i <= 0 for i in [P_bar, x_fluid]):
-            return 0
+        if P_bar < 0:
+            raise ValueError(f"Pressure is negative: '{P_bar}'")
 
         composition = oxide_wtPercents.copy()
 
@@ -376,9 +284,9 @@ class co2:
 
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
+        if P_bar < 0:
+            raise ValueError(f"Pressure is negative: '{P_bar}'")
 
-        if any(i <= 0 for i in [P_bar, (1 - x_fluid)]):
-            return 0
 
         if "anhydrous" in IaconoMarziano_configuration.parameters:
             parameterisation = "anhydrous"
@@ -482,6 +390,12 @@ class mixed:
             args=(composition, T_K),
         ).x
 
+        if saturation[1] <= 0.0:
+            saturation[0] = P_CO2_saturation
+        elif saturation[1] >= 1.0:
+            saturation[0] = P_H2O_saturation
+        saturation[1] = np.clip(saturation[1], 0.0, 1.0)
+
         return_dict = {"P": saturation[0], "x_fluid": saturation[1], "both": saturation}
         return return_dict[output]
 
@@ -491,6 +405,8 @@ class mixed:
 
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
+        if P_bar < 0:
+            raise ValueError(f"Pressure is negative: '{P_bar}'")
 
         composition = oxide_wtPercents.copy()
         H2O = h2o.calculate_solubility(composition, P_bar, T_K, x_fluid)
