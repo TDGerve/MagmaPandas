@@ -1,12 +1,18 @@
 from typing import List
 import pandas as pd
+
 from .magmaFrame_baseclass import MagmaFrame
-from ..parse.readers import _read_file
-from ..geochemistry.fO2 import fO2_QFM
+
+from ..configuration import configuration
+
+from ..geochemistry.Fe_redox import FeRedox_QFM
 from ..geochemistry.Kd_ol_melt import Kd_FeMg_vectorised
+from ..geochemistry.volatiles import calculate_saturation
+
 from ..thermometers.melt import melt_thermometers
+
 from ..parse.validate import _check_argument
-from MagmaPandas.configuration import configuration
+from ..parse.readers import _read_file
 
 
 
@@ -62,7 +68,7 @@ class Melt(MagmaFrame):
         return thermometer(self, *args, **kwargs)
 
     def Fe3Fe2_QFM(
-        self, T_K=None, P_bar=None, logshift=0, inplace=False
+        self, T_K=None, P_bar=None, inplace=False
     ):
         """
         Calculate Fe-redox equilibrium at QFM oxygen buffer for silicate liquids.
@@ -95,13 +101,11 @@ class Melt(MagmaFrame):
                 if not self.index.equals(param.index):
                     raise RuntimeError(f"Melt and {name} indices don't match")
 
+        logshift = configuration.dQFM
+
         mol_fractions = self.moles
 
-        Fe3Fe2_model = configuration.Fe3Fe2
-
-        fO2_bar = fO2_QFM(logshift, T_K, P_bar)
-
-        Fe3Fe2 = Fe3Fe2_model(mol_fractions, T_K, fO2_bar, P_bar)
+        Fe3Fe2 = FeRedox_QFM(mol_fractions=mol_fractions, T_K=T_K, P_bar=P_bar, logshift=logshift)
 
         if inplace:
             self["Fe3Fe2"] = Fe3Fe2
@@ -113,7 +117,7 @@ class Melt(MagmaFrame):
             return Fe3Fe2
 
     @_check_argument("total_Fe", ["FeO", "Fe2O3"])
-    def FeO_Fe2O3_calc(self, Fe3Fe2, total_Fe, inplace=False):
+    def FeO_Fe2O3_calc(self, Fe3Fe2, total_Fe="FeO", inplace=False):
         """
         melt_mol_fractions : pd.DataFrame
             melt composition in oxide mol fraction.
@@ -166,4 +170,37 @@ class Melt(MagmaFrame):
             Fe3Fe2=Fe3Fe2,
             **kwargs
         )
+
+    def volatile_saturation_pressure(self, T_K, inplace=False):
+        """
+        Calculate volatile (H2O and/or CO2) saturation pressures for given liquid compositions.
+        """
+
+        from alive_progress import alive_bar
+
+        P_bar = pd.Series(index=self.index, dtype=float)
+
+        
+        if isinstance(T_K, pd.Series):
+            if not self.index.equals(T_K.index):
+                    raise RuntimeError(f"Melt and T_K indices don't match")
+            T_K = T_K[self.index]
+        elif isinstance(T_K, (float, int)):
+            T_K = pd.Series(T_K, index=self.index)
+
+        total = self.shape[0]
+
+        with alive_bar(total, spinner=None, dual_line=True, force_tty=True) as bar:
+            for (name, row), temperature in zip(self.iterrows(), T_K):
+                bar.text = f"-> Processing sample '{name}'..."
+                P_bar[name] = calculate_saturation(row, T_K=temperature)
+                bar()
+
+        if inplace:
+            self["P_bar"] = P_bar
+            return
+        else:
+            return P_bar
+
+
 

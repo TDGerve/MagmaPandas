@@ -16,24 +16,24 @@ Contributions to mineralogy and petrology 40
 """
 
 
-def calculate_saturation(*args, **kwargs):
-    """
-    Docstring
-    """
-    model = Allison_configuration.model
-    equation = globals()[model].calculate_saturation
+# def calculate_saturation(*args, **kwargs):
+#     """
+#     Docstring
+#     """
+#     model = Allison_configuration.model
+#     equation = globals()[model].calculate_saturation
 
-    return equation(*args, **kwargs)
+#     return equation(*args, **kwargs)
 
 
-def calculate_solubility(*args, **kwargs):
-    """
-    Docstring
-    """
-    model = Allison_configuration.model
-    equation = globals()[model].calculate_solubility
+# def calculate_solubility(*args, **kwargs):
+#     """
+#     Docstring
+#     """
+#     model = Allison_configuration.model
+#     equation = globals()[model].calculate_solubility
 
-    return equation(*args, **kwargs)
+#     return equation(*args, **kwargs)
 
 
 fugacity_options = ["hollowayBlank"]
@@ -100,7 +100,7 @@ class h2o:
         Equation 8 from Allison 2022
         """
 
-        if oxide_wtPercents["H2O"] <= 0:
+        if oxide_wtPercents["H2O"] < 0:
             raise ValueError(f"H2O lower than 0: {oxide_wtPercents['H2O']}")
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
@@ -142,7 +142,7 @@ class co2:
     @staticmethod
     def calculate_saturation(oxide_wtPercents, T_K, x_fluid=0.0):
 
-        if oxide_wtPercents["CO2"] <= 0:
+        if oxide_wtPercents["CO2"] < 0:
             raise ValueError(f"CO2 lower than 0: {oxide_wtPercents['CO2']}")
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
@@ -299,9 +299,9 @@ class mixed:
         P_H2O_saturation = h2o.calculate_saturation(composition, T_K=T_K, x_fluid=1.0)
         P_CO2_saturation = co2.calculate_saturation(composition, T_K=T_K, x_fluid=0.0)
 
-        if oxide_wtPercents["H2O"] <= 0:
+        if oxide_wtPercents["H2O"] < 0:
             return P_CO2_saturation
-        if oxide_wtPercents["CO2"] <= 0:
+        if oxide_wtPercents["CO2"] < 0:
             return P_H2O_saturation
 
         P_guess = 0

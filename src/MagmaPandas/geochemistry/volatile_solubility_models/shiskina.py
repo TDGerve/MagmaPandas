@@ -14,37 +14,37 @@ Chemical geology 388 (112 - 129)
 
 """
 
-def calculate_saturation(oxide_wtPercents, **kwargs):
-    """
-    Docstring
-    """
+# def calculate_saturation(oxide_wtPercents, **kwargs):
+#     """
+#     Docstring
+#     """
 
-    model = shiskina_configuration.model
-    equation = globals()[model].calculate_saturation
-
-
-    return equation(oxide_wtPercents, **kwargs)
+#     species = shiskina_configuration.model
+#     equation = globals()[species].calculate_saturation
 
 
-def calculate_solubility(oxide_wtPercents, P_bar, **kwargs):
-    """
-    Docstring
-    """
+#     return equation(oxide_wtPercents, **kwargs)
 
-    model = shiskina_configuration.model
-    equation = globals()[model].calculate_solubility
 
-    return equation(oxide_wtPercents, P_bar, **kwargs)
+# def calculate_solubility(oxide_wtPercents, P_bar, **kwargs):
+#     """
+#     Docstring
+#     """
+
+#     species = shiskina_configuration.model
+#     equation = globals()[species].calculate_solubility
+
+#     return equation(oxide_wtPercents, P_bar, **kwargs)
 
 
 fugacity_options = ["ideal"]
-model_options = ["mixed", "h2o", "co2"]
+
 
 class _meta_shiskina_configuration(type):
 
     def __init__(cls, *args, **kwargs):
         cls._fugacity = "ideal"
-        cls._model = "mixed"
+
 
     @property
     def fugacity(cls):
@@ -54,15 +54,6 @@ class _meta_shiskina_configuration(type):
     @_check_setter(fugacity_options)
     def fugacity(cls, model: str):
         cls._fugacity = model
-
-    @property
-    def model(cls):
-        return cls._model
-
-    @model.setter
-    @_check_setter(model_options)
-    def model(cls, model: str):
-        cls._model = model
 
     @classmethod
     def reset(cls):
@@ -75,7 +66,7 @@ class shiskina_configuration(metaclass=_meta_shiskina_configuration):
     @classmethod
     def reset(cls):
         cls._fugacity = "ideal"
-        cls._model = "mixed"
+
 
     @classmethod
     def print(cls):
@@ -85,7 +76,6 @@ class shiskina_configuration(metaclass=_meta_shiskina_configuration):
 
         variables = {
             "Fugacity model": "_fugacity",
-            "Species model": "_model",
         }
 
         pad_left = 20
@@ -117,7 +107,7 @@ class h2o:
         """ """
         if "H2O" not in oxide_wtPercents.index:
             raise ValueError("H2O not found in sample")
-        if oxide_wtPercents["H2O"] <= 0:
+        if oxide_wtPercents["H2O"] < 0:
             raise ValueError(f"H2O lower than 0: {oxide_wtPercents['H2O']}")
 
         if oxide_wtPercents["H2O"] < h2o.calculate_solubility(
@@ -161,6 +151,7 @@ class h2o:
                 f"missing oxides: {oxides.difference(oxide_wtPercents.index)}"
             )
 
+       # Calculate cation mol fractions on an anhydrous basis 
         volatiles = {"H2O", "CO2"}.intersection(oxide_wtPercents.index)
         if volatiles:
             oxide_wtPercents = oxide_wtPercents.drop(volatiles)
@@ -194,7 +185,7 @@ class co2:
         """ """
         if "CO2" not in oxide_wtPercents.index:
             raise ValueError("CO2 not found in sample")
-        if oxide_wtPercents["CO2"] <= 0:
+        if oxide_wtPercents["CO2"] < 0:
             raise ValueError(f"CO2 lower than 0: {oxide_wtPercents['H2O']}")
 
         composition = oxide_wtPercents.copy()
@@ -284,9 +275,9 @@ class mixed:
         P_H2O_saturation = h2o.calculate_saturation(composition, x_fluid=1.0)
         P_CO2_saturation = co2.calculate_saturation(composition, x_fluid=0.0)
 
-        if oxide_wtPercents["H2O"] <= 0:
+        if oxide_wtPercents["H2O"] < 0:
             return P_CO2_saturation
-        if oxide_wtPercents["CO2"] <= 0:
+        if oxide_wtPercents["CO2"] < 0:
             return P_H2O_saturation
 
         P_guess = 0

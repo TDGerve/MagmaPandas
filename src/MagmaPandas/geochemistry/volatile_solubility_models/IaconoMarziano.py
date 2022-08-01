@@ -15,27 +15,27 @@ https://github.com/kaylai/VESIcal
 """
 
 
-def calculate_saturation(oxide_wtPercents, T_K, **kwargs):
-    """
-    Docstring
-    """
+# def calculate_saturation(oxide_wtPercents, T_K, **kwargs):
+#     """
+#     Docstring
+#     """
 
-    model = IaconoMarziano_configuration.model
-    equation = globals()[model].calculate_saturation
+#     model = IaconoMarziano_configuration.model
+#     equation = globals()[model].calculate_saturation
     
 
-    return equation(oxide_wtPercents, T_K, **kwargs)
+#     return equation(oxide_wtPercents, T_K, **kwargs)
 
 
-def calculate_solubility(oxide_wtPercents, P_bar, T_K, **kwargs):
-    """
-    Docstring
-    """
+# def calculate_solubility(oxide_wtPercents, P_bar, T_K, **kwargs):
+#     """
+#     Docstring
+#     """
 
-    model = IaconoMarziano_configuration.model
-    equation = globals()[model].calculate_solubility
+#     model = IaconoMarziano_configuration.model
+#     equation = globals()[model].calculate_solubility
 
-    return equation(oxide_wtPercents, P_bar, T_K, **kwargs)
+#     return equation(oxide_wtPercents, P_bar, T_K, **kwargs)
 
 
 parameter_options = ["hydrous_webapp", "hydrous_manuscript", "anhydrous"]
@@ -217,7 +217,7 @@ class h2o:
         """ """
         if "H2O" not in oxide_wtPercents.index:
             raise ValueError("H2O not found in sample")
-        if oxide_wtPercents["H2O"] <= 0:
+        if oxide_wtPercents["H2O"] < 0:
             raise ValueError(f"H2O lower than 0: {oxide_wtPercents['H2O']}")
 
         composition = oxide_wtPercents.copy()
@@ -342,7 +342,7 @@ class co2:
         """ """
         if "CO2" not in oxide_wtPercents.index:
             raise ValueError("CO2 not found in sample")
-        if oxide_wtPercents["CO2"] <= 0:
+        if oxide_wtPercents["CO2"] < 0:
             raise ValueError(f"CO2 lower than 0: {oxide_wtPercents['CO2']}")
         # Upper limit of 100kbar
 
@@ -379,9 +379,9 @@ class mixed:
         P_H2O_saturation = h2o.calculate_saturation(composition, T_K=T_K, x_fluid=1.0)
         P_CO2_saturation = co2.calculate_saturation(composition, T_K=T_K, x_fluid=0.0)
 
-        if oxide_wtPercents["H2O"] <= 0:
+        if oxide_wtPercents["H2O"] < 0:
             return P_CO2_saturation
-        if oxide_wtPercents["CO2"] <= 0:
+        if oxide_wtPercents["CO2"] < 0:
             return P_H2O_saturation
 
         P_guess = 0
