@@ -14,30 +14,6 @@ Code modified from VESIcal:
 https://github.com/kaylai/VESIcal
 """
 
-
-# def calculate_saturation(oxide_wtPercents, T_K, **kwargs):
-#     """
-#     Docstring
-#     """
-
-#     model = IaconoMarziano_configuration.model
-#     equation = globals()[model].calculate_saturation
-    
-
-#     return equation(oxide_wtPercents, T_K, **kwargs)
-
-
-# def calculate_solubility(oxide_wtPercents, P_bar, T_K, **kwargs):
-#     """
-#     Docstring
-#     """
-
-#     model = IaconoMarziano_configuration.model
-#     equation = globals()[model].calculate_solubility
-
-#     return equation(oxide_wtPercents, P_bar, T_K, **kwargs)
-
-
 parameter_options = ["hydrous_webapp", "hydrous_manuscript", "anhydrous"]
 fugacity_options = ["ideal"]
 activity_options = ["ideal"]
@@ -182,7 +158,7 @@ CO2_coefficients = {
 # Lower case names for classes, as to not mix up with variable names
 class h2o:
     @staticmethod
-    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid=1):
+    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid=1, **kwargs):
         """
         Solve quation 13
 
@@ -280,7 +256,7 @@ class h2o:
 # Lower case names for classes, as to not mix up with variable names
 class co2:
     @staticmethod
-    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid=0.0):
+    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid=0.0, **kwargs):
         """
         Equation 12 from Iacono-Marziano (2012)
         """
@@ -372,7 +348,7 @@ class co2:
 class mixed:
     @staticmethod
     @_check_argument("output", [None, "both", "P", "x_fluid"])
-    def calculate_saturation(oxide_wtPercents, T_K, output="P"):
+    def calculate_saturation(oxide_wtPercents, T_K, output="P", **kwargs):
 
         composition = oxide_wtPercents.copy()
 
@@ -407,7 +383,7 @@ class mixed:
 
     @staticmethod
     @_check_argument("output", [None, "both", "CO2", "H2O"])
-    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid, output="both"):
+    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid, output="both", **kwargs):
 
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")

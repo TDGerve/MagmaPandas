@@ -1,5 +1,6 @@
 from typing import List
 import pandas as pd
+from alive_progress import alive_bar
 
 from .magmaFrame_baseclass import MagmaFrame
 
@@ -15,7 +16,6 @@ from ..parse.validate import _check_argument
 from ..parse.readers import _read_file
 
 
-
 def read_melt(
     filepath: str,
     *args,
@@ -27,7 +27,7 @@ def read_melt(
     **kwargs,
 ) -> "Melt":
     """
-    Read olivine compositions in wt. % oxide from a .csv file
+    Read melt compositions in wt. % oxide from a .csv file
 
     """
 
@@ -67,9 +67,7 @@ class Melt(MagmaFrame):
 
         return thermometer(self, *args, **kwargs)
 
-    def Fe3Fe2_QFM(
-        self, T_K=None, P_bar=None, inplace=False
-    ):
+    def Fe3Fe2_QFM(self, T_K=None, P_bar=None, inplace=False):
         """
         Calculate Fe-redox equilibrium at QFM oxygen buffer for silicate liquids.
         Uses either equation 7 from Kress and Carmichael (1991) or equation 4 from Borisov et al. (2018).
@@ -105,7 +103,9 @@ class Melt(MagmaFrame):
 
         mol_fractions = self.moles
 
-        Fe3Fe2 = FeRedox_QFM(mol_fractions=mol_fractions, T_K=T_K, P_bar=P_bar, logshift=logshift)
+        Fe3Fe2 = FeRedox_QFM(
+            mol_fractions=mol_fractions, T_K=T_K, P_bar=P_bar, logshift=logshift
+        )
 
         if inplace:
             self["Fe3Fe2"] = Fe3Fe2
@@ -152,7 +152,6 @@ class Melt(MagmaFrame):
         else:
             return melt
 
-
     def Kd_olivine_FeMg(self, forsterite, T_K, Fe3Fe2, **kwargs):
         """
         Calulate Fe-Mg exchange coefficients between olivine (ol) and melt (m) as:
@@ -168,32 +167,32 @@ class Melt(MagmaFrame):
             forsterite=forsterite,
             T_K=T_K,
             Fe3Fe2=Fe3Fe2,
-            **kwargs
+            **kwargs,
         )
 
     def volatile_saturation_pressure(self, T_K, inplace=False):
         """
         Calculate volatile (H2O and/or CO2) saturation pressures for given liquid compositions.
+
+        Returns
+        -------
+        P_bar   : pd.Series
+            Saturation pressures in bar
         """
 
-        from alive_progress import alive_bar
-
-        P_bar = pd.Series(index=self.index, dtype=float)
-
-        
         if isinstance(T_K, pd.Series):
-            if not self.index.equals(T_K.index):
-                    raise RuntimeError(f"Melt and T_K indices don't match")
             T_K = T_K[self.index]
         elif isinstance(T_K, (float, int)):
             T_K = pd.Series(T_K, index=self.index)
 
+        P_bar = pd.Series(index=self.index, dtype=float)
+
         total = self.shape[0]
 
-        with alive_bar(total, spinner=None, dual_line=True, force_tty=True) as bar:
-            for (name, row), temperature in zip(self.iterrows(), T_K):
+        with alive_bar(total, spinner=None, force_tty=True) as bar:
+            for (name, composition), temperature in zip(self.iterrows(), T_K):
                 bar.text = f"-> Processing sample '{name}'..."
-                P_bar[name] = calculate_saturation(row, T_K=temperature)
+                P_bar[name] = calculate_saturation(composition, T_K=temperature)
                 bar()
 
         if inplace:
@@ -201,6 +200,3 @@ class Melt(MagmaFrame):
             return
         else:
             return P_bar
-
-
-

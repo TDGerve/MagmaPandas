@@ -1,17 +1,20 @@
 from functools import partial
-from re import A
 import pandas as pd
 import numpy as np
-import elements as e
 from typing import Union
 from scipy.optimize import root_scalar
 
-from MagmaPandas.geochemistry.Kd_ol_melt import Kd_FeMg, Kd_FeMg_vectorised
-from MagmaPandas.geochemistry.Fe_redox import Fe_redox
-from MagmaPandas.geochemistry.fO2 import fO2_QFM
-from MagmaPandas import MagmaSeries, Olivine, Melt
-from MagmaPandas.configuration import configuration
-from MagmaPandas.parse.validate import _check_setter
+import elements as e
+
+from ..geochemistry.Kd_ol_melt import Kd_FeMg, Kd_FeMg_vectorised
+from ..geochemistry.Fe_redox import Fe_redox
+from ..geochemistry.fO2 import fO2_QFM
+
+from ..MagmaSeries import MagmaSeries 
+from ..MagmaFrames import Olivine, Melt
+
+from ..configuration import configuration
+from ..parse.validate import _check_setter
 
 
 Fe2_options = ["buffered", "incompatible"]

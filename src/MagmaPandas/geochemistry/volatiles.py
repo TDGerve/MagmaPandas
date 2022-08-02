@@ -1,6 +1,6 @@
 from .volatile_solubility_models import Allison2022
 from .volatile_solubility_models import IaconoMarziano
-from .volatile_solubility_models import shiskina
+from .volatile_solubility_models import Shiskina
 from ..configuration import configuration
 
 def calculate_saturation(oxide_wtPercents, **kwargs):

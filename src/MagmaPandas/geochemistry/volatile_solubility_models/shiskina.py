@@ -13,30 +13,6 @@ Compositional and pressure effects on the solubility of H2Oand CO2 in maficmelt
 Chemical geology 388 (112 - 129)
 
 """
-
-# def calculate_saturation(oxide_wtPercents, **kwargs):
-#     """
-#     Docstring
-#     """
-
-#     species = shiskina_configuration.model
-#     equation = globals()[species].calculate_saturation
-
-
-#     return equation(oxide_wtPercents, **kwargs)
-
-
-# def calculate_solubility(oxide_wtPercents, P_bar, **kwargs):
-#     """
-#     Docstring
-#     """
-
-#     species = shiskina_configuration.model
-#     equation = globals()[species].calculate_solubility
-
-#     return equation(oxide_wtPercents, P_bar, **kwargs)
-
-
 fugacity_options = ["ideal"]
 
 
@@ -44,7 +20,6 @@ class _meta_shiskina_configuration(type):
 
     def __init__(cls, *args, **kwargs):
         cls._fugacity = "ideal"
-
 
     @property
     def fugacity(cls):
@@ -181,7 +156,7 @@ class h2o:
 
 class co2:
     @staticmethod
-    def calculate_saturation(oxide_wtPercents, x_fluid=0.0):
+    def calculate_saturation(oxide_wtPercents, **kwargs):
         """ """
         if "CO2" not in oxide_wtPercents.index:
             raise ValueError("CO2 not found in sample")
@@ -268,7 +243,7 @@ class co2:
 class mixed:
     @staticmethod
     @_check_argument("output", [None, "both", "P", "x_fluid"])
-    def calculate_saturation(oxide_wtPercents, output="P"):
+    def calculate_saturation(oxide_wtPercents, output="P", **kwargs):
 
         composition = oxide_wtPercents.copy()
 
@@ -303,7 +278,7 @@ class mixed:
 
     @staticmethod
     @_check_argument("output", [None, "both", "CO2", "H2O"])
-    def calculate_solubility(oxide_wtPercents, P_bar, x_fluid, output="both"):
+    def calculate_solubility(oxide_wtPercents, P_bar, x_fluid, output="both", **kwargs):
 
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")

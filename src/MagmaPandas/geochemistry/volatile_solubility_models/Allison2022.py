@@ -15,27 +15,6 @@ Contributions to mineralogy and petrology 40
 
 """
 
-
-# def calculate_saturation(*args, **kwargs):
-#     """
-#     Docstring
-#     """
-#     model = Allison_configuration.model
-#     equation = globals()[model].calculate_saturation
-
-#     return equation(*args, **kwargs)
-
-
-# def calculate_solubility(*args, **kwargs):
-#     """
-#     Docstring
-#     """
-#     model = Allison_configuration.model
-#     equation = globals()[model].calculate_solubility
-
-#     return equation(*args, **kwargs)
-
-
 fugacity_options = ["hollowayBlank"]
 model_options = ["mixed", "h2o", "co2"]
 
@@ -95,7 +74,7 @@ fugacity_model = hollowayBlank.fugacity
 
 class h2o:
     @staticmethod
-    def calculate_saturation(oxide_wtPercents, T_K, x_fluid=1.0):
+    def calculate_saturation(oxide_wtPercents, T_K, x_fluid=1.0, **kwargs):
         """
         Equation 8 from Allison 2022
         """
@@ -120,7 +99,7 @@ class h2o:
         return P_saturation
 
     @staticmethod
-    def calculate_solubility(P_bar, T_K, x_fluid=1.0):
+    def calculate_solubility(P_bar, T_K, x_fluid=1.0, **kwargs):
         """
         Equation 8 from Allison 2022
         """
@@ -140,7 +119,7 @@ class h2o:
 
 class co2:
     @staticmethod
-    def calculate_saturation(oxide_wtPercents, T_K, x_fluid=0.0):
+    def calculate_saturation(oxide_wtPercents, T_K, x_fluid=0.0, **kwargs):
 
         if oxide_wtPercents["CO2"] < 0:
             raise ValueError(f"CO2 lower than 0: {oxide_wtPercents['CO2']}")
@@ -179,7 +158,7 @@ class co2:
             return P_saturation
 
     @staticmethod
-    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid=0.0):
+    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid=0.0, **kwargs):
         """ """
 
         if not 1 >= x_fluid >= 0:
@@ -292,7 +271,7 @@ class co2:
 class mixed:
     @staticmethod
     @_check_argument("output", [None, "both", "P", "x_fluid"])
-    def calculate_saturation(oxide_wtPercents, T_K, output="P"):
+    def calculate_saturation(oxide_wtPercents, T_K, output="P", **kwargs):
 
         composition = oxide_wtPercents.copy()
 
@@ -328,7 +307,7 @@ class mixed:
 
     @staticmethod
     @_check_argument("output", [None, "both", "CO2", "H2O"])
-    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid, output="both"):
+    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid, output="both", **kwargs):
         """ """
 
         if not 1 >= x_fluid >= 0:
