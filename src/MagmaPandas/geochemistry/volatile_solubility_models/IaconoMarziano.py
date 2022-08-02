@@ -1,7 +1,9 @@
-from ...parse.validate import _check_setter, _check_argument
 import pandas as pd
 import numpy as np
 from scipy.optimize import root_scalar, root
+import warnings as w
+
+from ...parse.validate import _check_setter, _check_argument
 
 """
 Equations from:
@@ -195,19 +197,21 @@ class h2o:
             raise ValueError("H2O not found in sample")
         if oxide_wtPercents["H2O"] < 0:
             raise ValueError(f"H2O lower than 0: {oxide_wtPercents['H2O']}")
+        if oxide_wtPercents["H2O"] == 0.:
+            return 0.
 
         composition = oxide_wtPercents.copy()
 
         # Upper limit of 15kbar
         upper_limit = 1.5e4
-        try:
-            P_saturation = root_scalar(
-                h2o._saturation_rootFunction,
-                args=(composition, T_K, kwargs),
-                bracket=[1e-15, upper_limit],
-            ).root
-        except:
-            P_saturation = np.nan
+        # try:
+        P_saturation = root_scalar(
+            h2o._saturation_rootFunction,
+            args=(composition, T_K, kwargs),
+            bracket=[1e-15, upper_limit],
+        ).root
+        # except:
+        #     P_saturation = np.nan
         return P_saturation
 
     @staticmethod
@@ -320,18 +324,21 @@ class co2:
             raise ValueError("CO2 not found in sample")
         if oxide_wtPercents["CO2"] < 0:
             raise ValueError(f"CO2 lower than 0: {oxide_wtPercents['CO2']}")
-        # Upper limit of 100kbar
+        if oxide_wtPercents["CO2"] == 0.:
+            return 0.
+        
 
         composition = oxide_wtPercents.copy()
+        # Upper limit of 100kbar
         upper_limit = 1e5
-        try:
-            P_saturation = root_scalar(
-                co2._saturation_rootFunction,
-                args=(composition, T_K, kwargs),
-                bracket=[1e-10, upper_limit],
-            ).root
-        except:
-            P_saturation = np.nan
+        # try:
+        P_saturation = root_scalar(
+            co2._saturation_rootFunction,
+            args=(composition, T_K, kwargs),
+            bracket=[1e-10, upper_limit],
+        ).root
+        # except:
+        #     P_saturation = np.nan
         return P_saturation
 
     @staticmethod
@@ -366,6 +373,7 @@ class mixed:
             if np.isfinite(species):
                 P_guess += species
 
+
         saturation = root(
             mixed._saturation_rootFunction,
             x0=[P_guess, 0.],
@@ -377,6 +385,7 @@ class mixed:
         elif saturation[1] >= 1.0:
             saturation[0] = P_H2O_saturation
         saturation[1] = np.clip(saturation[1], 0.0, 1.0)
+
 
         return_dict = {"P": saturation[0], "x_fluid": saturation[1], "both": saturation}
         return return_dict[output]

@@ -14,7 +14,7 @@ from ..MagmaSeries import MagmaSeries
 from ..MagmaFrames import Olivine, Melt
 
 from ..configuration import configuration
-from ..parse.validate import _check_setter
+from ..parse.validate import _check_setter, _check_value
 
 
 Fe2_options = ["buffered", "incompatible"]
@@ -43,6 +43,27 @@ class _meta_PEC_configuration(type):
     @_check_setter(Fe2_options)
     def Fe2_behaviour(cls, value):
         cls._Fe2_behaviour = value
+
+    @stepsize_equilibration.setter
+    @_check_value("value", [0, 1])
+    def stepsize_equilibration(cls, value):
+        cls.stepsize_equilibration = value
+    
+    @stepsize_crystallisation.setter
+    @_check_value("value", [0, 1])
+    def stepsize_crystallisation(cls, value):
+        cls.stepsize_crystallisation = value
+    
+    @decrease_factor.setter
+    @_check_value("value", [1, 50])
+    def decrease_factor(cls, value):
+        cls.decrease_factor = value
+
+    
+
+    
+
+    
 
 
 

@@ -2,9 +2,12 @@ from typing import List
 import numpy as np
 from scipy.optimize import root_scalar, root
 from scipy.constants import R
+from elements.elements import compound_weights
+import warnings as w
+
 from MagmaPandas.parse.validate import _check_argument, _check_setter
 from MagmaPandas.geochemistry.eos_volatiles import hollowayBlank
-from elements.elements import compound_weights
+
 
 """
 Equations from:
@@ -83,6 +86,8 @@ class h2o:
             raise ValueError(f"H2O lower than 0: {oxide_wtPercents['H2O']}")
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
+        if oxide_wtPercents["H2O"] == 0.:
+            return 0.
 
         composition = oxide_wtPercents.copy()
 
@@ -93,7 +98,7 @@ class h2o:
         P_saturation = root_scalar(
             _root_fugacity_pressure,
             args=(T_K, fH2O_pure, "H2O"),
-            bracket=[1e-15, 1.5e4],
+            bracket=[1e-50, 1.5e4],
         ).root
 
         return P_saturation
@@ -125,6 +130,8 @@ class co2:
             raise ValueError(f"CO2 lower than 0: {oxide_wtPercents['CO2']}")
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
+        if oxide_wtPercents["CO2"] == 0.:
+            return 0.
 
         composition = oxide_wtPercents.copy()
         CO2 = composition["CO2"]
@@ -140,7 +147,7 @@ class co2:
         P_CO2 = root_scalar(
             co2._root_partial_pressure,
             args=(T_K, deltaV, lnK0, Kf),
-            bracket=[1e-15, 1.5e4],
+            bracket=[1e-50, 1.5e4],
         ).root
         if x_fluid <= 0:
             return P_CO2
@@ -152,7 +159,7 @@ class co2:
             P_saturation = root_scalar(
                 _root_fugacity_pressure,
                 args=(T_K, fCO2pure, "CO2"),
-                bracket=[1e-15, 1.5e4],
+                bracket=[1e-50, 1.5e4],
             ).root
 
             return P_saturation
@@ -182,7 +189,7 @@ class co2:
         # Partial pressure of CO2
         if x_fluid > 0:
             P_CO2 = root_scalar(
-                _root_fugacity_pressure, args=(T_K, fCO2, "CO2"), bracket=[1e-15, 1.5e4]
+                _root_fugacity_pressure, args=(T_K, fCO2, "CO2"), bracket=[1e-50, 1.5e4]
             ).root
         else:
             P_CO2 = P_bar
@@ -278,9 +285,9 @@ class mixed:
         P_H2O_saturation = h2o.calculate_saturation(composition, T_K=T_K, x_fluid=1.0)
         P_CO2_saturation = co2.calculate_saturation(composition, T_K=T_K, x_fluid=0.0)
 
-        if oxide_wtPercents["H2O"] < 0:
+        if oxide_wtPercents["H2O"] <= 0:
             return P_CO2_saturation
-        if oxide_wtPercents["CO2"] < 0:
+        if oxide_wtPercents["CO2"] <= 0:
             return P_H2O_saturation
 
         P_guess = 0
@@ -289,9 +296,10 @@ class mixed:
             if np.isfinite(species):
                 P_guess += species
 
+   
         saturation = root(
             mixed._saturation_rootFunction,
-            x0=[P_guess, 0.01],
+            x0=[P_guess, 0.1],
             args=(composition, T_K),
         ).x
 
@@ -300,6 +308,8 @@ class mixed:
         elif saturation[1] >= 1.0:
             saturation[0] = P_H2O_saturation
         saturation[1] = np.clip(saturation[1], 0.0, 1.0)
+ 
+        
 
         return_dict = {"P": saturation[0], "x_fluid": saturation[1], "both": saturation}
 

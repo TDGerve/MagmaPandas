@@ -1,6 +1,8 @@
 from typing import List
 import pandas as pd
 from alive_progress import alive_bar
+import warnings as w
+import numpy as np
 
 from .magmaFrame_baseclass import MagmaFrame
 
@@ -192,7 +194,11 @@ class Melt(MagmaFrame):
         with alive_bar(total, spinner=None, force_tty=True) as bar:
             for (name, composition), temperature in zip(self.iterrows(), T_K):
                 bar.text = f"-> Processing sample '{name}'..."
-                P_bar[name] = calculate_saturation(composition, T_K=temperature)
+                try:
+                    P_bar[name] = calculate_saturation(composition, T_K=temperature)
+                except Exception:
+                    P_bar[name] = np.nan
+                    w.warn(f"Saturation pressure not found for sample {name}")
                 bar()
 
         if inplace:
