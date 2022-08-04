@@ -3,11 +3,11 @@ import numpy as np
 
 
 class melt_thermometers:
-    def putirka2008_14(self, inplace=False, **kwargs):
+    def putirka2008_14(self, **kwargs):
 
         """Liquid thermometer
 
-        Equation 14 from Putirka (2008) calculates liquiqdus temperature for liquid compositions. 
+        Equation 14 from Putirka (2008) calculates liquiqdus temperature for bulk compositions. 
         Requires equilibrium with olivine.
 
         Parameters
@@ -67,11 +67,11 @@ class melt_thermometers:
 
         return pd.Series(T_K, name="T_K").squeeze()
 
-    def putirka2008_15(self, P_bar, inplace=False, **kwargs):
+    def putirka2008_15(self, P_bar, **kwargs):
 
         """Liquid thermometer
 
-        Equation 15 from Putirka (2008) calculates liquiqdus temperature for liquid compositions. 
+        Equation 15 from Putirka (2008) calculates liquiqdus temperature for bulk compositions. 
         Requires equilibrium with olivine.
 
         Parameters
@@ -137,7 +137,7 @@ class melt_thermometers:
 
         """Liquid thermometer
 
-        Equation 16 from Putirka (2008) calculates liquiqdus temperature for liquid compositions. 
+        Equation 16 from Putirka (2008) calculates liquiqdus temperature for bulk compositions. 
         Requires equilibrium with olivine + plagioclase + clinopyroxene.
 
         Parameters
