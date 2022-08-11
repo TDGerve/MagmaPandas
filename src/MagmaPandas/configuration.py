@@ -106,7 +106,8 @@ class configuration(metaclass=_meta_configuration):
         print("".ljust(pad_total, "#"))
         print("\nGeneral settings".ljust(pad_total, "_"))
         print(f"{'fO2 buffer':.<{names_length}}{'QFM':.>{pad_right}}")
-        for param, model in variables.items():
+        for param, value in variables.items():
             # model_attr = f"_configuration{model}"
-            print(f"{param:.<{names_length}}{getattr(cls, model):.>{pad_right}}")
+            print(f"{param:.<{names_length}}{getattr(cls, value):.>{pad_right}}")
+        print("\n")
 

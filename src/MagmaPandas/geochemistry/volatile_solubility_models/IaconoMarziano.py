@@ -111,6 +111,7 @@ class IaconoMarziano_configuration(metaclass=_meta_IaconoMarziano_configuration)
         T_string = f"1373-1673\N{DEGREE SIGN}K"
         print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
         print(f"{'Pressure':.<{pad_left}}{'0.1-5 kbar':.>{pad_right}}")
+        print("\n")
 
 
 H2O_coefficients = {

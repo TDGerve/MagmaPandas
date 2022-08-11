@@ -68,6 +68,7 @@ class shiskina_configuration(metaclass=_meta_shiskina_configuration):
         T_string = f"1423-1523\N{DEGREE SIGN}K"
         print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
         print(f"{'Pressure':.<{pad_left}}{'0.2-5 kbar':.>{pad_right}}")
+        print("\n")
 
 # Model parameters
 co2_parameters = {

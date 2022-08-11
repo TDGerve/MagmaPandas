@@ -69,6 +69,7 @@ class Allison_configuration(metaclass=_meta_Allison_configuration):
         T_string = f"{1000+273.15:.0f}-{1400+273.14:.0f}\N{DEGREE SIGN}K"
         print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
         print(f"{'Pressure':.<{pad_left}}{'< 7 kbar':.>{pad_right}}")
+        print("\n")
 
 
 FeO_mass, Fe2O3_mass = compound_weights(["FeO", "Fe2O3"])

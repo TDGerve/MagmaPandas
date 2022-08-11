@@ -58,7 +58,9 @@ class MagmaFrame(pd.DataFrame):
         def _c(*args, weights=None, **kwargs):
             if weights is None:
                 weights = self._weights.copy(deep=True)
-            return MagmaFrame(*args, weights=weights, **kwargs).__finalize__(self)
+            self.recalculate(inplace=True)
+            current_class = type(self)
+            return current_class(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
 

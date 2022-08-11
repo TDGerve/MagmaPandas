@@ -1,8 +1,9 @@
 from typing import List
 import pandas as pd
-from alive_progress import alive_bar
 import warnings as w
 import numpy as np
+
+from alive_progress import alive_bar
 
 from .magmaFrame_baseclass import MagmaFrame
 
@@ -47,21 +48,21 @@ def read_melt(
 
 
 class Melt(MagmaFrame):
-    @property
-    def _constructor(self):
-        """This is the key to letting Pandas know how to keep
-        derivatives of `MagmaBase` the same type as yours.  It should
-        be enough to return the name of the Class.  However, in
-        some cases, `__finalize__` is not called and `new attributes` are
-        not carried over.  We can fix that by constructing a callable
-        that makes sure to call `__finalize__` every time."""
+    # @property
+    # def _constructor(self):
+    #     """This is the key to letting Pandas know how to keep
+    #     derivatives of `MagmaBase` the same type as yours.  It should
+    #     be enough to return the name of the Class.  However, in
+    #     some cases, `__finalize__` is not called and `new attributes` are
+    #     not carried over.  We can fix that by constructing a callable
+    #     that makes sure to call `__finalize__` every time."""
 
-        def _c(*args, weights=None, **kwargs):
-            if weights is None:
-                weights = self._weights.copy(deep=True)
-            return Melt(*args, weights=weights, **kwargs).__finalize__(self)
+    #     def _c(*args, weights=None, **kwargs):
+    #         if weights is None:
+    #             weights = self._weights.copy(deep=True)
+    #         return Melt(*args, weights=weights, **kwargs).__finalize__(self)
 
-        return _c
+    #     return _c
 
     def temperature(self, *args, **kwargs):
 
@@ -191,7 +192,9 @@ class Melt(MagmaFrame):
 
         total = self.shape[0]
 
-        with alive_bar(total, spinner=None, force_tty=True) as bar:
+        with alive_bar(
+            total, spinner=None, length=30, theme="smooth",
+        ) as bar:
             for (name, composition), temperature in zip(self.iterrows(), T_K):
                 bar.text = f"-> Processing sample '{name}'..."
                 try:
