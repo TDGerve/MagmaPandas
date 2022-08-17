@@ -2,6 +2,7 @@ from typing import List
 import pandas as pd
 import warnings as w
 import numpy as np
+from multiprocessing import Pool
 
 from alive_progress import alive_bar
 
@@ -48,6 +49,7 @@ def read_melt(
 
 
 class Melt(MagmaFrame):
+
     # @property
     # def _constructor(self):
     #     """This is the key to letting Pandas know how to keep
@@ -173,7 +175,7 @@ class Melt(MagmaFrame):
             **kwargs,
         )
 
-    def volatile_saturation_pressure(self, T_K, inplace=False):
+    def volatile_saturation_pressure(self, T_K, inplace=False, **kwargs):
         """
         Calculate volatile (H2O and/or CO2) saturation pressures for given liquid compositions.
 
@@ -189,23 +191,48 @@ class Melt(MagmaFrame):
             T_K = pd.Series(T_K, index=self.index)
 
         P_bar = pd.Series(index=self.index, dtype=float)
+        names = self.index.values
 
+        samples = [(name, temperature) for name, temperature in zip(names, T_K)]
         total = self.shape[0]
 
-        with alive_bar(
-            total, spinner=None, length=30, theme="smooth",
+        # Run calculations in a pool across multiple cpu cores
+        # Progress bar from alive_bar
+        with Pool() as pool, alive_bar(
+            total,
+            spinner=None,
+            length=30,
+            manual=True,
+            theme="smooth",
+            force_tty=True,
         ) as bar:
-            for (name, composition), temperature in zip(self.iterrows(), T_K):
-                bar.text = f"-> Processing sample '{name}'..."
-                try:
-                    P_bar[name] = calculate_saturation(composition, T_K=temperature)
-                except Exception:
-                    P_bar[name] = np.nan
-                    w.warn(f"Saturation pressure not found for sample {name}")
-                bar()
+
+            results = pool.imap_unordered(self._saturation_multicore, samples)
+            pool.close()
+
+            finished = 0
+            bar(0.0 / total)
+
+            for name, pressure in results:
+                finished += 1
+                bar(finished / total)
+                P_bar[name] = pressure
 
         if inplace:
             self["P_bar"] = P_bar
             return
         else:
             return P_bar
+
+    def _saturation_multicore(self, sample):
+        """
+        Refactor of calculate_saturation for multiprocess calling
+        """
+        name, temperature = sample
+        try:
+            P_bar = calculate_saturation(self.loc[name], T_K=temperature)
+        except Exception:
+            P_bar = np.nan
+            w.warn(f"Saturation pressure not found for sample {name}")
+
+        return name, P_bar

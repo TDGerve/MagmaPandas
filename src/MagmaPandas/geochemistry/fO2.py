@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from scipy.constants import R
 import itertools as it
+from multiprocessing import Pool
 
 
 def VdP_QFM(T_K, P_bar):
@@ -146,11 +147,9 @@ def muO2_QFM_P(T_K, P_bar):
             # kiloJoule to Joule
             muO2[i] = 1e3 * (3 * VdP_quartz + 2 * VdP_magnetite - 3 * VdP_fayalite)
 
-
     else:
         VdP_quartz, VdP_magnetite, VdP_fayalite = VdP_QFM_phaseTransitions(T_K, P_bar)
         muO2 = 1e3 * (3 * VdP_quartz + 2 * VdP_magnetite - 3 * VdP_fayalite)
-
 
     return muO2
 
@@ -178,7 +177,7 @@ def muO2_QFM_1bar(T_K, warning=False):
         if (np.array(T_K) > 1420).any():
             w.warn("O'Neill fO2: temperatures above 1420K present")
 
-    muO2 = -587474 + 1584.427 * T - 203.3164 * T * np.log(T) + 0.092710 * T ** 2
+    muO2 = -587474 + 1584.427 * T - 203.3164 * T * np.log(T) + 0.092710 * T**2
 
     # Convert to float if there is only one item
     if len(muO2) == 1:
@@ -204,21 +203,21 @@ def fO2_QFM_1bar(T_K, logshift=0):
     """
     mu_O2 = muO2_QFM_1bar(T_K)
 
-    offset = 10 ** logshift
+    offset = 10**logshift
 
     return np.exp(mu_O2 / (R * T_K)) * offset
 
 
 def fO2_QFM(logshift, T_K, P_bar):
     """ """
-    offset = 10 ** logshift
+    offset = 10**logshift
 
     # Chemical potential of oxygen
     # 1 bar contribution from O'Neill
     muO2_1bar_Oneill = muO2_QFM_1bar(T_K)
     # Pressue contribution from equations of state
     muO2_pressure_eos = muO2_QFM_P(T_K, P_bar)
-    # Remove any 1 bar contribution from the equation of state formulation, 
+    # Remove any 1 bar contribution from the equation of state formulation,
     # since the O'Neill emperical formulation is used for this
     VdP_quartz, VdP_magnetite, VdP_fayalite = VdP_QFM(T_K, 1)
     muO2_1bar_eos = 1e3 * (3 * VdP_quartz + 2 * VdP_magnetite - 3 * VdP_fayalite)
