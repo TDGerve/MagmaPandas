@@ -169,7 +169,7 @@ class Melt(MagmaFrame):
 
         return Kd_model(
             melt_mol_fractions=mol_fractions,
-            forsterite=forsterite,
+            forsterite_initial=forsterite,
             T_K=T_K,
             Fe3Fe2=Fe3Fe2,
             **kwargs,

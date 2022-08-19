@@ -5,9 +5,6 @@ from .Fe_redox import FeRedox_QFM
 from ..parse.validate import _check_argument
 
 
-
-
-
 ##### Toplis (2005) Fe-Mg olivine - melt exchange coefficient #####
 ###################################################################
 
@@ -259,7 +256,7 @@ class Kd_FeMg_vectorised:
         # Liquid Fe2+/Fe(total)
         Fe2Fe_total = 1 / (1 + Fe3Fe2)
         # liquid Fe2+/Mg
-        Fe2Mg = (melt_mol_fractions["FeO"] * Fe2Fe_total)/ melt_mol_fractions["MgO"]
+        Fe2Mg = (melt_mol_fractions["FeO"] * Fe2Fe_total) / melt_mol_fractions["MgO"]
         # Equilibrium forsterite content according to Kd
         forsterite_EQ = 1 / (1 + Kd * Fe2Mg)
         # Difference between observed Fo and equilibrium Fo
@@ -316,7 +313,7 @@ class Kd_FeMg:
         Kd = FeMg_blundy(forsterite, Fe3Fe2, T_K)
         # Liquid Fe2+/Fe(total)
         Fe2Fe_total = 1 / (1 + Fe3Fe2)
-        Fe2Mg = (melt_mol_fractions["FeO"] * Fe2Fe_total)/ melt_mol_fractions["MgO"]
+        Fe2Mg = (melt_mol_fractions["FeO"] * Fe2Fe_total) / melt_mol_fractions["MgO"]
         # Equilibrium forsterite content according to Kd
         forsterite_EQ = 1 / (1 + Kd * Fe2Mg)
         # Difference between observed Fo and equilibrium Fo
@@ -370,7 +367,7 @@ class Kd_FeMg:
         # Liquid Fe2+/Fe(total)
         Fe2Fe_total = 1 / (1 + Fe3Fe2)
         # liquid Fe2+/Mg
-        Fe2Mg = (melt_mol_fractions["FeO"] * Fe2Fe_total)/ melt_mol_fractions["MgO"]
+        Fe2Mg = (melt_mol_fractions["FeO"] * Fe2Fe_total) / melt_mol_fractions["MgO"]
         # Equilibrium forsterite content according to Kd
         forsterite_EQ = 1 / (1 + Kd * Fe2Mg)
 

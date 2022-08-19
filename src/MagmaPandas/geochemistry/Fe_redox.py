@@ -6,7 +6,7 @@ from ..parse.validate import _check_argument
 from ..configuration import configuration
 
 
-class Fe_redox():
+class Fe_redox:
     @staticmethod
     def kressCarmichael(mol_fractions, T_K, fO2, P_bar):
         """
@@ -74,7 +74,7 @@ class Fe_redox():
         Returns
         -------
         melt Fe3+/Fe2+ ratio
-        """   
+        """
 
         oxides = ["SiO2", "TiO2", "MgO", "CaO", "Na2O", "K2O", "Al2O3", "P2O5"]
 
@@ -88,9 +88,9 @@ class Fe_redox():
             for oxide in missing_oxides:
                 mol_fractions[oxide] = 0.0
 
-            w.warn(f"{', '.join(str(i) for i in missing_oxides)} missing in composition and set to 0.")
-
-
+            w.warn(
+                f"{', '.join(str(i) for i in missing_oxides)} missing in composition and set to 0."
+            )
 
         part1 = (
             0.207 * np.log10(fO2)
@@ -111,10 +111,10 @@ class Fe_redox():
             - 1.852
         )
 
-        return 10**(part1 + part2 + part3)
+        return 10 ** (part1 + part2 + part3)
 
 
-def FeRedox_QFM(mol_fractions, T_K, P_bar, logshift=0, **kwargs):
+def FeRedox_QFM(mol_fractions, T_K, P_bar, logshift, **kwargs):
     """
     Calculate Fe-redox equilibrium at QFM oxygen buffer for silicate liquids.
     Uses either equation 7 from Kress and Carmichael (1991) or equation 4 from Borisov et al. (2018).
@@ -130,14 +130,17 @@ def FeRedox_QFM(mol_fractions, T_K, P_bar, logshift=0, **kwargs):
     logshift    int, pd.Series-like
         log units shift of QFM
     model       string
-        'KressCarmichael' or 'Borisov'       
+        'KressCarmichael' or 'Borisov'
 
     Returns
     -------
     melt Fe3+/Fe2+ ratio
 
     """
-    Fe_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
+
+    Fe_model_name = kwargs.get("Fe_model", configuration.Fe3Fe2_model)
+    Fe_model = getattr(Fe_redox, Fe_model_name)
+    # getattr(Fe_redox, configuration.Fe3Fe2_model)
 
     fO2_bar = kwargs.get("fO2", fO2.fO2_QFM(logshift, T_K, P_bar))
 
