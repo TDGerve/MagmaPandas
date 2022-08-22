@@ -8,5 +8,5 @@ setuptools.setup(
     packages=setuptools.find_packages(where="src", exclude=[]),
     package_dir={"": "src"},
     package_data={"elements": ["data/*"], "geoplot": ["data/*"]},
-    install_requires=["pandas", "scipy", "numpy" "alive_progress"],
+    install_requires=["pandas", "scipy", "numpy", "alive_progress"],
 )

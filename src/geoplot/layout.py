@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-
+import elements as e
 
 # Color palettes
 class colors:
@@ -38,7 +38,7 @@ def layout(colors=colors.firenze, fontsize=14, **kwargs):
     axTitleSize = int(fontsize / 1.2)
     axLabelSize = int(fontsize)
     tickLabelSize = int(fontsize / 1.2)
-    markersize = kwargs.get("markersize", 12)
+    markersize = kwargs.get("markersize", 10)
     linewidth = kwargs.get("linewidth", 2)
 
     plt.rcParams["figure.constrained_layout.use"] = True
@@ -84,6 +84,7 @@ def side_plots(
         ax_kde_x.spines["left"].set_visible(False)
         ax_kde_x.yaxis.set_visible(False)
         ax_kde_x.tick_params(axis="x", labelbottom=False, direction="in", **kwargs)
+        ax_kde_x.set_xlim(ax.get_xlim())
 
     if y_axis:
         ax_kde_y = ax.inset_axes([1.0 + spacing, 0, side, 1])
@@ -92,6 +93,7 @@ def side_plots(
         ax_kde_y.xaxis.set_visible(False)
         ax_kde_y.spines["bottom"].set_visible(False)
         ax_kde_y.tick_params(axis="y", labelleft=False, direction="in", **kwargs)
+        ax_kde_y.set_ylim(ax.get_ylim())
 
     for axis in axes:
         # axis.set_frame_on(False)
@@ -102,3 +104,15 @@ def side_plots(
             axis.spines[spine].set_visible(False)
 
     return axes
+
+
+def subscript_numbers(compound: str):
+    string = ""
+    elements = e.find_elements(compound)
+    for element in elements:
+        name, quantity = e.find_quantity(element)
+        string = string + name
+        if float(quantity) > 1:
+            string = string + f"$_{quantity}$"
+
+    return string
