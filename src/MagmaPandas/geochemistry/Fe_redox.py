@@ -76,17 +76,19 @@ class Fe_redox:
         melt Fe3+/Fe2+ ratio
         """
 
+        moles = mol_fractions.copy()
+
         oxides = ["SiO2", "TiO2", "MgO", "CaO", "Na2O", "K2O", "Al2O3", "P2O5"]
 
-        if isinstance(mol_fractions, pd.DataFrame):
-            missing_oxides = set(oxides).difference(mol_fractions.columns)
-        elif isinstance(mol_fractions, pd.Series):
-            missing_oxides = set(oxides).difference(mol_fractions.index)
+        if isinstance(moles, pd.DataFrame):
+            missing_oxides = set(oxides).difference(moles.columns)
+        elif isinstance(moles, pd.Series):
+            missing_oxides = set(oxides).difference(moles.index)
 
         if len(missing_oxides) > 0:
 
             for oxide in missing_oxides:
-                mol_fractions[oxide] = 0.0
+                moles[oxide] = 0.0
 
             w.warn(
                 f"{', '.join(str(i) for i in missing_oxides)} missing in composition and set to 0."
@@ -95,19 +97,19 @@ class Fe_redox:
         part1 = (
             0.207 * np.log10(fO2)
             + 4633.3 / T_K
-            - 0.445 * mol_fractions["SiO2"]
-            - 0.900 * mol_fractions["TiO2"]
-            + 1.532 * mol_fractions["MgO"]
+            - 0.445 * moles["SiO2"]
+            - 0.900 * moles["TiO2"]
+            + 1.532 * moles["MgO"]
         )
         part2 = (
-            0.341 * mol_fractions["CaO"]
-            + 2.030 * mol_fractions["Na2O"]
-            + 3.355 * mol_fractions["K2O"]
-            - 4.851 * mol_fractions["P2O5"]
+            0.341 * moles["CaO"]
+            + 2.030 * moles["Na2O"]
+            + 3.355 * moles["K2O"]
+            - 4.851 * moles["P2O5"]
         )
         part3 = (
-            -3.081 * mol_fractions["SiO2"] * mol_fractions["Al2O3"]
-            - 4.370 * mol_fractions["SiO2"] * mol_fractions["MgO"]
+            -3.081 * moles["SiO2"] * moles["Al2O3"]
+            - 4.370 * moles["SiO2"] * moles["MgO"]
             - 1.852
         )
 

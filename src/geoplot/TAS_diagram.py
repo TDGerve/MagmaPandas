@@ -8,7 +8,7 @@ def TAS(labels=False, fontsize="medium", **kwargs):
     in total-alkali vs silica plots
     """
 
-    with resources.open_text("meltInc.static", "TAS.csv") as df:
+    with resources.open_text("geoplot.data", "TAS.csv") as df:
         TAS = pd.read_csv(df)
 
     rock_labels = {

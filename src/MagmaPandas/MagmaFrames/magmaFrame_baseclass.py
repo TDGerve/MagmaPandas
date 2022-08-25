@@ -18,36 +18,36 @@ class MagmaFrame(pd.DataFrame):
     # New attributes
     _metadata = ["_weights", "_units", "_datatype"]
 
-
     @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
     @_check_argument("datatype", [None, "cation", "oxide"])
     def __init__(
-        self, data=None, *args, units: str = None, datatype: str = None, total_col: str = None, weights: pd.Series = None, **kwargs
-    ) -> None:        
+        self,
+        data=None,
+        *args,
+        units: str = None,
+        datatype: str = None,
+        total_col: str = None,
+        weights: pd.Series = None,
+        **kwargs,
+    ) -> None:
 
         self._units = units
         self._datatype = datatype
         if weights is not None:
             self._weights = weights.copy()
 
-        super().__init__(data, **kwargs) 
+        super().__init__(data, **kwargs)
 
         if not hasattr(self, "_weights"):
             self._weights = pd.Series(name="weight", dtype=float)
-            self.recalculate(inplace=True)
             for col in self.columns:
                 try:
                     # Calculate element/oxide weight
                     self._weights[col] = e.calculate_weight(col)
                 except (ValueError, KeyError):
                     pass
-        
-            
 
-        
-        
             # self = self.loc[:, self.elements]
-
 
     @property
     def _constructor(self):
@@ -56,14 +56,14 @@ class MagmaFrame(pd.DataFrame):
         be enough to return the name of the Class.  However, in
         some cases, `__finalize__` is not called and `new attributes` are
         not carried over.  We can fix that by constructing a callable
-        that makes sure to call `__finalize__` every time."""  
+        that makes sure to call `__finalize__` every time."""
 
         def _c(*args, weights=None, **kwargs):
             if weights is None:
-                
+
                 weights = self._weights.copy(deep=True)
             current_class = type(self)
-            
+
             return current_class(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
@@ -101,7 +101,6 @@ class MagmaFrame(pd.DataFrame):
 
         return "total" in self.columns
 
-
     @property
     def units(self) -> str:
         """
@@ -128,7 +127,7 @@ class MagmaFrame(pd.DataFrame):
         return list(self._weights.index).copy()
 
     @property
-    @_check_attribute("_datatype", ["oxide"])
+    @_check_attribute("_units", ["wt. %", "ppm"])
     def moles(self):
         """
         Calculate molar fractions from oxide concentrations
@@ -225,11 +224,11 @@ class MagmaFrame(pd.DataFrame):
         missing_elements = df.columns.difference(df._weights.index)
         extra_elements = df._weights.index.difference(df.columns)
 
-        if all(i.size == 0 for i in[missing_elements, extra_elements]):
+        if all(i.size == 0 for i in [missing_elements, extra_elements]):
             return
 
         if extra_elements.size > 0:
-            df._weights = df._weights.drop(extra_elements)        
+            df._weights = df._weights.drop(extra_elements)
 
         if missing_elements.size > 0:
             new_weights = pd.Series(name="weight", dtype="float32")
@@ -238,12 +237,12 @@ class MagmaFrame(pd.DataFrame):
                     new_weights[element] = e.calculate_weight(element)
                 except:
                     pass
-            df._weights = pd.concat([df._weights, new_weights])        
-        
+            df._weights = pd.concat([df._weights, new_weights])
+
         if df._total:
             totals = df.loc[:, df.elements].sum(axis=1)
             df.loc[:, "total"] = totals.values
-        
+
         if not inplace:
             return df
 

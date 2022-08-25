@@ -21,8 +21,8 @@ fugacity_options = ["ideal"]
 activity_options = ["ideal"]
 model_options = ["mixed", "h2o", "co2"]
 
-class _meta_IaconoMarziano_configuration(type):
 
+class _meta_IaconoMarziano_configuration(type):
     def __init__(cls, *args, **kwargs):
         cls._parameters = "hydrous_webapp"
         cls._fugacity = "ideal"
@@ -74,7 +74,6 @@ class _meta_IaconoMarziano_configuration(type):
 
 
 class IaconoMarziano_configuration(metaclass=_meta_IaconoMarziano_configuration):
-
     @classmethod
     def reset(cls):
         cls._parameters = "hydrous_webapp"
@@ -84,9 +83,7 @@ class IaconoMarziano_configuration(metaclass=_meta_IaconoMarziano_configuration)
 
     @classmethod
     def print(cls):
-        """ 
-        
-        """
+        """ """
 
         variables = {
             "Parameterisation": "_parameters",
@@ -104,9 +101,7 @@ class IaconoMarziano_configuration(metaclass=_meta_IaconoMarziano_configuration)
         print("Settings".ljust(pad_total, "_"))
         for param, model in variables.items():
             # model_attr = f"_IaconoMarziano_configuration{model}"
-            print(
-                f"{param:.<{pad_left}}{getattr(cls, model):.>{pad_right}}"
-            )
+            print(f"{param:.<{pad_left}}{getattr(cls, model):.>{pad_right}}")
         print("\nCalibration range".ljust(pad_total, "_"))
         T_string = f"1373-1673\N{DEGREE SIGN}K"
         print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
@@ -198,8 +193,8 @@ class h2o:
             raise ValueError("H2O not found in sample")
         if oxide_wtPercents["H2O"] < 0:
             raise ValueError(f"H2O lower than 0: {oxide_wtPercents['H2O']}")
-        if oxide_wtPercents["H2O"] == 0.:
-            return 0.
+        if oxide_wtPercents["H2O"] == 0.0:
+            return 0.0
 
         composition = oxide_wtPercents.copy()
 
@@ -226,7 +221,6 @@ class h2o:
 
         mol_fractions = oxide_wtPercents.moles
         NBO_O = NBO_O_calculate(mol_fractions)
-        
 
         if IaconoMarziano_configuration.fugacity == "ideal":
             P_H2O = x_fluid * P_bar
@@ -248,9 +242,7 @@ class h2o:
 
     @staticmethod
     def _saturation_rootFunction(P_bar, oxide_wtPercents, T_K, kwargs):
-        """ 
-        
-        """
+        """ """
         composition = oxide_wtPercents.copy()
         #
         return composition["H2O"] - h2o.calculate_solubility(
@@ -273,7 +265,6 @@ class co2:
 
         if any(i <= 0 for i in [P_bar, (1 - x_fluid)]):
             return 0
-
 
         if "anhydrous" in IaconoMarziano_configuration.parameters:
             parameterisation = "anhydrous"
@@ -325,9 +316,8 @@ class co2:
             raise ValueError("CO2 not found in sample")
         if oxide_wtPercents["CO2"] < 0:
             raise ValueError(f"CO2 lower than 0: {oxide_wtPercents['CO2']}")
-        if oxide_wtPercents["CO2"] == 0.:
-            return 0.
-        
+        if oxide_wtPercents["CO2"] == 0.0:
+            return 0.0
 
         composition = oxide_wtPercents.copy()
         # Upper limit of 100kbar
@@ -360,13 +350,13 @@ class mixed:
 
         composition = oxide_wtPercents.copy()
 
+        if oxide_wtPercents["H2O"] <= 0.0:
+            return P_CO2_saturation
+        if oxide_wtPercents["CO2"] <= 0.0:
+            return P_H2O_saturation
+
         P_H2O_saturation = h2o.calculate_saturation(composition, T_K=T_K, x_fluid=1.0)
         P_CO2_saturation = co2.calculate_saturation(composition, T_K=T_K, x_fluid=0.0)
-
-        if oxide_wtPercents["H2O"] < 0:
-            return P_CO2_saturation
-        if oxide_wtPercents["CO2"] < 0:
-            return P_H2O_saturation
 
         P_guess = 0
 
@@ -374,10 +364,9 @@ class mixed:
             if np.isfinite(species):
                 P_guess += species
 
-
         saturation = root(
             mixed._saturation_rootFunction,
-            x0=[P_guess, 0.],
+            x0=[P_guess, 0.0],
             args=(composition, T_K),
         ).x
 
@@ -387,13 +376,14 @@ class mixed:
             saturation[0] = P_H2O_saturation
         saturation[1] = np.clip(saturation[1], 0.0, 1.0)
 
-
         return_dict = {"P": saturation[0], "x_fluid": saturation[1], "both": saturation}
         return return_dict[output]
 
     @staticmethod
     @_check_argument("output", [None, "both", "CO2", "H2O"])
-    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid, output="both", **kwargs):
+    def calculate_solubility(
+        oxide_wtPercents, P_bar, T_K, x_fluid, output="both", **kwargs
+    ):
 
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")

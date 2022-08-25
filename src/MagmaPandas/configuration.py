@@ -5,17 +5,17 @@ Fe3Fe2_models = ["borisov", "kressCarmichael"]
 Kd_ol_FeMg_models = ["toplis", "blundy"]
 melt_thermometers = ["putirka2008_14", "putirka2008_15", "putirka2008_16"]
 volatile_solubility_models = ["IaconoMarziano", "Allison2022", "Shiskina"]
-volatile_species_options = ["CO2", "H2O", "mixed"]
+volatile_species_options = ["co2", "h2o", "mixed"]
+
 
 class _meta_configuration(type):
-
     def __init__(cls, *args, **kwargs):
         cls._dQFM = 1
         cls._Kd_model = "toplis"
         cls._Fe3Fe2_model = "borisov"
         cls._melt_thermometer = "putirka2008_15"
         cls._volatile_solubility = "IaconoMarziano"
-        cls._volatile_species = "mixed"
+        cls._volatile_species = "co2"
 
     @property
     def dQFM(cls):
@@ -59,7 +59,7 @@ class _meta_configuration(type):
     @volatile_solubility.setter
     @_check_setter(volatile_solubility_models)
     def volatile_solubility(cls, model: str):
-        cls._volatile_solubility = model   
+        cls._volatile_solubility = model
 
     @property
     def volatile_species(cls):
@@ -71,9 +71,7 @@ class _meta_configuration(type):
         cls._volatile_species = model
 
 
-
 class configuration(metaclass=_meta_configuration):
-
     @classmethod
     def reset(cls):
         cls._dQFM = 1
@@ -81,11 +79,11 @@ class configuration(metaclass=_meta_configuration):
         cls._Fe3Fe2_model = "borisov"
         cls._melt_thermometer = "putirka2008_15"
         cls._volatile_solubility = "IaconoMarziano"
-        cls._volatile_species = "mixed"
+        cls._volatile_species = "co2"
 
     @classmethod
     def print(cls):
-        """ 
+        """
         Docstring
         """
 
@@ -95,7 +93,7 @@ class configuration(metaclass=_meta_configuration):
             "Kd Fe-Mg ol-melt": "_Kd_model",
             "Melt thermometer": "_melt_thermometer",
             "Volatile solubility model": "_volatile_solubility",
-            "Volatile species": "_volatile_species"
+            "Volatile species": "_volatile_species",
         }
 
         names_length = max([len(i) for i in variables.keys()]) + 5
@@ -110,4 +108,3 @@ class configuration(metaclass=_meta_configuration):
             # model_attr = f"_configuration{model}"
             print(f"{param:.<{names_length}}{getattr(cls, value):.>{pad_right}}")
         print("\n")
-

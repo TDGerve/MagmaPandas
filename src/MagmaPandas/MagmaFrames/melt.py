@@ -14,6 +14,7 @@ from ..geochemistry.Fe_redox import FeRedox_QFM
 from ..geochemistry.Kd_ol_melt import Kd_FeMg_vectorised
 from ..geochemistry.volatiles import calculate_saturation
 
+
 from ..thermometers.melt import melt_thermometers
 
 from ..parse.validate import _check_argument
@@ -193,7 +194,13 @@ class Melt(MagmaFrame):
         P_bar = pd.Series(index=self.index, dtype=float)
         names = self.index.values
 
-        samples = [(name, temperature) for name, temperature in zip(names, T_K)]
+        model = configuration.volatile_solubility
+        species = configuration.volatile_species
+
+        samples = [
+            (name, temperature, (model, species))
+            for name, temperature in zip(names, T_K)
+        ]
         total = self.shape[0]
 
         # Run calculations in a pool across multiple cpu cores
@@ -228,9 +235,12 @@ class Melt(MagmaFrame):
         """
         Refactor of calculate_saturation for multiprocess calling
         """
-        name, temperature = sample
+
+        name, temperature, (model, species) = sample
         try:
-            P_bar = calculate_saturation(self.loc[name], T_K=temperature)
+            P_bar = calculate_saturation(
+                self.loc[name], T_K=temperature, model=model, species=species
+            )
         except Exception:
             P_bar = np.nan
             w.warn(f"Saturation pressure not found for sample {name}")
