@@ -132,8 +132,6 @@ def Fe_equilibrate(
     **kwargs,
 ):
     """
-    STOP NORMALISING
-
     Equilibrate a melt inclusion with it's host olivine through Fe-Mg exchange.
     Isothermal and isobaric.
     """
@@ -312,8 +310,6 @@ def crystallisation_correction(
 ):
 
     """
-    STOP NORMALISING
-
     Correct an olivine hosted melt inclusion for post entrapment crystallisation or melting by
     respectively melting or crystallising host olivine.
     Expects the melt inclusion is completely equilibrated with the host crystal.
