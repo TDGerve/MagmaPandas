@@ -1,4 +1,5 @@
 from functools import partial
+from operator import eq
 import pandas as pd
 import numpy as np
 from typing import Union
@@ -289,9 +290,12 @@ def Fe_equilibrate(
             stepsize = stepsize / decrease_factor
     # Recalculate compositions to oxide wt. %
     equilibrated_composition = mi_moles.convert_moles_wtPercent
+
     if len(olivine_crystallised) == 1:
         olivine_crystallised = np.array([0])
         temperature_new = temperature
+
+    equilibrated_composition.index = olivine_crystallised
 
     return (
         equilibrated_composition,
@@ -960,6 +964,11 @@ class PEC_olivine:
         # Starting FeO and temperature
         FeO = self.inclusions["FeO"].copy()
         FeO_target = self.FeO_target.copy()
+        if self._FeO_as_function:
+            FeO_target = self.FeO_function(self.inclusions)
+        else:
+            FeO_target = self.FeO_target.copy()
+
         temperature_old = self.inclusions.temperature(P_bar=P_bar)
 
         stepsize.loc[FeO > FeO_target] = -stepsize.loc[FeO > FeO_target]
@@ -1113,55 +1122,113 @@ class PEC_olivine:
         equilibrated["correction"] = "equilibration"
         corrected["correction"] = "correction"
 
-        total_inclusion = pd.concat([equilibrated, corrected], axis=0)
+        total_inclusion = pd.concat([equilibrated, corrected.iloc[1:]], axis=0)
 
         if plot:
             import matplotlib.pyplot as plt
+            import matplotlib.lines as l
             from labellines import labelLine
+
+            set_markers = kwargs.get("markers", True)
+
+            import geoplot as p
 
             fontsize = 14
 
-            fig, ax = plt.subplots(figsize=(8, 7), constrained_layout=False)
+            fig, ax = plt.subplots(figsize=(7, 6), constrained_layout=False)
 
-            plt.title(index)
+            colors = p.colors.bella.by_key()["color"]
+
+            linewidth = 5
+            markersize = 90
+
+            FeO_color = tuple(np.repeat(0.25, 3))
 
             plt.plot(
-                equilibrated["MgO"], equilibrated["FeO"], "-o", label="equilibration"
+                equilibrated["MgO"],
+                equilibrated["FeO"],
+                ["-", ".-"][set_markers],
+                color=colors[1],
+                # label="equilibration",
+                linewidth=linewidth,
+                alpha=0.7,
             )
-            plt.plot(corrected["MgO"], corrected["FeO"], "-D", label="correction")
+            plt.plot(
+                corrected["MgO"],
+                corrected["FeO"],
+                ["-", ".-"][set_markers],
+                color=colors[2],
+                # label="correction",
+                linewidth=linewidth,
+                alpha=0.7,
+            )
+            ax.scatter(
+                equilibrated.loc[equilibrated.index[0], "MgO"],
+                equilibrated.loc[equilibrated.index[0], "FeO"],
+                marker="^",
+                color=colors[1],
+                edgecolors="k",
+                s=markersize,
+                zorder=10,
+                label="Glass",
+            )
+            ax.scatter(
+                equilibrated.loc[equilibrated.index[-1], "MgO"],
+                equilibrated.loc[equilibrated.index[-1], "FeO"],
+                marker="o",
+                edgecolors="k",
+                color=colors[3],
+                s=markersize,
+                zorder=10,
+                label="Equilibrated",
+            )
+            ax.scatter(
+                corrected.loc[corrected.index[-1], "MgO"],
+                corrected.loc[corrected.index[-1], "FeO"],
+                marker="s",
+                color=colors[2],
+                edgecolors="k",
+                s=markersize,
+                zorder=10,
+                label="Corrected",
+            )
 
             middle = sum(ax.get_xlim()) / 2
 
             if self._FeO_as_function:
-                FeO_inital = self.FeO_function(total_inclusion)
-                ax.plot(total_inclusion["MgO"], FeO_inital, color="k", linestyle="--")
+                FeO_inital = self.FeO_function(corrected)
+                ax.plot(corrected["MgO"], FeO_inital, color=FeO_color, linestyle="-")
                 FeO_target = sum((min(FeO_inital), max(FeO_inital))) / 2
             else:
-                ax.axhline(FeO_target, linestyle="--", color="k", linewidth=1.5)
+                ax.axhline(FeO_target, linestyle="-", color=FeO_color, linewidth=1.5)
 
-            # USE LABELLINES INSTEAD
             FeO_line = ax.get_lines()[-1]
-            labelLine(FeO_line, x=middle, label="FeO target", size=fontsize)
-            # plt.text(
-            #     middle,
-            #     FeO_target,
-            #     s="FeO target",
-            #     size=fontsize,
-            #     backgroundcolor=ax.get_facecolor(),
-            # )
-            plt.text(
-                0.6,
-                0.1,
-                s=f"{total_corrected * 100:.2f} mol %\ncrystallisation correction",
-                size=fontsize,
-                transform=ax.transAxes,
+            labelLine(
+                FeO_line,
+                x=middle,
+                label="initial FeO",
+                size=fontsize * 0.8,
+                color=FeO_color,
             )
 
             ax.set_ylim(ax.get_ylim()[0], max((FeO_target * 1.03, ax.get_ylim()[1])))
 
-            ax.set_xlabel("wt. % MgO")
-            ax.set_ylabel("wt. % FeO")
+            ax.set_xlabel("MgO (wt. %)")
+            ax.set_ylabel("FeO$^T$\n(wt. %)", rotation=0, labelpad=30)
 
-            plt.legend()
+            handles, labels = ax.get_legend_handles_labels()
+
+            handles = handles + [l.Line2D([0], [0], linewidth=0)]
+
+            labels = labels + [f"{total_corrected * 100:.2f} mol. %\nPEC correction"]
+
+            ax.legend(
+                handles,
+                labels,
+                title=index,
+                prop={"family": "monospace", "size": fontsize / 1.5},
+                fancybox=False,
+                facecolor="white",
+            )
 
         return total_inclusion
