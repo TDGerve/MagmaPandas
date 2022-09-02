@@ -1,1 +1,1 @@
-from .regress import optimise_regression
+from .regress import optimise_regression, ols_fit

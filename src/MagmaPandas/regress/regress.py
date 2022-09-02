@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy import stats
 import statsmodels.api as sm
 from statsmodels.tools.eval_measures import rmse
@@ -29,13 +28,12 @@ class statsmodel_wrapper(BaseEstimator, RegressorMixin):
         if self.fit_intercept:
             X = sm.add_constant(X)
         return self.results_.predict(X)
-        return self.result.predict(X)
 
 
 # ols fitting
 def ols_fit(x, y):
     """
-    Multiple linear ordinary least squares regresson
+    Multiple linear ordinary least squares regression
     """
     x_train = sm.add_constant(x)
     reg_ols = sm.OLS(y, x_train).fit()
@@ -122,7 +120,9 @@ def optimise_regression(data: pd.DataFrame, y_predict: str, exclude=None, split=
     y = data[y_predict].copy()
 
     parameters_total = pd.DataFrame(dtype=float, columns=["const"] + list(x.columns))
-    errors = pd.DataFrame(dtype=float, columns=["calibration", "validation", "delta"])
+    errors = pd.DataFrame(
+        dtype=float, columns=["calibration", "validation", "delta", "r2"]
+    )
 
     for _ in x.columns[1:]:
         x_data, parameters, model = get_model(x, y)
@@ -148,10 +148,11 @@ def optimise_regression(data: pd.DataFrame, y_predict: str, exclude=None, split=
             abs(cross_validation["test_score"])
         ).mean()
 
+        errors.loc[n_parameters, "r2"] = model.rsquared
         x = x_data.copy()
 
-        # if (parameters["p_value"] > 0.0001).any() or (r2 < 0.96):
-        #     break
     errors["delta"] = abs(errors["validation"] - errors["calibration"])
+
+    parameters_total = parameters_total.rename(columns={"const": "intercept"})
 
     return parameters_total, errors

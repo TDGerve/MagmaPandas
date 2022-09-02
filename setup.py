@@ -14,5 +14,6 @@ setuptools.setup(
         "numpy",
         "alive_progress",
         "matplotlib-label-lines",
+        "statsmodels",
     ],
 )
