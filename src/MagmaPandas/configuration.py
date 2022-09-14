@@ -15,7 +15,7 @@ class _meta_configuration(type):
         cls._Fe3Fe2_model = "borisov"
         cls._melt_thermometer = "putirka2008_15"
         cls._volatile_solubility = "IaconoMarziano"
-        cls._volatile_species = "co2"
+        cls._volatile_species = "mixed"
 
     @property
     def dQFM(cls):
@@ -70,25 +70,13 @@ class _meta_configuration(type):
     def volatile_species(cls, model: str):
         cls._volatile_species = model
 
-
-class configuration(metaclass=_meta_configuration):
-    @classmethod
-    def reset(cls):
-        cls._dQFM = 1
-        cls._Kd_model = "toplis"
-        cls._Fe3Fe2_model = "borisov"
-        cls._melt_thermometer = "putirka2008_15"
-        cls._volatile_solubility = "IaconoMarziano"
-        cls._volatile_species = "co2"
-
-    @classmethod
-    def print(cls):
+    def __str__(cls):
         """
         Docstring
         """
 
         variables = {
-            "\u0394QFM": "_dQFM",
+            "\u0394 buffer": "_dQFM",
             "Melt Fe3+/Fe2+": "_Fe3Fe2_model",
             "Kd Fe-Mg ol-melt": "_Kd_model",
             "Melt thermometer": "_melt_thermometer",
@@ -99,12 +87,30 @@ class configuration(metaclass=_meta_configuration):
         names_length = max([len(i) for i in variables.keys()]) + 5
         pad_right = 15
         pad_total = names_length + pad_right
+        new_line = "\n"
 
-        print(" MagmaPandas ".center(pad_total, "#"))
-        print("".ljust(pad_total, "#"))
-        print("\nGeneral settings".ljust(pad_total, "_"))
-        print(f"{'fO2 buffer':.<{names_length}}{'QFM':.>{pad_right}}")
+        message = (
+            f"{new_line}{' MagmaPandas ':#^{pad_total}}"
+            f"{new_line}{'':#^{pad_total}}"
+            f"{new_line}{'General settings':_<{pad_total}}"
+            f"{new_line}{'fO2 buffer':.<{names_length}}{'QFM':.>{pad_right}}"
+        )
+
+        parameter_settings = ""
         for param, value in variables.items():
-            # model_attr = f"_configuration{model}"
-            print(f"{param:.<{names_length}}{getattr(cls, value):.>{pad_right}}")
-        print("\n")
+            parameter_settings += (
+                f"{new_line}{param:.<{names_length}}{getattr(cls, value):.>{pad_right}}"
+            )
+
+        return message + parameter_settings
+
+
+class configuration(metaclass=_meta_configuration):
+    @classmethod
+    def reset(cls):
+        cls._dQFM = 1
+        cls._Kd_model = "toplis"
+        cls._Fe3Fe2_model = "borisov"
+        cls._melt_thermometer = "putirka2008_15"
+        cls._volatile_solubility = "IaconoMarziano"
+        cls._volatile_species = "mixed"

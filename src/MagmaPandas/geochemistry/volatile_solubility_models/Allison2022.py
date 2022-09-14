@@ -45,6 +45,36 @@ class _meta_Allison_configuration(type):
     def model(cls, model: str):
         cls._model = model
 
+    def __str__(cls):
+        """ """
+
+        variables = {"Fugacity model": "_fugacity", "Species model": "_model"}
+        pad_left = 20
+        pad_right = 20
+        pad_total = pad_left + pad_right
+        new_line = "\n"
+
+        message = (
+            f"{new_line}{' Allison (2022) volatile solubility ':#^{pad_total}}"
+            f"{new_line}{'':#<{pad_total}}"
+            f"{new_line}{'Settings':#<{pad_total}}"
+        )
+
+        parameter_settings = ""
+        for param, model in variables.items():
+            prameter_settings += (
+                f"{new_line}{param:.<{pad_left}}{getattr(cls, model):.>{pad_right}}"
+            )
+
+        T_string = f"{1000+273.15:.0f}-{1400+273.14:.0f}\N{DEGREE SIGN}K"
+        calibration_range = (
+            f"{new_line}{'Calibration range':_<{pad_total}}"
+            f"{new_line}{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}"
+            f"{new_line}{'Pressure':.<{pad_left}}{'< 7 kbar':.>{pad_right}}"
+        )
+
+        return message + parameter_settings + calibration_range
+
 
 class Allison_configuration(metaclass=_meta_Allison_configuration):
     @classmethod
@@ -87,8 +117,8 @@ class h2o:
             raise ValueError(f"H2O lower than 0: {oxide_wtPercents['H2O']}")
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
-        if oxide_wtPercents["H2O"] == 0.:
-            return 0.
+        if oxide_wtPercents["H2O"] == 0.0:
+            return 0.0
 
         composition = oxide_wtPercents.copy()
 
@@ -131,8 +161,8 @@ class co2:
             raise ValueError(f"CO2 lower than 0: {oxide_wtPercents['CO2']}")
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
-        if oxide_wtPercents["CO2"] == 0.:
-            return 0.
+        if oxide_wtPercents["CO2"] == 0.0:
+            return 0.0
 
         composition = oxide_wtPercents.copy()
         CO2 = composition["CO2"]
@@ -297,7 +327,6 @@ class mixed:
             if np.isfinite(species):
                 P_guess += species
 
-   
         saturation = root(
             mixed._saturation_rootFunction,
             x0=[P_guess, 0.1],
@@ -309,8 +338,6 @@ class mixed:
         elif saturation[1] >= 1.0:
             saturation[0] = P_H2O_saturation
         saturation[1] = np.clip(saturation[1], 0.0, 1.0)
- 
-        
 
         return_dict = {"P": saturation[0], "x_fluid": saturation[1], "both": saturation}
 
@@ -318,7 +345,9 @@ class mixed:
 
     @staticmethod
     @_check_argument("output", [None, "both", "CO2", "H2O"])
-    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid, output="both", **kwargs):
+    def calculate_solubility(
+        oxide_wtPercents, P_bar, T_K, x_fluid, output="both", **kwargs
+    ):
         """ """
 
         if not 1 >= x_fluid >= 0:

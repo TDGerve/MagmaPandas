@@ -35,7 +35,13 @@ class MagmaSeries(pd.Series):
     @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
     @_check_argument("datatype", [None, "cation", "oxide"])
     def __init__(
-        self, data=None, *args, units: str = None, datatype: str = None, weights: pd.Series = None, **kwargs
+        self,
+        data=None,
+        *args,
+        units: str = None,
+        datatype: str = None,
+        weights: pd.Series = None,
+        **kwargs,
     ) -> None:
 
         self._units = units
@@ -54,10 +60,7 @@ class MagmaSeries(pd.Series):
                 except (ValueError, KeyError):
                     pass
 
-        
-
         # self.recalculate(inplace=True)
-
 
     @property
     def _constructor(self):
@@ -218,11 +221,11 @@ class MagmaSeries(pd.Series):
         missing_elements = series.index.difference(series._weights.index)
         extra_elements = series._weights.index.difference(series.index)
 
-        if all(i.size == 0 for i in[missing_elements, extra_elements]):
+        if all(i.size == 0 for i in [missing_elements, extra_elements]):
             return
 
         if extra_elements.size > 0:
-            series._weights = series._weights.drop(extra_elements)        
+            series._weights = series._weights.drop(extra_elements)
 
         if missing_elements.size > 0:
             new_weights = pd.Series(name="weight", dtype="float32")
@@ -231,8 +234,8 @@ class MagmaSeries(pd.Series):
                     new_weights[element] = e.calculate_weight(element)
                 except:
                     pass
-            series._weights = pd.concat([series._weights, new_weights])        
-        
+            series._weights = pd.concat([series._weights, new_weights])
+
         if series._total:
             series["total"] = series[series.elements].sum()
 

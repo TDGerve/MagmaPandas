@@ -34,6 +34,9 @@ class colors:
     )
 
 
+markers = plt.cycler(marker=["^", "D", "s", "o", "p"])
+
+
 def layout(colors=colors.firenze, fontsize=14, **kwargs):
     axTitleSize = int(fontsize / 1.2)
     axLabelSize = int(fontsize)
@@ -61,7 +64,7 @@ def layout(colors=colors.firenze, fontsize=14, **kwargs):
         titlesize=axTitleSize,
         labelsize=axLabelSize,
         axisbelow=True,
-        prop_cycle=colors,
+        prop_cycle=colors + markers,
         facecolor="whitesmoke",
         linewidth=1.2,
     )

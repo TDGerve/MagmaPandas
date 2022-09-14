@@ -1,8 +1,45 @@
 import numpy as np
 import pandas as pd
 from scipy.constants import R  # J*K-1*mol-1
-from .Fe_redox import FeRedox_QFM
-from ..parse.validate import _check_argument
+
+from ..geochemistry.Fe_redox import Fe_redox
+from ..geochemistry.fO2 import fO2_QFM
+
+from ..configuration import configuration
+
+
+def calculate_olivine_Kd(melt: pd.DataFrame, forsterite: pd.Series, P_bar, **kwargs):
+    """
+    Calulate Fe-Mg exchange coefficients between olivine (ol) and melt (m) as:
+
+    [Fe(ol) / Fe(m)] * [Mg(m) / Mg(ol)]
+    """
+    if isinstance(P_bar, (int, float)):
+        P_bar = pd.Series(P_bar, index=melt.index)
+    if isinstance(forsterite, (int, float)):
+        forsterite = pd.Series(forsterite, index=melt.index)
+
+    forsterite = forsterite[melt.index]
+
+    melt_x_moles = melt.moles
+
+    Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
+    Kd_model = getattr(Kd_FeMg_vectorised, configuration.Kd_model)
+    dQFM = kwargs.get("dQFM", configuration.dQFM)
+
+    T_K = melt_x_moles.convert_moles_wtPercent.temperature(P_bar)
+    fO2 = fO2_QFM(dQFM, T_K, P_bar)
+    Fe3Fe2 = Fe3Fe2_model(melt_x_moles, T_K, fO2)
+
+    melt_x_moles = melt_x_moles.normalise()
+    Fe2_FeTotal = 1 / (1 + Fe3Fe2)
+    melt_MgFe = melt_x_moles["MgO"] / (melt_x_moles["FeO"] * Fe2_FeTotal)
+    olivine_MgFe = forsterite / (1 - forsterite)
+    Kd_observed = melt_MgFe / olivine_MgFe
+
+    Kd_eq = Kd_model(melt_x_moles, forsterite, T_K, Fe3Fe2, P_bar)
+
+    return Kd_eq, Kd_observed
 
 
 ##### Toplis (2005) Fe-Mg olivine - melt exchange coefficient #####
@@ -23,7 +60,6 @@ def FeMg_toplis(T_K, P_bar, forsterite, SiO2_A):
 
 def toplis_Phi(molar_SiO2, molar_Na2O, molar_K2O):
     """
-
     Equation 12 from Toplis (2005) calculates a Phi parameter to correct SiO2 for alkali-bearing liquids.
     This expression is only valid for SiO2 <= 60 mol %
 
@@ -82,6 +118,7 @@ def toplis_SiO2_A(melt_mol_fractions):
 
     # Calculate melt molar concentrations
     # Molar fractions normalised to 1
+    melt_mol_fractions = melt_mol_fractions.fillna(0.0)
     molar_concentrations = melt_mol_fractions * 100
 
     molar_SiO2 = molar_concentrations["SiO2"]
@@ -162,9 +199,10 @@ class Kd_FeMg_vectorised:
 
         for name in ["T_K", "forsterite_initial"]:
             param = locals()[name]
-            if isinstance(param, pd.Series):
-                if not melt_mol_fractions.index.equals(param.index):
-                    raise RuntimeError(f"Melt and {name} indices don't match")
+            if not isinstance(param, pd.Series):
+                continue
+            if not melt_mol_fractions.index.equals(param.index):
+                raise RuntimeError(f"Melt and {name} indices don't match")
 
         # Convert everything to Series for easier looping
         if isinstance(forsterite_initial, (int, float)):
@@ -229,11 +267,12 @@ class Kd_FeMg_vectorised:
             melt Fe3+/Fe2+ ratio
         """
 
-        for name in ["T_K", "P_bar", "forsterite_initial"]:
+        for name in ["T_K", "forsterite_initial"]:
             param = locals()[name]
-            if isinstance(param, pd.Series):
-                if not melt_mol_fractions.index.equals(param.index):
-                    raise RuntimeError(f"Melt and {name} indices don't match")
+            if not isinstance(param, pd.Series):
+                continue
+            if not melt_mol_fractions.index.equals(param.index):
+                raise RuntimeError(f"Melt and {name} indices don't match")
 
         # Convert everything to Series for easier looping
         if isinstance(forsterite_initial, (int, float)):

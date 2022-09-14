@@ -3,7 +3,6 @@ import pandas as pd
 import warnings as w
 import numpy as np
 from multiprocessing import Pool
-
 from alive_progress import alive_bar
 
 from .magmaFrame_baseclass import MagmaFrame
@@ -13,7 +12,6 @@ from ..configuration import configuration
 from ..geochemistry.Fe_redox import FeRedox_QFM
 from ..geochemistry.Kd_ol_melt import Kd_FeMg_vectorised
 from ..geochemistry.volatiles import calculate_saturation
-
 
 from ..thermometers.melt import melt_thermometers
 
