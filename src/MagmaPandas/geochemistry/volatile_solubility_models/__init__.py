@@ -1,4 +1,0 @@
-from MagmaPandas.geochemistry.volatile_solubility_models import Allison2022
-from MagmaPandas.geochemistry.volatile_solubility_models import IaconoMarziano
-from MagmaPandas.geochemistry.volatile_solubility_models import shiskina
-from MagmaPandas.geochemistry.volatile_solubility_models.solubility_baseclass import *
