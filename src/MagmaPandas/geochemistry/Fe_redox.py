@@ -1,9 +1,9 @@
-from . import fO2
 import warnings as w
 import numpy as np
 import pandas as pd
-from ..parse_io.validate import _check_argument
-from ..configuration import configuration
+
+from MagmaPandas.configuration import configuration
+from MagmaPandas.geochemistry import fO2
 
 
 class Fe_redox:
@@ -142,7 +142,6 @@ def FeRedox_QFM(mol_fractions, T_K, P_bar, logshift, **kwargs):
 
     Fe_model_name = kwargs.get("Fe_model", configuration.Fe3Fe2_model)
     Fe_model = getattr(Fe_redox, Fe_model_name)
-    # getattr(Fe_redox, configuration.Fe3Fe2_model)
 
     fO2_bar = kwargs.get("fO2", fO2.fO2_QFM(logshift, T_K, P_bar))
 

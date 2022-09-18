@@ -1,11 +1,11 @@
-from . import eos_minerals
 import scipy.optimize as opt
 import warnings as w
 import numpy as np
 import pandas as pd
 from scipy.constants import R
 import itertools as it
-from multiprocessing import Pool
+
+from MagmaPandas.geochemistry import eos_minerals
 
 
 def VdP_QFM(T_K, P_bar):
