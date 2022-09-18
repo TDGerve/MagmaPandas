@@ -1,14 +1,13 @@
 from MagmaPandas.volatile_solubility import models as vsm
-
 from MagmaPandas.configuration import configuration
 
 def get_solubility_model(model_name: str=None, species: str=None) -> vsm.Solubility_model:
 
-
-    model_name = configuration.volatile_solubility
+    if model_name is None:
+        model_name = configuration.volatile_solubility
     model = getattr(vsm, model_name)
-
-    species = configuration.volatile_species
+    if species is None:
+        species = configuration.volatile_species
 
     return getattr(model, species)
 
@@ -18,7 +17,7 @@ def calculate_saturation(oxide_wtPercents, *args, solubility_model: vsm.Solubili
     Docstring
     """
     if solubility_model is None:
-        solubility_model = get_solubility_model("IaconoMarziano", "mixed")
+        solubility_model = get_solubility_model()
 
     equation = solubility_model.calculate_saturation
 
