@@ -1,5 +1,5 @@
 from typing import List
-from ..parse.validate import _check_attribute, _check_argument
+from ..parse_io.validate import _check_attribute, _check_argument
 import pandas as pd
 import elements as e
 from ..configuration import configuration

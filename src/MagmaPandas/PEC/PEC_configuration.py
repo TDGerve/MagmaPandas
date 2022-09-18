@@ -1,4 +1,4 @@
-from ..parse.validate import _check_setter, _check_value
+from ..parse_io.validate import _check_setter, _check_value
 
 
 Fe2_options = ["buffered", "incompatible"]

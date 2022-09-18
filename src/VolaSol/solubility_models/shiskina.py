@@ -1,9 +1,8 @@
 import numpy as np
 from scipy.optimize import root, root_scalar
-from scipy.constants import R
 from MagmaPandas.parse_io.validate import _check_argument, _check_setter
-from MagmaPandas.geochemistry.eos_volatiles import hollowayBlank
-from elements.elements import compound_weights
+from MagmaPandas import MagmaSeries
+
 
 """
 Equations from:
@@ -79,7 +78,7 @@ co2_parameters = {
 
 class h2o:
     @staticmethod
-    def calculate_saturation(oxide_wtPercents, **kwargs):
+    def calculate_saturation(oxide_wtPercents: MagmaSeries, **kwargs):
         """ """
         if "H2O" not in oxide_wtPercents.index:
             raise ValueError("H2O not found in sample")
@@ -108,7 +107,7 @@ class h2o:
         return P_saturation
 
     @staticmethod
-    def calculate_solubility(oxide_wtPercents, P_bar, x_fluid=1.0, **kwargs):
+    def calculate_solubility(oxide_wtPercents: MagmaSeries, P_bar, x_fluid=1.0, **kwargs):
         """
         equation 9
 
@@ -159,7 +158,7 @@ class h2o:
 
 class co2:
     @staticmethod
-    def calculate_saturation(oxide_wtPercents, **kwargs):
+    def calculate_saturation(oxide_wtPercents: MagmaSeries, **kwargs):
         """ """
         if "CO2" not in oxide_wtPercents.index:
             raise ValueError("CO2 not found in sample")
@@ -183,7 +182,7 @@ class co2:
         return P_saturation
 
     @staticmethod
-    def calculate_solubility(oxide_wtPercents, P_bar, x_fluid=0.0, **kwargs):
+    def calculate_solubility(oxide_wtPercents: MagmaSeries, P_bar, x_fluid=0.0, **kwargs):
         """
         equation 13
 
@@ -248,7 +247,7 @@ class co2:
 class mixed:
     @staticmethod
     @_check_argument("output", [None, "both", "P", "x_fluid"])
-    def calculate_saturation(oxide_wtPercents, output="P", **kwargs):
+    def calculate_saturation(oxide_wtPercents: MagmaSeries, output="P", **kwargs):
 
         composition = oxide_wtPercents.copy()
 
@@ -283,7 +282,7 @@ class mixed:
 
     @staticmethod
     @_check_argument("output", [None, "both", "CO2", "H2O"])
-    def calculate_solubility(oxide_wtPercents, P_bar, x_fluid, output="both", **kwargs):
+    def calculate_solubility(oxide_wtPercents: MagmaSeries, P_bar, x_fluid, output="both", **kwargs):
 
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")

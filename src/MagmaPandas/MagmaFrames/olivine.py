@@ -1,33 +1,10 @@
 from typing import List
 import pandas as pd
-from .magmaFrame_baseclass import MagmaFrame
-from ..parse.readers import _read_file
+from abc import ABC, abstractmethod
 
+from MagmaPandas.MagmaFrames.magmaFrame_baseclass import MagmaFrame
+from MagmaPandas.parse_io.readers import _read_file
 
-def read_olivine(
-    filepath: str,
-    *args,
-    index_col: List[str] = None,
-    total_col: str = None,
-    keep_columns: List[str] = None,
-    **kwargs
-) -> "Olivine":
-    """
-    Read olivine compositions in wt. % oxide from a .csv file
-
-    """
-
-    return _read_file(
-        filepath=filepath,
-        *args,
-        phase="Olivine",
-        index_col=index_col,
-        total_col=total_col,
-        keep_columns=keep_columns,
-        units="wt. %",
-        datatype="oxide",
-        **kwargs
-    )
 
 
 class Olivine(MagmaFrame):
@@ -70,3 +47,29 @@ class Olivine(MagmaFrame):
         Docstrings
         """
         return self.mineral_formula(O=4)
+
+
+def read_olivine(
+    filepath: str,
+    *args,
+    index_col: List[str] = None,
+    total_col: str = None,
+    keep_columns: List[str] = None,
+    **kwargs
+) -> Olivine:
+    """
+    Read olivine compositions in wt. % oxide from a .csv file
+
+    """
+
+    return _read_file(
+        filepath=filepath,
+        *args,
+        phase="Olivine",
+        index_col=index_col,
+        total_col=total_col,
+        keep_columns=keep_columns,
+        units="wt. %",
+        datatype="oxide",
+        **kwargs
+    )

@@ -1,5 +1,5 @@
 import numpy as np
-from ..parse_io.validate import _check_argument
+from MagmaPandas.parse_io.validate import _check_argument
 
 """
 Re-written visual basic code from Holloway and Blank, 1994 (Reviews

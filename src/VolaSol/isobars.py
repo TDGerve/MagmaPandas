@@ -1,42 +1,12 @@
-import itertools
-from ..MagmaSeries import MagmaSeries
+import VolaSol.calculate_volatiles as vsc
 
-from .volatile_solubility_models import Allison2022
-from .volatile_solubility_models import IaconoMarziano
-from .volatile_solubility_models import Shiskina
-from ..configuration import configuration
+from MagmaPandas.MagmaSeries import MagmaSeries
 
 import numpy as np
 from scipy.interpolate import interp1d
 import pandas as pd
 from multiprocessing import Pool
-
-
-def calculate_saturation(oxide_wtPercents, **kwargs):
-    """
-    Docstring
-    """
-
-    model = kwargs.get("model", configuration.volatile_solubility)
-    species = kwargs.get("species", configuration.volatile_species)
-
-    equation = getattr(globals()[model], species).calculate_saturation
-
-    return equation(oxide_wtPercents, **kwargs)
-
-
-def calculate_solubility(oxide_wtPercents, P_bar, **kwargs):
-    """
-    Docstring
-    """
-
-    model = kwargs.get("model", configuration.volatile_solubility)
-    species = kwargs.get("species", configuration.volatile_species)
-
-    equation = getattr(globals()[model], species).calculate_solubility
-
-    return equation(oxide_wtPercents, P_bar, **kwargs)
-
+import itertools
 
 def CO2H2O_isobar_data(
     oxide_wtPercents: MagmaSeries,
@@ -116,7 +86,7 @@ def _solubility_multicore(sample):
 
     oxide_wtPercents, P_bar, temperature, xfl, species = sample
 
-    volatiles = calculate_solubility(
+    volatiles = vsc.calculate_solubility(
         oxide_wtPercents, P_bar=P_bar, T_K=temperature, x_fluid=xfl, species=species
     )
 

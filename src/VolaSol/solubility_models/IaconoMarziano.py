@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
 from scipy.optimize import root_scalar, root
-import warnings as w
 
-from ...parse_io.validate import _check_setter, _check_argument
+from MagmaPandas.parse_io.validate import _check_setter, _check_argument
+from MagmaPandas import MagmaSeries
 
 """
 Equations from:
@@ -156,7 +156,7 @@ CO2_coefficients = {
 # Lower case names for classes, as to not mix up with variable names
 class h2o:
     @staticmethod
-    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid=1, **kwargs):
+    def calculate_solubility(oxide_wtPercents: MagmaSeries, P_bar, T_K, x_fluid=1, **kwargs):
         """
         Solve quation 13
 
@@ -187,7 +187,7 @@ class h2o:
             ).root
 
     @staticmethod
-    def calculate_saturation(oxide_wtPercents, T_K, **kwargs):
+    def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, **kwargs):
         """ """
         if "H2O" not in oxide_wtPercents.index:
             raise ValueError("H2O not found in sample")
@@ -211,7 +211,7 @@ class h2o:
         return P_saturation
 
     @staticmethod
-    def _solubility(oxide_wtPercents, x_fluid, P_bar, T_K):
+    def _solubility(oxide_wtPercents: MagmaSeries, x_fluid, P_bar, T_K):
         """
         Equation 13 from Iacono-Marziano et al. (2012)
         """
@@ -230,7 +230,7 @@ class h2o:
         return H2O
 
     @staticmethod
-    def _solubility_rootFunction(H2O, oxide_wtPercents, x_fluid, P_bar, T_K):
+    def _solubility_rootFunction(H2O, oxide_wtPercents: MagmaSeries, x_fluid, P_bar, T_K):
         """
         Compare input and output dissolved H2O
         """
@@ -241,7 +241,7 @@ class h2o:
         return H2O - h2o._solubility(composition, x_fluid, P_bar, T_K)
 
     @staticmethod
-    def _saturation_rootFunction(P_bar, oxide_wtPercents, T_K, kwargs):
+    def _saturation_rootFunction(P_bar, oxide_wtPercents: MagmaSeries, T_K, kwargs):
         """ """
         composition = oxide_wtPercents.copy()
         #
@@ -253,7 +253,7 @@ class h2o:
 # Lower case names for classes, as to not mix up with variable names
 class co2:
     @staticmethod
-    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid=0.0, **kwargs):
+    def calculate_solubility(oxide_wtPercents: MagmaSeries, P_bar, T_K, x_fluid=0.0, **kwargs):
         """
         Equation 12 from Iacono-Marziano (2012)
         """
@@ -310,7 +310,7 @@ class co2:
         return CO3_ppm / 1e4
 
     @staticmethod
-    def calculate_saturation(oxide_wtPercents, T_K, **kwargs):
+    def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, **kwargs):
         """ """
         if "CO2" not in oxide_wtPercents.index:
             raise ValueError("CO2 not found in sample")
@@ -333,7 +333,7 @@ class co2:
         return P_saturation
 
     @staticmethod
-    def _saturation_rootFunction(P_bar, oxide_wtPercents, T_K, kwargs):
+    def _saturation_rootFunction(P_bar, oxide_wtPercents: MagmaSeries, T_K, kwargs):
         """
         Compare calculated and sample CO2
         """
@@ -346,7 +346,7 @@ class co2:
 class mixed:
     @staticmethod
     @_check_argument("output", [None, "both", "P", "x_fluid"])
-    def calculate_saturation(oxide_wtPercents, T_K, output="P", **kwargs):
+    def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, output="P", **kwargs):
 
         composition = oxide_wtPercents.copy()
 
@@ -382,7 +382,7 @@ class mixed:
     @staticmethod
     @_check_argument("output", [None, "both", "CO2", "H2O"])
     def calculate_solubility(
-        oxide_wtPercents, P_bar, T_K, x_fluid, output="both", **kwargs
+        oxide_wtPercents: MagmaSeries, P_bar, T_K, x_fluid, output="both", **kwargs
     ):
 
         if not 1 >= x_fluid >= 0:
@@ -399,7 +399,7 @@ class mixed:
         return return_dict[output]
 
     @staticmethod
-    def _saturation_rootFunction(P_x_fluid, oxide_wtPercents, T_K):
+    def _saturation_rootFunction(P_x_fluid, oxide_wtPercents: MagmaSeries, T_K):
         """
         compare calculated with sample concentrations
         """
