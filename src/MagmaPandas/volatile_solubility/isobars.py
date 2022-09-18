@@ -1,4 +1,4 @@
-import VolaSol.calculate_volatiles as vsc
+import volatile_solubility.calculate_volatiles as vsc
 
 from MagmaPandas.MagmaSeries import MagmaSeries
 

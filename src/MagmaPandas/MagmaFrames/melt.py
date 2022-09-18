@@ -5,7 +5,7 @@ import numpy as np
 from multiprocessing import Pool
 from alive_progress import alive_bar
 
-import VolaSol as vs
+import MagmaPandas.volatile_solubility as vs
 
 from MagmaPandas.MagmaFrames.magmaFrame_baseclass import MagmaFrame
 

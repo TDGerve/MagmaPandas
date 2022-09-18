@@ -1,4 +1,4 @@
-import VolaSol.solubility_models as vsm
+from MagmaPandas.volatile_solubility import models as vsm
 
 from MagmaPandas.configuration import configuration
 
