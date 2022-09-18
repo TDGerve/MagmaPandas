@@ -6,19 +6,12 @@ from multiprocessing import Pool
 from alive_progress import alive_bar
 
 import MagmaPandas.volatile_solubility as vs
-
-from MagmaPandas.MagmaFrames.magmaFrame_baseclass import MagmaFrame
-
-from MagmaPandas.configuration import configuration
-
 from MagmaPandas.geochemistry.Fe_redox import FeRedox_QFM
 from MagmaPandas.geochemistry.Kd_ol_melt import Kd_FeMg_vectorised
-
-# from MagmaPandas.geochemistry.volatiles import calculate_saturation
-# from MagmaPandas.geochemistry.volatiles import _get_solubility_model
-
 from MagmaPandas.thermometers.melt import melt_thermometers
 
+from MagmaPandas.MagmaFrames.magmaFrame_baseclass import MagmaFrame
+from MagmaPandas.configuration import configuration
 from MagmaPandas.parse_io.validate import _check_argument
 from MagmaPandas.parse_io.readers import _read_file
 

@@ -4,8 +4,7 @@ from scipy.optimize import root_scalar, root
 from scipy.constants import R
 from elements.elements import compound_weights
 
-from volatile_solubility.EOS import hollowayBlank
-
+from MagmaPandas.volatile_solubility.EOS import hollowayBlank
 from MagmaPandas.parse_io.validate import _check_argument, _check_setter
 from MagmaPandas import MagmaSeries
 

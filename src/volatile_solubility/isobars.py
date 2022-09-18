@@ -1,5 +1,4 @@
 import MagmaPandas.volatile_solubility as vs
-
 from MagmaPandas.MagmaSeries import MagmaSeries
 
 import numpy as np
