@@ -5,7 +5,7 @@ import pandas as pd
 from scipy.constants import R
 import itertools as it
 
-from MagmaPandas.geochemistry import eos_minerals
+from MagmaPandas.fO2 import eos_minerals
 
 
 def VdP_QFM(T_K, P_bar):

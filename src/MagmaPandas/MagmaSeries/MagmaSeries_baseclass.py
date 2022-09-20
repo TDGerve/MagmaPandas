@@ -1,9 +1,10 @@
 from typing import List
-from ..parse.validate import _check_attribute, _check_argument
 import pandas as pd
 import elements as e
-from ..configuration import configuration
-from ..thermometers.melt import melt_thermometers
+
+from MagmaPandas.configuration import configuration
+from MagmaPandas.parse_io.validate import _check_attribute, _check_argument
+from MagmaPandas.thermometers.melt import melt_thermometers
 
 
 def _MagmaSeries_expanddim(data=None, *args, **kwargs):

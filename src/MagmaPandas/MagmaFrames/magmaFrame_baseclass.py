@@ -1,6 +1,6 @@
 from typing import List
-from ..parse.validate import _check_attribute, _check_argument
-from ..parse.readers import _read_file
+from ..parse_io.validate import _check_attribute, _check_argument
+from ..parse_io.readers import _read_file
 import pandas as pd
 import elements as e
 

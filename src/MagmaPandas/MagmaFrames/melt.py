@@ -5,18 +5,15 @@ import numpy as np
 from multiprocessing import Pool
 from alive_progress import alive_bar
 
-from .magmaFrame_baseclass import MagmaFrame
+import MagmaPandas.volatile_solubility as vs
+from MagmaPandas.geochemistry.Fe_redox import FeRedox_QFM
+from MagmaPandas.geochemistry.Kd_ol_melt import Kd_FeMg_vectorised
+from MagmaPandas.thermometers.melt import melt_thermometers
 
-from ..configuration import configuration
-
-from ..geochemistry.Fe_redox import FeRedox_QFM
-from ..geochemistry.Kd_ol_melt import Kd_FeMg_vectorised
-from ..geochemistry.volatiles import calculate_saturation
-
-from ..thermometers.melt import melt_thermometers
-
-from ..parse.validate import _check_argument
-from ..parse.readers import _read_file
+from MagmaPandas.MagmaFrames.magmaFrame_baseclass import MagmaFrame
+from MagmaPandas.configuration import configuration
+from MagmaPandas.parse_io.validate import _check_argument
+from MagmaPandas.parse_io.readers import _read_file
 
 
 def read_melt(
@@ -234,10 +231,11 @@ class Melt(MagmaFrame):
         Refactor of calculate_saturation for multiprocess calling
         """
 
-        name, temperature, (model, species) = sample
+        name, temperature, model = sample
+        solubility_model = vs.get_solubility_model(*model)
         try:
-            P_bar = calculate_saturation(
-                self.loc[name], T_K=temperature, model=model, species=species
+            P_bar = vs.calculate_saturation(
+                self.loc[name], T_K=temperature, solubility_model=solubility_model,
             )
         except Exception:
             P_bar = np.nan

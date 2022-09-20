@@ -3,10 +3,10 @@ import numpy as np
 from scipy.optimize import root_scalar, root
 from scipy.constants import R
 from elements.elements import compound_weights
-import warnings as w
 
-from MagmaPandas.parse.validate import _check_argument, _check_setter
-from MagmaPandas.geochemistry.eos_volatiles import hollowayBlank
+from MagmaPandas.volatile_solubility.EOS import hollowayBlank
+from MagmaPandas.parse_io.validate import _check_argument, _check_setter
+from MagmaPandas import MagmaSeries
 
 
 """
@@ -75,6 +75,33 @@ class _meta_Allison_configuration(type):
 
         return message + parameter_settings + calibration_range
 
+    def __str__(cls):
+
+        variables = {"Fugacity model": "_fugacity", "Species model": "_model"}
+        pad_left = 20
+        pad_right = 20
+        pad_total = pad_left + pad_right
+        new_line = "\n"
+
+        message = (
+            f"{new_line}{' Allison (2022) volatile solubility ':#^{pad_total}}"
+            f"{new_line}{'':#^{pad_total}}"
+            f"{new_line}{'Settings':#<{pad_total}}"
+        )
+        parameter_settings = ""
+        for param, model in variables.items():
+            parameter_settings += (
+                f"{param:.<{pad_left}}{getattr(cls, model):.>{pad_right}}"
+            )
+        temperature_string = f"{1000+273.15:.0f}-{1400+273.14:.0f}\N{DEGREE SIGN}K"
+        calibration_range = (
+            f"{new_line}{'Calibration_range':_<{pad_total}}"
+            f"{new_line}{'Temperature':.<{pad_left}}{temperature_string:.>{pad_right}}"
+            f"{new_line}{'Pressure':.<{pad_left}}{'< 7 kbar':.>{pad_right}}"
+        )
+
+        return message + parameter_settings + calibration_range
+
 
 class Allison_configuration(metaclass=_meta_Allison_configuration):
     @classmethod
@@ -82,24 +109,24 @@ class Allison_configuration(metaclass=_meta_Allison_configuration):
         cls._fugacity = "hollowayBlank"
         cls._model = "mixed"
 
-    @classmethod
-    def print(cls):
-        """ """
+    # @classmethod
+    # def print(cls):
+    #     """ """
 
-        variables = {"Fugacity model": "_fugacity", "Species model": "_model"}
-        pad_left = 20
-        pad_right = 20
-        pad_total = pad_left + pad_right
-        print(" Allison (2022) volatile solubility ".center(pad_total, "#"))
-        print("".ljust(pad_total, "#"))
-        print("Settings".ljust(pad_total, "_"))
-        for param, model in variables.items():
-            print(f"{param:.<{pad_left}}{getattr(cls, model):.>{pad_right}}")
-        print("\nCalibration range".ljust(pad_total, "_"))
-        T_string = f"{1000+273.15:.0f}-{1400+273.14:.0f}\N{DEGREE SIGN}K"
-        print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
-        print(f"{'Pressure':.<{pad_left}}{'< 7 kbar':.>{pad_right}}")
-        print("\n")
+    #     variables = {"Fugacity model": "_fugacity", "Species model": "_model"}
+    #     pad_left = 20
+    #     pad_right = 20
+    #     pad_total = pad_left + pad_right
+    #     print(" Allison (2022) volatile solubility ".center(pad_total, "#"))
+    #     print("".ljust(pad_total, "#"))
+    #     print("Settings".ljust(pad_total, "_"))
+    #     for param, model in variables.items():
+    #         print(f"{param:.<{pad_left}}{getattr(cls, model):.>{pad_right}}")
+    #     print("\nCalibration range".ljust(pad_total, "_"))
+    #     T_string = f"{1000+273.15:.0f}-{1400+273.14:.0f}\N{DEGREE SIGN}K"
+    #     print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
+    #     print(f"{'Pressure':.<{pad_left}}{'< 7 kbar':.>{pad_right}}")
+    #     print("\n")
 
 
 FeO_mass, Fe2O3_mass = compound_weights(["FeO", "Fe2O3"])
@@ -108,7 +135,7 @@ fugacity_model = hollowayBlank.fugacity
 
 class h2o:
     @staticmethod
-    def calculate_saturation(oxide_wtPercents, T_K, x_fluid=1.0, **kwargs):
+    def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, x_fluid=1.0, **kwargs):
         """
         Equation 8 from Allison 2022
         """
@@ -155,7 +182,7 @@ class h2o:
 
 class co2:
     @staticmethod
-    def calculate_saturation(oxide_wtPercents, T_K, x_fluid=0.0, **kwargs):
+    def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, x_fluid=0.0, **kwargs):
 
         if oxide_wtPercents["CO2"] < 0:
             raise ValueError(f"CO2 lower than 0: {oxide_wtPercents['CO2']}")
@@ -196,7 +223,9 @@ class co2:
             return P_saturation
 
     @staticmethod
-    def calculate_solubility(oxide_wtPercents, P_bar, T_K, x_fluid=0.0, **kwargs):
+    def calculate_solubility(
+        oxide_wtPercents: MagmaSeries, P_bar, T_K, x_fluid=0.0, **kwargs
+    ):
         """ """
 
         if not 1 >= x_fluid >= 0:
@@ -309,7 +338,7 @@ class co2:
 class mixed:
     @staticmethod
     @_check_argument("output", [None, "both", "P", "x_fluid"])
-    def calculate_saturation(oxide_wtPercents, T_K, output="P", **kwargs):
+    def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, output="P", **kwargs):
 
         composition = oxide_wtPercents.copy()
 
@@ -346,7 +375,7 @@ class mixed:
     @staticmethod
     @_check_argument("output", [None, "both", "CO2", "H2O"])
     def calculate_solubility(
-        oxide_wtPercents, P_bar, T_K, x_fluid, output="both", **kwargs
+        oxide_wtPercents: MagmaSeries, P_bar, T_K, x_fluid, output="both", **kwargs
     ):
         """ """
 
@@ -362,7 +391,7 @@ class mixed:
         return return_dict[output]
 
     @staticmethod
-    def _saturation_rootFunction(P_x_fluid: List, oxide_wtPercents, T_K):
+    def _saturation_rootFunction(P_x_fluid: List, oxide_wtPercents: MagmaSeries, T_K):
 
         P_bar, x_fluid = P_x_fluid
         # Keep x_fluid and P_bar within bounds

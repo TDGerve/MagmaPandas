@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from MagmaPandas.configuration import configuration
-from MagmaPandas.geochemistry import fO2
+from MagmaPandas import fO2
 
 
 class Fe_redox:

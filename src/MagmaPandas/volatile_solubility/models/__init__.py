@@ -1,0 +1,4 @@
+from MagmaPandas.volatile_solubility.models import Allison2022
+from MagmaPandas.volatile_solubility.models import IaconoMarziano
+from MagmaPandas.volatile_solubility.models import shiskina
+from MagmaPandas.volatile_solubility.models.solubility_baseclass import *

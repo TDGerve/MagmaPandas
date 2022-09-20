@@ -2,7 +2,7 @@ from .validate import _check_argument
 from typing import List
 import elements as e
 import pandas as pd
-from .. import MagmaFrames as mf
+from MagmaPandas import MagmaFrames as mf
 
 @_check_argument("phase", [None, "Melt", "Olivine", "Clinopyroxene", "Plagioclase"])
 def _read_file(

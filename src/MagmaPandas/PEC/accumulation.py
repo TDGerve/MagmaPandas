@@ -3,9 +3,9 @@ from multiprocessing import Pool
 from scipy.optimize import root_scalar
 from alive_progress import alive_bar
 
-from ..MagmaFrames import Olivine, Melt
+from MagmaPandas.MagmaFrames import Olivine, Melt
 
-from ..geochemistry.Kd_ol_melt import calculate_olivine_Kd
+from MagmaPandas.geochemistry.Kd_ol_melt import calculate_olivine_Kd
 
 
 def correct_olivine_accumulation(liquids: Melt, olivines: Olivine, pressures, **kwargs):
@@ -55,16 +55,6 @@ def correct_olivine_accumulation(liquids: Melt, olivines: Olivine, pressures, **
             olivine_accumulated[name] = olivine_amount
             finished += 1
             bar(finished / total)
-
-    # for name in names:
-
-    #     melt = melts.loc[[name]]
-    #     olivine = olivines.loc[[name]]
-    #     P_bar = pressures.loc[[name]]
-
-    #     olivine_amount = _calculate_accumulation(melt, olivine, P_bar)
-
-    #     olivine_accumulated.loc[name] = olivine_amount
 
     melts_corrected = melts.moles.loc[names] + olivines.moles.loc[names].mul(
         olivine_accumulated[names], axis=0
