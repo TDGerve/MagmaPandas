@@ -578,11 +578,11 @@ class PEC_olivine:
         olivine_MgFe = forsterite / (1 - forsterite)
         Kd_observed = melt_MgFe / olivine_MgFe
         Kd_observed.rename("real", inplace=True)
-        Kd_observed.index.name = "sample"
+        Kd_observed.index.name = "name"
 
         Kd_equilibrium = Kd_model(melt, forsterite, T_K, Fe3Fe2, pressure)
         Kd_equilibrium.rename("equilibrium", inplace=True)
-        Kd_equilibrium.index.name = "sample"
+        Kd_equilibrium.index.name = "name"
 
         return Kd_equilibrium, Kd_observed
 

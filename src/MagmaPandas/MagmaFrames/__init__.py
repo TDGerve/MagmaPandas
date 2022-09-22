@@ -1,6 +1,5 @@
-from .magmaFrame_baseclass import *
-from .mineral import *
-# from .plagioclase import *
-# from .clinopyroxene import *
-from .melt import *
-
+from MagmaPandas.MagmaFrames.magmaFrame_baseclass import *
+from MagmaPandas.MagmaFrames.olivine import *
+from MagmaPandas.MagmaFrames.plagioclase import *
+from MagmaPandas.MagmaFrames.clinopyroxene import *
+from MagmaPandas.MagmaFrames.melt import *

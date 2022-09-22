@@ -16,7 +16,6 @@ fugacity_options = ["ideal"]
 
 
 class _meta_shiskina_configuration(type):
-
     def __init__(cls, *args, **kwargs):
         cls._fugacity = "ideal"
 
@@ -36,17 +35,13 @@ class _meta_shiskina_configuration(type):
 
 
 class shiskina_configuration(metaclass=_meta_shiskina_configuration):
-
     @classmethod
     def reset(cls):
         cls._fugacity = "ideal"
 
-
     @classmethod
     def print(cls):
-        """
-
-        """
+        """ """
 
         variables = {
             "Fugacity model": "_fugacity",
@@ -60,14 +55,13 @@ class shiskina_configuration(metaclass=_meta_shiskina_configuration):
         print("".ljust(pad_total, "#"))
         print("Settings".ljust(pad_total, "_"))
         for param, model in variables.items():
-            print(
-                f"{param:.<{pad_left}}{getattr(cls, model):.>{pad_right}}"
-            )
+            print(f"{param:.<{pad_left}}{getattr(cls, model):.>{pad_right}}")
         print("\nCalibration range".ljust(pad_total, "_"))
         T_string = f"1423-1523\N{DEGREE SIGN}K"
         print(f"{'Temperature':.<{pad_left}}{T_string:.>{pad_right}}")
         print(f"{'Pressure':.<{pad_left}}{'0.2-5 kbar':.>{pad_right}}")
         print("\n")
+
 
 # Model parameters
 co2_parameters = {
@@ -84,8 +78,8 @@ class h2o:
             raise ValueError("H2O not found in sample")
         if oxide_wtPercents["H2O"] < 0:
             raise ValueError(f"H2O lower than 0: {oxide_wtPercents['H2O']}")
-        if oxide_wtPercents["H2O"] == 0.:
-            return 0.
+        if oxide_wtPercents["H2O"] == 0.0:
+            return 0.0
 
         if oxide_wtPercents["H2O"] < h2o.calculate_solubility(
             oxide_wtPercents, P_bar=0
@@ -107,7 +101,9 @@ class h2o:
         return P_saturation
 
     @staticmethod
-    def calculate_solubility(oxide_wtPercents: MagmaSeries, P_bar, x_fluid=1.0, **kwargs):
+    def calculate_solubility(
+        oxide_wtPercents: MagmaSeries, P_bar, x_fluid=1.0, **kwargs
+    ):
         """
         equation 9
 
@@ -128,7 +124,7 @@ class h2o:
                 f"missing oxides: {oxides.difference(oxide_wtPercents.index)}"
             )
 
-       # Calculate cation mol fractions on an anhydrous basis 
+        # Calculate cation mol fractions on an anhydrous basis
         volatiles = {"H2O", "CO2"}.intersection(oxide_wtPercents.index)
         if volatiles:
             oxide_wtPercents = oxide_wtPercents.drop(volatiles)
@@ -164,8 +160,8 @@ class co2:
             raise ValueError("CO2 not found in sample")
         if oxide_wtPercents["CO2"] < 0:
             raise ValueError(f"CO2 lower than 0: {oxide_wtPercents['H2O']}")
-        if oxide_wtPercents["CO2"] == 0.:
-            return 0.
+        if oxide_wtPercents["CO2"] == 0.0:
+            return 0.0
 
         composition = oxide_wtPercents.copy()
 
@@ -182,7 +178,9 @@ class co2:
         return P_saturation
 
     @staticmethod
-    def calculate_solubility(oxide_wtPercents: MagmaSeries, P_bar, x_fluid=0.0, **kwargs):
+    def calculate_solubility(
+        oxide_wtPercents: MagmaSeries, P_bar, x_fluid=0.0, **kwargs
+    ):
         """
         equation 13
 
@@ -246,7 +244,7 @@ class co2:
 
 class mixed:
     @staticmethod
-    @_check_argument("output", [None, "both", "P", "x_fluid"])
+    @_check_argument("output", [None, "PXfl", "P", "Xfl"])
     def calculate_saturation(oxide_wtPercents: MagmaSeries, output="P", **kwargs):
 
         composition = oxide_wtPercents.copy()
@@ -277,12 +275,14 @@ class mixed:
             saturation[0] = P_H2O_saturation
         saturation[1] = np.clip(saturation[1], 0.0, 1.0)
 
-        return_dict = {"P": saturation[0], "x_fluid": saturation[1], "both": saturation}
+        return_dict = {"P": saturation[0], "Xfl": saturation[1], "PXfl": saturation}
         return return_dict[output]
 
     @staticmethod
-    @_check_argument("output", [None, "both", "CO2", "H2O"])
-    def calculate_solubility(oxide_wtPercents: MagmaSeries, P_bar, x_fluid, output="both", **kwargs):
+    @_check_argument("output", [None, "PXfl", "CO2", "H2O"])
+    def calculate_solubility(
+        oxide_wtPercents: MagmaSeries, P_bar, x_fluid, output="PXfl", **kwargs
+    ):
 
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
@@ -294,7 +294,7 @@ class mixed:
         composition["H2O"] = H2O
         CO2 = co2.calculate_solubility(composition, P_bar, x_fluid)
 
-        return_dict = {"both": (H2O, CO2), "H2O": H2O, "CO2": CO2}
+        return_dict = {"PXfl": (H2O, CO2), "H2O": H2O, "CO2": CO2}
         return return_dict[output]
 
     @staticmethod
@@ -319,7 +319,7 @@ class mixed:
                 oxide_wtPercents=composition,
                 P_bar=P_bar,
                 x_fluid=x_fluid,
-                output="both",
+                output="PXfl",
             )
         )
 

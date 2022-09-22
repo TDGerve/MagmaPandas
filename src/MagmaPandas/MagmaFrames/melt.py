@@ -5,7 +5,7 @@ import numpy as np
 from multiprocessing import Pool
 from alive_progress import alive_bar
 
-import MagmaPandas.volatile_solubility as vs
+from MagmaPandas import volatile_solubility as vs
 from MagmaPandas.geochemistry.Fe_redox import FeRedox_QFM
 from MagmaPandas.geochemistry.Kd_ol_melt import Kd_FeMg_vectorised
 from MagmaPandas.thermometers.melt import melt_thermometers
@@ -187,13 +187,14 @@ class Melt(MagmaFrame):
             T_K = pd.Series(T_K, index=self.index)
 
         P_bar = pd.Series(index=self.index, dtype=float)
+        Xfl = pd.Series(index=self.index, dtype=float)
         names = self.index.values
 
         model = configuration.volatile_solubility
         species = configuration.volatile_species
 
         samples = [
-            (name, temperature, (model, species))
+            (name, temperature, (model, species), kwargs)
             for name, temperature in zip(names, T_K)
         ]
         total = self.shape[0]
@@ -215,30 +216,41 @@ class Melt(MagmaFrame):
             finished = 0
             bar(0.0 / total)
 
-            for name, pressure in results:
+            for name, result in results:
                 finished += 1
                 bar(finished / total)
-                P_bar[name] = pressure
+                try:
+                    pressure, fl = result
+                    P_bar[name] = pressure
+                    Xfl[name] = fl
+                except TypeError:
+                    P_bar[name] = result
 
         if inplace:
             self["P_bar"] = P_bar
             return
         else:
-            return P_bar
+            output = [P_bar]
+            if sum(Xfl.isna()) != Xfl.shape[0]:
+                output += [Xfl]
+            return (*output,)
 
     def _saturation_multicore(self, sample):
         """
         Refactor of calculate_saturation for multiprocess calling
         """
 
-        name, temperature, model = sample
+        name, temperature, model, kwargs = sample
         solubility_model = vs.get_solubility_model(*model)
         try:
-            P_bar = vs.calculate_saturation(
-                self.loc[name], T_K=temperature, solubility_model=solubility_model,
+            result = vs.calculate_saturation(
+                self.loc[name],
+                T_K=temperature,
+                solubility_model=solubility_model,
+                **kwargs,
             )
         except Exception:
-            P_bar = np.nan
+            result = np.nan
             w.warn(f"Saturation pressure not found for sample {name}")
 
-        return name, P_bar
+        return name, result

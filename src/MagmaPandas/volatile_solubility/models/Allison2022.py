@@ -337,7 +337,7 @@ class co2:
 
 class mixed:
     @staticmethod
-    @_check_argument("output", [None, "both", "P", "x_fluid"])
+    @_check_argument("output", [None, "PXfl", "P", "Xfl"])
     def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, output="P", **kwargs):
 
         composition = oxide_wtPercents.copy()
@@ -368,7 +368,7 @@ class mixed:
             saturation[0] = P_H2O_saturation
         saturation[1] = np.clip(saturation[1], 0.0, 1.0)
 
-        return_dict = {"P": saturation[0], "x_fluid": saturation[1], "both": saturation}
+        return_dict = {"P": saturation[0], "Xfl": saturation[1], "PXfl": saturation}
 
         return return_dict[output]
 

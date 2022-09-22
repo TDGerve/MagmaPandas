@@ -1,10 +1,8 @@
 from typing import List
 import pandas as pd
-from abc import ABC, abstractmethod
 
 from MagmaPandas.MagmaFrames.magmaFrame_baseclass import MagmaFrame
 from MagmaPandas.parse_io.readers import _read_file
-
 
 
 class Olivine(MagmaFrame):
@@ -38,7 +36,9 @@ class Olivine(MagmaFrame):
         Fe = {"oxide": "FeO", "cation": "Fe"}
         self.recalculate(inplace=True)
         return pd.Series(
-            moles[Mg[self._datatype]] / (moles[Fe[self._datatype]] + moles[Mg[self._datatype]]), name="Fo#"
+            moles[Mg[self._datatype]]
+            / (moles[Fe[self._datatype]] + moles[Mg[self._datatype]]),
+            name="Fo#",
         )
 
     @property

@@ -8,6 +8,7 @@ import pandas as pd
 from multiprocessing import Pool
 import itertools
 
+
 def CO2H2O_isobar_data(
     oxide_wtPercents: MagmaSeries,
     temperature: float,

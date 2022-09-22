@@ -156,7 +156,9 @@ CO2_coefficients = {
 # Lower case names for classes, as to not mix up with variable names
 class h2o:
     @staticmethod
-    def calculate_solubility(oxide_wtPercents: MagmaSeries, P_bar, T_K, x_fluid=1, **kwargs):
+    def calculate_solubility(
+        oxide_wtPercents: MagmaSeries, P_bar, T_K, x_fluid=1, **kwargs
+    ):
         """
         Solve quation 13
 
@@ -230,7 +232,9 @@ class h2o:
         return H2O
 
     @staticmethod
-    def _solubility_rootFunction(H2O, oxide_wtPercents: MagmaSeries, x_fluid, P_bar, T_K):
+    def _solubility_rootFunction(
+        H2O, oxide_wtPercents: MagmaSeries, x_fluid, P_bar, T_K
+    ):
         """
         Compare input and output dissolved H2O
         """
@@ -253,7 +257,9 @@ class h2o:
 # Lower case names for classes, as to not mix up with variable names
 class co2:
     @staticmethod
-    def calculate_solubility(oxide_wtPercents: MagmaSeries, P_bar, T_K, x_fluid=0.0, **kwargs):
+    def calculate_solubility(
+        oxide_wtPercents: MagmaSeries, P_bar, T_K, x_fluid=0.0, **kwargs
+    ):
         """
         Equation 12 from Iacono-Marziano (2012)
         """
@@ -345,7 +351,7 @@ class co2:
 
 class mixed:
     @staticmethod
-    @_check_argument("output", [None, "both", "P", "x_fluid"])
+    @_check_argument("output", [None, "PXfl", "P", "Xfl"])
     def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, output="P", **kwargs):
 
         composition = oxide_wtPercents.copy()
@@ -376,7 +382,7 @@ class mixed:
             saturation[0] = P_H2O_saturation
         saturation[1] = np.clip(saturation[1], 0.0, 1.0)
 
-        return_dict = {"P": saturation[0], "x_fluid": saturation[1], "both": saturation}
+        return_dict = {"P": saturation[0], "Xfl": saturation[1], "PXfl": saturation}
         return return_dict[output]
 
     @staticmethod
