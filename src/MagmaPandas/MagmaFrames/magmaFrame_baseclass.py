@@ -60,8 +60,8 @@ class MagmaFrame(pd.DataFrame):
 
         def _c(*args, weights=None, **kwargs):
             if weights is None:
+                weights = getattr(self, "_weights", None).copy(deep=True)
 
-                weights = self._weights.copy(deep=True)
             current_class = type(self)
 
             return current_class(*args, weights=weights, **kwargs).__finalize__(self)
@@ -78,7 +78,8 @@ class MagmaFrame(pd.DataFrame):
 
         def _c(*args, weights=None, **kwargs):
             if weights is None:
-                weights = self._weights.copy(deep=True)
+                weights = getattr(self, "_weights", None).copy(deep=True)
+                
             return MagmaSeries(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
