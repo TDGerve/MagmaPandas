@@ -52,21 +52,39 @@ class MagmaSeries(pd.Series):
 
         self._units = units
         self._datatype = datatype
-        if weights is not None:
-            self._weights = weights.copy()
+        # if weights is not None:
+        #     self._weights = weights.copy()
 
+        # super().__init__(data, **kwargs)
+
+        # if not hasattr(self, "_weights"):
+        #     self._weights = pd.Series(name="weight", dtype=float)
+        #     for idx in self.index:
+        #         try:
+        #             # Calculate element/oxide weight
+        #             self._weights[idx] = e.calculate_weight(idx)
+        #         except (ValueError, KeyError):
+        #             pass
+        
         super().__init__(data, **kwargs)
 
-        if not hasattr(self, "_weights"):
+        if weights is not None:
+            self._weights = weights.copy()
+        elif not hasattr(self, "_weights"):
             self._weights = pd.Series(name="weight", dtype=float)
-            for idx in self.index:
-                try:
-                    # Calculate element/oxide weight
-                    self._weights[idx] = e.calculate_weight(idx)
-                except (ValueError, KeyError):
-                    pass
 
-        # self.recalculate(inplace=True)
+        for idx in self.index.difference(self._weights.index):
+            # for col in self.columns:
+            try:
+                # Calculate element/oxide weight
+                self._weights[idx] = e.calculate_weight(idx)
+            except (ValueError, KeyError):
+                pass
+
+        extra_elements = self._weights.index.difference(self.index)
+        self._weights = self._weights.drop(extra_elements)
+
+
 
     @property
     def _constructor(self):
