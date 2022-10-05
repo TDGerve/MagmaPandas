@@ -10,19 +10,24 @@ from MagmaPandas.thermometers.melt import melt_thermometers
 def _MagmaSeries_expanddim(data=None, *args, **kwargs):
     from MagmaPandas.MagmaFrames import MagmaFrame
 
+    if isinstance(data, MagmaSeries):
+        kwargs["units"] = data._units
+        kwargs["datatype"] = data._datatype
+        kwargs["weights"] = data._weights.copy(deep=True)
+
     df = MagmaFrame(data, *args, **kwargs)
 
-    if isinstance(data, MagmaSeries):
-        df._units = data._units.copy(deep=True)
-        df._datatype = data._datatype.copy(deep=True)
+    
+        # df._units = data._units.copy(deep=True)
+        # df._datatype = data._datatype.copy(deep=True)
 
     return df
 
 
-# pd.concat (pandas/core/reshape/concat.py) requires this for the
-# concatenation of series since pandas 1.1
-# (https://github.com/pandas-dev/pandas/commit/f9e4c8c84bcef987973f2624cc2932394c171c8c)
-_MagmaSeries_expanddim._get_axis_number = pd.DataFrame._get_axis_number
+# # pd.concat (pandas/core/reshape/concat.py) requires this for the
+# # concatenation of series since pandas 1.1
+# # (https://github.com/pandas-dev/pandas/commit/f9e4c8c84bcef987973f2624cc2932394c171c8c)
+# _MagmaSeries_expanddim._get_axis_number = pd.DataFrame._get_axis_number
 
 
 class MagmaSeries(pd.Series):
@@ -47,21 +52,39 @@ class MagmaSeries(pd.Series):
 
         self._units = units
         self._datatype = datatype
-        if weights is not None:
-            self._weights = weights.copy()
+        # if weights is not None:
+        #     self._weights = weights.copy()
 
+        # super().__init__(data, **kwargs)
+
+        # if not hasattr(self, "_weights"):
+        #     self._weights = pd.Series(name="weight", dtype=float)
+        #     for idx in self.index:
+        #         try:
+        #             # Calculate element/oxide weight
+        #             self._weights[idx] = e.calculate_weight(idx)
+        #         except (ValueError, KeyError):
+        #             pass
+        
         super().__init__(data, **kwargs)
 
-        if not hasattr(self, "_weights"):
+        if weights is not None:
+            self._weights = weights.copy()
+        elif not hasattr(self, "_weights"):
             self._weights = pd.Series(name="weight", dtype=float)
-            for idx in self.index:
-                try:
-                    # Calculate element/oxide weight
-                    self._weights[idx] = e.calculate_weight(idx)
-                except (ValueError, KeyError):
-                    pass
 
-        # self.recalculate(inplace=True)
+        for idx in self.index.difference(self._weights.index):
+            # for col in self.columns:
+            try:
+                # Calculate element/oxide weight
+                self._weights[idx] = e.calculate_weight(idx)
+            except (ValueError, KeyError):
+                pass
+
+        extra_elements = self._weights.index.difference(self.index)
+        self._weights = self._weights.drop(extra_elements)
+
+
 
     @property
     def _constructor(self):
@@ -76,7 +99,7 @@ class MagmaSeries(pd.Series):
 
         def _c(*args, weights=None, **kwargs):
             if weights is None:
-                weights = self._weights.copy(deep=True)
+                weights = getattr(self, "_weights", None).copy(deep=True)#self._weights.copy(deep=True)
             return MagmaSeries(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
@@ -85,10 +108,15 @@ class MagmaSeries(pd.Series):
     def _constructor_expanddim(self):
         def _c(*args, weights=None, **kwargs):
             if weights is None:
-                weights = self._weights.copy(deep=True)
+                weights = getattr(self, "_weights", None).copy(deep=True)
             return _MagmaSeries_expanddim(
                 *args, weights=weights, **kwargs
             ).__finalize__(self)
+
+        # pd.concat (pandas/core/reshape/concat.py) requires this for the
+        # concatenation of series since pandas 1.1
+        # (https://github.com/pandas-dev/pandas/commit/f9e4c8c84bcef987973f2624cc2932394c171c8c)
+        _c._get_axis_number = pd.DataFrame._get_axis_number
 
         return _c
 

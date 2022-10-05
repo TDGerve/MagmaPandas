@@ -23,7 +23,7 @@ def find_elements(compound: str):
     """
     Docstring
     """
-    elements = re.findall("([A-Z][^A-Z]*)", compound)
+    elements = re.findall("([A-Z][^A-Z]*)", str(compound))
 
     # Raise an error if no elements are found
     if len(elements) < 1:
