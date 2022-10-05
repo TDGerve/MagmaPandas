@@ -243,17 +243,23 @@ class MagmaSeries(pd.Series):
         if not inplace:
             return series
 
-    def normalise(self):
+    def normalise(self, to=None):
         """
         Normalise composition.
         """
+        if to is not None:
+            norm = to
+        elif self._units == "wt. %":
+            norm = 100
+        else:
+            norm = 1
+
         self.recalculate(inplace=True)
         normalised = self.copy()[self.elements]
-        total = normalised.sum()
 
+        total = normalised.sum()
         normalised = normalised.div(total)
-        if self._units == "wt. %":
-            normalised = normalised.mul(100)
+        normalised = normalised.mul(norm)
         normalised["total"] = normalised.sum()
 
         return normalised

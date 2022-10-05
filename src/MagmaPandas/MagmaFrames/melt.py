@@ -230,10 +230,10 @@ class Melt(MagmaFrame):
             self["P_bar"] = P_bar
             return
         else:
-            output = [P_bar]
+            output = P_bar
             if sum(Xfl.isna()) != Xfl.shape[0]:
-                output += [Xfl]
-            return (*output,)
+                output = [P_bar, Xfl]
+            return output
 
     def _saturation_multicore(self, sample):
         """

@@ -42,7 +42,6 @@ def radii(valency):
 
     if valency not in [2, 3, "REE"]:
         raise Exception("valency should be 2, 3 or 'REE'")
-        return
 
     valency = {2: 0, 3: 1, "REE": 1}[valency]
 

@@ -246,17 +246,24 @@ class MagmaFrame(pd.DataFrame):
         if not inplace:
             return df
 
-    def normalise(self):
+    def normalise(self, to=None):
         """
         Normalise composition.
         """
-        self.recalculate(inplace=True)
+        if to is not None:
+            norm = to
+        elif self._units == "wt. %":
+            norm = 100
+        else:
+            norm = 1
+
+        self = self.recalculate()
         normalised = self[self.elements].copy()
+
         total = normalised.sum(axis=1)
 
         normalised = normalised.div(total, axis=0)
-        if self._units == "wt. %":
-            normalised = normalised.mul(100)
+        normalised = normalised.mul(norm, axis=0)
         normalised.loc[:, "total"] = normalised.sum(axis=1)
 
         return normalised
