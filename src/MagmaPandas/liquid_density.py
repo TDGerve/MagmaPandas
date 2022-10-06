@@ -90,7 +90,9 @@ def calculate_density(composition: Melt, T_K: pd.Series, P_bar: pd.Series) -> pd
     return density
 
 
-def temperature(composition: Melt, density: pd.Series, P_bar: pd.Series) -> pd.Series:
+def calculate_temperature(
+    composition: Melt, density: pd.Series, P_bar: pd.Series
+) -> pd.Series:
 
     mole_fractions = composition.moles[molar_volumes.index]
 
@@ -136,19 +138,3 @@ def _calculate_T_contribution(T_K: pd.Series, index):
     T_contribution = T_contribution.mul(dVdT, axis=1)
 
     return T_contribution
-
-
-if __name__ == "__main__":
-
-    import numpy as np
-
-    df = mp.read_melt("./tests/melt.csv", index_col=["name"])
-    df["Fe2O3"] = df["FeO"] * 0.0
-    df = df[dVdP.index].recalculate()
-    t = pd.Series(np.linspace(1400, 1600, df.shape[0]), index=df.index)
-    p = pd.Series(np.linspace(3e3, 2e3, df.shape[0]), index=df.index)
-    d = pd.Series(np.linspace(2.6e3, 2.65e3, df.shape[0]), index=df.index)
-
-    t = temperature(df, d, p)
-
-    print(calculate_density(df, t, p))
