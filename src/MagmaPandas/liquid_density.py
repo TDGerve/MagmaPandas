@@ -1,7 +1,6 @@
 import pandas as pd
 
 from MagmaPandas import Melt
-import MagmaPandas as mp
 import elements as e
 
 """
