@@ -41,7 +41,7 @@ def layout(colors=colors.firenze, fontsize=14, **kwargs):
     axTitleSize = int(fontsize / 1.2)
     axLabelSize = int(fontsize)
     tickLabelSize = int(fontsize / 1.2)
-    markersize = kwargs.get("markersize", 10)
+    markersize = kwargs.get("markersize", 8)
     linewidth = kwargs.get("linewidth", 2)
 
     plt.rcParams["figure.constrained_layout.use"] = True
@@ -71,7 +71,7 @@ def layout(colors=colors.firenze, fontsize=14, **kwargs):
     plt.rc("grid", color="snow")
 
     # Lines
-    plt.rc("lines", markersize=markersize, linewidth=linewidth, markeredgecolor="k")
+    plt.rc("lines", markersize=markersize, linewidth=linewidth)
 
 
 def side_plots(

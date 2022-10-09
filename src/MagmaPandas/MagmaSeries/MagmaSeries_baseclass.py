@@ -17,9 +17,8 @@ def _MagmaSeries_expanddim(data=None, *args, **kwargs):
 
     df = MagmaFrame(data, *args, **kwargs)
 
-    
-        # df._units = data._units.copy(deep=True)
-        # df._datatype = data._datatype.copy(deep=True)
+    # df._units = data._units.copy(deep=True)
+    # df._datatype = data._datatype.copy(deep=True)
 
     return df
 
@@ -65,7 +64,7 @@ class MagmaSeries(pd.Series):
         #             self._weights[idx] = e.calculate_weight(idx)
         #         except (ValueError, KeyError):
         #             pass
-        
+
         super().__init__(data, **kwargs)
 
         if weights is not None:
@@ -73,18 +72,13 @@ class MagmaSeries(pd.Series):
         elif not hasattr(self, "_weights"):
             self._weights = pd.Series(name="weight", dtype=float)
 
-        for idx in self.index.difference(self._weights.index):
-            # for col in self.columns:
-            try:
-                # Calculate element/oxide weight
-                self._weights[idx] = e.calculate_weight(idx)
-            except (ValueError, KeyError):
-                pass
-
-        extra_elements = self._weights.index.difference(self.index)
-        self._weights = self._weights.drop(extra_elements)
-
-
+            for idx in self.index.difference(self._weights.index):
+                # for col in self.columns:
+                try:
+                    # Calculate element/oxide weight
+                    self._weights[idx] = e.calculate_weight(idx)
+                except (ValueError, KeyError):
+                    pass
 
     @property
     def _constructor(self):
@@ -99,7 +93,9 @@ class MagmaSeries(pd.Series):
 
         def _c(*args, weights=None, **kwargs):
             if weights is None:
-                weights = getattr(self, "_weights", None).copy(deep=True)#self._weights.copy(deep=True)
+                weights = getattr(self, "_weights", None).copy(
+                    deep=True
+                )  # self._weights.copy(deep=True)
             return MagmaSeries(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
