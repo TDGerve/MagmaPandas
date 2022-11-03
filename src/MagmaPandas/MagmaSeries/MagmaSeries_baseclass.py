@@ -176,7 +176,11 @@ class MagmaSeries(pd.Series):
         Calculate cation fractions from oxide concentrations
         """
         # Calculate oxide moles
-        moles = self.moles[self.elements]
+        if self._units != "mol fraction":
+            moles = self.moles[self.elements]
+        else:
+            moles = self[self.elements].copy()
+
         # Calculate cation moles
         cation_numbers = e.cation_numbers(moles.elements)
         cations = moles.mul(cation_numbers)

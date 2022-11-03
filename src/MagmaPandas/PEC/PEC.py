@@ -713,31 +713,6 @@ class PEC_olivine:
                     datatype="oxide",
                 )
                 olivine = olivine.fillna(0.0).normalise()
-                ######################################################################
-                ##### Melting/crystallising olivine to keep temperature constant #####
-                # # Multi core
-                # samples = [
-                #     (
-                #         sample,
-                #         mi_moles_loop.loc[sample],
-                #         olivine.loc[sample],
-                #         temperatures_loop.loc[sample],
-                #         P_loop.loc[sample],
-                #     )
-                #     for sample in mi_moles_loop.index
-                # ]
-
-                # results = pool.imap_unordered(self._crystallise_multicore, samples)
-
-                # for sample, olivine_amount in results:
-                #     print(f"{sample}: {olivine_amount}")
-                #     mi_moles_loop.loc[sample] = mi_moles_loop.loc[sample] + olivine.loc[
-                #         sample
-                #     ].mul(olivine_amount)
-                #     # current iteration
-                #     olivine_corrected_loop.loc[sample] = olivine_amount
-                #     # Running total
-                #     self.olivine_corrected.loc[sample, "equilibration_crystallisation"] += olivine_amount
 
                 # Single core
                 for sample in mi_moles_loop.index:

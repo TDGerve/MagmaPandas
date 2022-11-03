@@ -30,17 +30,19 @@ def find_elements(compound: str):
         raise ValueError(f"'{compound}' does not contain valid elements")
 
     for element in elements:
-    # Raise an error for invalid elements with more than 1 lower case character
+        # Raise an error for invalid elements with more than 1 lower case character
         if sum(c.islower() for c in element) > 1:
             raise ValueError(f"'{element}' is not a valid element")
-    # Check for non-word characters
+        # Check for non-word characters
         elif len(re.findall(r"\W", element)) > 0:
             raise ValueError(f"'{element}' contains an invalid character")
 
     # Raise an error if there are any leftover characters
     length_elements = sum(len(s) for s in elements)
     if len(compound) != length_elements:
-        raise ValueError(f"There are leftover characters in '{compound}'; elements found: {elements}")
+        raise ValueError(
+            f"There are leftover characters in '{compound}'; elements found: {elements}"
+        )
 
     return elements
 
@@ -102,9 +104,10 @@ def cation_numbers(compounds: List[str]):
     Docstring
     """
 
-    cations = pd.Series(index=compounds, name='cations', dtype=int)
+    cations = pd.Series(index=compounds, name="cations", dtype=int)
 
     for i in cations.index:
+
         cations[i] = decompose(i)[0]
 
     return cations
@@ -115,10 +118,10 @@ def oxygen_numbers(compounds: List[str]):
     Docstrings
     """
 
-    oxygen = pd.Series(index=compounds, name='oxygen', dtype=int)
+    oxygen = pd.Series(index=compounds, name="oxygen", dtype=int)
 
     for i in oxygen.index:
-        oxygen[i] = decompose(i)['O']
+        oxygen[i] = decompose(i)["O"]
 
     return oxygen
 
@@ -128,6 +131,10 @@ def cation_names(compounds: List[str]):
     Docstrings
     """
 
-    return [decompose(oxide).index[0] for oxide in compounds]
+    names = [decompose(oxide).index[0] for oxide in compounds]
 
+    if "Fe2O3" in compounds:
+        idx = compounds.index("Fe2O3")
+        names[idx] = "Fe3"
 
+    return names

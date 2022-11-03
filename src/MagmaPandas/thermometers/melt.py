@@ -1,5 +1,5 @@
 import pandas as pd
-import numpy as np
+import elements as e
 
 
 class melt_thermometers:
@@ -7,8 +7,10 @@ class melt_thermometers:
 
         """Liquid thermometer
 
-        Equation 14 from Putirka (2008) calculates liquiqdus temperature for bulk compositions. 
+        Equation 14 from Putirka (2008) calculates liquiqdus temperature for bulk compositions.
         Requires equilibrium with olivine.
+
+        SEE = 58 degrees
 
         Parameters
         ----------
@@ -22,14 +24,15 @@ class melt_thermometers:
         pd.Series
             liquidus temperatures in degrees Kelvin.
         """
-        import MagmaPandas as mp
+        from ..MagmaFrames import MagmaFrame
+        from ..MagmaSeries import MagmaSeries
 
         composition = self.copy(deep=True)
         composition = composition.fillna(0.0)
 
-        if isinstance(composition, mp.MagmaFrame):
+        if isinstance(composition, MagmaFrame):
             elements = composition.columns
-        elif isinstance(composition, mp.MagmaSeries):
+        elif isinstance(composition, MagmaSeries):
             elements = composition.index
 
         oxides = set(["MgO", "FeO", "Na2O", "K2O"])
@@ -44,9 +47,7 @@ class melt_thermometers:
                 composition = composition.drop("H2O")
             except KeyError:
                 composition = composition.drop(columns=["H2O"])
-        composition.recalculate()
-        composition = composition.normalise()
-  
+        composition = composition.recalculate()
 
         if len(absentOxides) > 0:
             raise KeyError(f"{absentOxides} not found in melt")
@@ -54,7 +55,15 @@ class melt_thermometers:
         # Calculate molar oxide fractions
         mol_fractions = composition.moles
         # Melt Mg#
-        Mg_no = mol_fractions["MgO"] / (mol_fractions["MgO"] + mol_fractions["FeO"]) # SHOULD PROBABLY BE STRICTLY Fe2+?
+        Mg_no = mol_fractions["MgO"] / (
+            mol_fractions["MgO"] + mol_fractions["FeO"]
+        )  # Putirka doesn't specify whether this should be Fe2+ or Fe(total)
+
+        if "Fe2O3" in elements:
+            FeO_w, Fe2O3_w = e.compound_weights(["FeO", "Fe2O3"])
+            composition["FeO"] = composition["FeO"] + (
+                2 * composition["Fe2O3"] * (FeO_w / Fe2O3_w)
+            )
 
         T_K = (
             754
@@ -71,7 +80,7 @@ class melt_thermometers:
 
         """Liquid thermometer
 
-        Equation 15 from Putirka (2008) calculates liquiqdus temperature for bulk compositions. 
+        Equation 15 from Putirka (2008) calculates liquiqdus temperature for bulk compositions.
         Requires equilibrium with olivine.
 
         Parameters
@@ -108,10 +117,9 @@ class melt_thermometers:
                 composition = composition.drop("H2O")
             except KeyError:
                 composition = composition.drop(columns=["H2O"])
-        composition.recalculate()
-        composition = composition.normalise()
+        composition = composition.recalculate()
 
-        P_GPa = P_bar / 1e4  
+        P_GPa = P_bar / 1e4
 
         if len(absentOxides) > 0:
             raise KeyError(f"{absentOxides} not found in melt")
@@ -119,7 +127,15 @@ class melt_thermometers:
         # Calculate molar oxide fractions
         mol_fractions = composition.moles
         # Melt Mg#
-        Mg_no = mol_fractions["MgO"] / (mol_fractions["MgO"] + mol_fractions["FeO"]) # SHOULD PROBABLY BE STRICTLY Fe2+
+        Mg_no = mol_fractions["MgO"] / (
+            mol_fractions["MgO"] + mol_fractions["FeO"]
+        )  # Putirka doesn't specify whether this should be Fe2+ or Fe(total)
+
+        if "Fe2O3" in elements:
+            FeO_w, Fe2O3_w = e.compound_weights(["FeO", "Fe2O3"])
+            composition["FeO"] = composition["FeO"] + (
+                2 * composition["Fe2O3"] * (FeO_w / Fe2O3_w)
+            )
 
         T_K = (
             815.3
@@ -137,7 +153,7 @@ class melt_thermometers:
 
         """Liquid thermometer
 
-        Equation 16 from Putirka (2008) calculates liquiqdus temperature for bulk compositions. 
+        Equation 16 from Putirka (2008) calculates liquiqdus temperature for bulk compositions.
         Requires equilibrium with olivine + plagioclase + clinopyroxene.
 
         Parameters
@@ -206,5 +222,3 @@ class melt_thermometers:
                 self["P_bar"] = P_bar
         else:
             return pd.Series(T_K, name="T_K").squeeze()
-
-

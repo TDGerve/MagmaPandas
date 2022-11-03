@@ -1,16 +1,14 @@
 import numpy as np
 import pandas as pd
 from scipy.constants import R  # J*K-1*mol-1
+from scipy.optimize import root_scalar
 
 from MagmaPandas.configuration import configuration
-
 from MagmaPandas.MagmaFrames import Melt
-from MagmaPandas.MagmaSeries import MagmaSeries
 from MagmaPandas import Fe_redox
 from MagmaPandas.Kd.Kd_baseclass import Kd_model
 from MagmaPandas.fO2 import fO2_QFM
-
-
+from MagmaPandas.geochemistry.Fe_redox import FeRedox_QFM
 
 
 def calculate_olivine_Kd(melt: pd.DataFrame, forsterite: pd.Series, P_bar, **kwargs):
@@ -47,7 +45,7 @@ def calculate_olivine_Kd(melt: pd.DataFrame, forsterite: pd.Series, P_bar, **kwa
     return Kd_eq, Kd_observed
 
 
-def equilibrium_forsterite(Kd, Fe2Mg):
+def equilibrium_forsterite(Kd, melt_mol_fractions, Fe3Fe2):
     """
     Parameters
     ----------
@@ -61,17 +59,29 @@ def equilibrium_forsterite(Kd, Fe2Mg):
     Equilibrium forsterite fraction as Mg/(Mg + Fe)
     """
 
+    Fe2FeTotal = 1 / (1 + Fe3Fe2)
+    cations = melt_mol_fractions.cations
+    Fe2Mg = cations["Fe"] * Fe2FeTotal / cations["Mg"]
+
     return 1 / (1 + Kd * Fe2Mg)
 
-def _root_Kd(Fo_guess: float, Kd_model, melt: Melt, T_K: float, P_bar: float):
 
-    melt_mol_fractions = melt.moles
-    Fe3Fe2 = melt.Fe3Fe2_QFM(T_K, P_bar)
-    Fe2FeTotal = 1 / (1 + Fe3Fe2)
-    Fe2Mg = melt_mol_fractions["Fe"] * Fe2FeTotal / melt_mol_fractions["Mg"]
+def _root_Kd(
+    Fo_guess: float,
+    Kd_model,
+    melt_mol_fractions: Melt,
+    T_K: float,
+    P_bar: float,
+    Fe3Fe2,
+):
 
-    Kd = Kd_model._Kd_initial(melt_mol_fractions=melt_mol_fractions, T_K=T_K, P_bar=P_bar, forsterite=Fo_guess)
-    Fo_model = equilibrium_forsterite(Kd, Fe2Mg)
+    Kd = Kd_model(
+        forsterite=Fo_guess,
+        melt_mol_fractions=melt_mol_fractions,
+        T_K=T_K,
+        P_bar=P_bar,
+    )
+    Fo_model = equilibrium_forsterite(Kd, melt_mol_fractions, Fe3Fe2)
 
     return abs(Fo_guess - Fo_model)
 
@@ -79,9 +89,10 @@ def _root_Kd(Fo_guess: float, Kd_model, melt: Melt, T_K: float, P_bar: float):
 ##### Toplis (2005) Fe-Mg olivine - melt exchange coefficient #####
 ###################################################################
 
-class FeMg_Toplis(Kd_model):
 
-    def _Phi(self, molar_SiO2, molar_Na2O, molar_K2O):
+class FeMg_Toplis(Kd_model):
+    @classmethod
+    def _Phi(cls, molar_SiO2, molar_Na2O, molar_K2O):
         """
         Equation 12 from Toplis (2005) calculates a Phi parameter to correct SiO2 for alkali-bearing liquids.
         This expression is only valid for SiO2 <= 60 mol %
@@ -112,8 +123,8 @@ class FeMg_Toplis(Kd_model):
             -5.33 * (100 / (100 - molar_SiO2)) + 9.69
         )
 
-
-    def _SiO2_A(self, melt_mol_fractions):
+    @classmethod
+    def _SiO2_A(cls, melt_mol_fractions):
         """returns adjusted SiO2 for Toplis (2005) Fe-Mg Kd calculations
 
         Equations 11 and 14 calculate adjusted molar SiO2 by correcting for akalis and water
@@ -148,7 +159,7 @@ class FeMg_Toplis(Kd_model):
         molar_Na2O = molar_concentrations["Na2O"]
         molar_K2O = molar_concentrations["K2O"]
 
-        Phi = self._Phi(molar_SiO2, molar_Na2O, molar_K2O)
+        Phi = cls._Phi(molar_SiO2, molar_Na2O, molar_K2O)
         # Equation 11
         SiO2_A = molar_SiO2 + Phi * (molar_Na2O + molar_K2O)
 
@@ -163,12 +174,13 @@ class FeMg_Toplis(Kd_model):
 
         return SiO2_A
 
-    def _Kd_initial(self, melt_mol_fractions, T_K, P_bar, forsterite, **kwargs):
+    @classmethod
+    def _Kd_initial(cls, forsterite, melt_mol_fractions, T_K, P_bar, **kwargs):
         """
         Toplis (2005) Equation 10
         """
 
-        SiO2_A = self._SiO2(melt_mol_fractions)
+        SiO2_A = cls._SiO2_A(melt_mol_fractions)
 
         return np.exp(
             (-6766 / (R * T_K) - 7.34 / R)
@@ -177,106 +189,123 @@ class FeMg_Toplis(Kd_model):
             + (0.035 * (P_bar - 1) / (R * T_K))
         )
 
+    @classmethod
+    def calculate_Kd(cls, melt: Melt, forsterite, T_K: float, P_bar: float, **kwargs):
+
+        melt_mol_fractions = melt.moles
+
+        dQFM = kwargs.get("dQFM", configuration.dQFM)
+        Fe3Fe2 = FeRedox_QFM(melt_mol_fractions, T_K, P_bar, dQFM)
+
+        forsterite_eq = root_scalar(
+            _root_Kd,
+            args=(cls._Kd_initial, melt_mol_fractions, T_K, P_bar, Fe3Fe2),
+            x0=forsterite,
+            x1=forsterite - 0.01,
+            xtol=0.01,
+        ).root
+
+        return cls._Kd_initial(
+            forsterite_eq,
+            melt_mol_fractions,
+            T_K,
+            P_bar,
+        )
 
 
-    def calculate_Kd(self, melt: Melt, forsterite):
-        pass
-            
-
-    
-def FeMg_toplis(T_K, P_bar, forsterite, SiO2_A):
-    """
-    Toplis (2005) Equation 10
-    """
-    return np.exp(
-        (-6766 / (R * T_K) - 7.34 / R)
-        + np.log(0.036 * SiO2_A - 0.22)
-        + (3000 * (1 - 2 * forsterite) / (R * T_K))
-        + (0.035 * (P_bar - 1) / (R * T_K))
-    )
+# def FeMg_toplis(T_K, P_bar, forsterite, SiO2_A):
+#     """
+#     Toplis (2005) Equation 10
+#     """
+#     return np.exp(
+#         (-6766 / (R * T_K) - 7.34 / R)
+#         + np.log(0.036 * SiO2_A - 0.22)
+#         + (3000 * (1 - 2 * forsterite) / (R * T_K))
+#         + (0.035 * (P_bar - 1) / (R * T_K))
+#     )
 
 
-def toplis_Phi(molar_SiO2, molar_Na2O, molar_K2O):
-    """
-    Equation 12 from Toplis (2005) calculates a Phi parameter to correct SiO2 for alkali-bearing liquids.
-    This expression is only valid for SiO2 <= 60 mol %
+# def toplis_Phi(molar_SiO2, molar_Na2O, molar_K2O):
+#     """
+#     Equation 12 from Toplis (2005) calculates a Phi parameter to correct SiO2 for alkali-bearing liquids.
+#     This expression is only valid for SiO2 <= 60 mol %
 
 
-    Parameters
-    ----------
-    molar_SiO2 : int or list-like
+#     Parameters
+#     ----------
+#     molar_SiO2 : int or list-like
 
-    molar_Na2O : int or list-like
+#     molar_Na2O : int or list-like
 
-    molar_K2O : int or list-like
-
-
-    Returns
-    -------
-        int or list-like
-    """
-
-    try:
-        if sum(np.array(molar_SiO2) > 60) > 1:
-            raise RuntimeError("SiO2 >60 mol% present")
-    except:
-        if molar_SiO2 > 60:
-            raise RuntimeError("SiO2 >60 mol%")
-
-    return (0.46 * (100 / (100 - molar_SiO2)) - 0.93) * (molar_Na2O + molar_K2O) + (
-        -5.33 * (100 / (100 - molar_SiO2)) + 9.69
-    )
+#     molar_K2O : int or list-like
 
 
-def toplis_SiO2_A(melt_mol_fractions):
-    """returns adjusted SiO2 for Toplis (2005) Fe-Mg Kd calculations
+#     Returns
+#     -------
+#         int or list-like
+#     """
 
-    Equations 11 and 14 calculate adjusted molar SiO2 by correcting for akalis and water
+#     try:
+#         if sum(np.array(molar_SiO2) > 60) > 1:
+#             raise RuntimeError("SiO2 >60 mol% present")
+#     except:
+#         if molar_SiO2 > 60:
+#             raise RuntimeError("SiO2 >60 mol%")
 
-
-    Parameters
-    ----------
-    molar_SiO2 : int or list-like
-
-    molar_Na2O : int or list-like
-
-    molar_K2O : int or list-like
-
-    Phi : int or list-like
-        coefficient for alkali correction, needs to be calculated according to Toplis (eq 12, 2005)
-
-    H2O : int or list-like, optional
-        wt. %
+#     return (0.46 * (100 / (100 - molar_SiO2)) - 0.93) * (molar_Na2O + molar_K2O) + (
+#         -5.33 * (100 / (100 - molar_SiO2)) + 9.69
+#     )
 
 
-    Returns
-    -------
-    int or list-like
-    """
+# def toplis_SiO2_A(melt_mol_fractions):
+#     """returns adjusted SiO2 for Toplis (2005) Fe-Mg Kd calculations
 
-    # Calculate melt molar concentrations
-    # Molar fractions normalised to 1
-    melt_mol_fractions = melt_mol_fractions.fillna(0.0)
-    molar_concentrations = melt_mol_fractions * 100
+#     Equations 11 and 14 calculate adjusted molar SiO2 by correcting for akalis and water
 
-    molar_SiO2 = molar_concentrations["SiO2"]
-    molar_Na2O = molar_concentrations["Na2O"]
-    molar_K2O = molar_concentrations["K2O"]
 
-    Phi = toplis_Phi(molar_SiO2, molar_Na2O, molar_K2O)
-    # Equation 11
-    SiO2_A = molar_SiO2 + Phi * (molar_Na2O + molar_K2O)
+#     Parameters
+#     ----------
+#     molar_SiO2 : int or list-like
 
-    try:
-        # For dataframes
-        if "H2O" in molar_concentrations.columns:
-            SiO2_A = SiO2_A + 0.8 * molar_concentrations["H2O"]  # equation 14
-    except:
-        # For series
-        if "H2O" in molar_concentrations.index:
-            SiO2_A = SiO2_A + 0.8 * molar_concentrations["H2O"]  # equation 14
+#     molar_Na2O : int or list-like
 
-    return SiO2_A
+#     molar_K2O : int or list-like
+
+#     Phi : int or list-like
+#         coefficient for alkali correction, needs to be calculated according to Toplis (eq 12, 2005)
+
+#     H2O : int or list-like, optional
+#         wt. %
+
+
+#     Returns
+#     -------
+#     int or list-like
+#     """
+
+#     # Calculate melt molar concentrations
+#     # Molar fractions normalised to 1
+#     melt_mol_fractions = melt_mol_fractions.fillna(0.0)
+#     molar_concentrations = melt_mol_fractions * 100
+
+#     molar_SiO2 = molar_concentrations["SiO2"]
+#     molar_Na2O = molar_concentrations["Na2O"]
+#     molar_K2O = molar_concentrations["K2O"]
+
+#     Phi = toplis_Phi(molar_SiO2, molar_Na2O, molar_K2O)
+#     # Equation 11
+#     SiO2_A = molar_SiO2 + Phi * (molar_Na2O + molar_K2O)
+
+#     try:
+#         # For dataframes
+#         if "H2O" in molar_concentrations.columns:
+#             SiO2_A = SiO2_A + 0.8 * molar_concentrations["H2O"]  # equation 14
+#     except:
+#         # For series
+#         if "H2O" in molar_concentrations.index:
+#             SiO2_A = SiO2_A + 0.8 * molar_concentrations["H2O"]  # equation 14
+
+#     return SiO2_A
 
 
 ##### Blundy (2020) Fe-Mg olivine - melt exchange coefficient #####
@@ -291,9 +320,6 @@ def FeMg_blundy(forsterite, Fe3Fe2_liquid, T_K):
     Fe3FeTotal = Fe3Fe2_liquid / (1 + Fe3Fe2_liquid)
 
     return 0.3642 * (1 - Fe3FeTotal) * np.exp(312.7 * (1 - 2 * forsterite) / T_K)
-
-
-
 
 
 class Kd_FeMg_vectorised:
@@ -413,29 +439,43 @@ class Kd_FeMg_vectorised:
         fo_converge_default = 0.001
         fo_converge = kwargs.setdefault("fo_converge", fo_converge_default)
 
-        SiO2mol_A = toplis_SiO2_A(melt_mol_fractions)
+        ## SiO2mol_A = toplis_SiO2_A(melt_mol_fractions)
+
         # initialise Kds
-        Kd = FeMg_toplis(T_K, P_bar, forsterite, SiO2mol_A)
+        ##Kd = FeMg_toplis(T_K, P_bar, forsterite, SiO2mol_A)
+        Kd = FeMg_Toplis._Kd_initial(forsterite, melt_mol_fractions, T_K, P_bar)
         # Liquid Fe2+/Fe(total)
-        Fe2Fe_total = 1 / (1 + Fe3Fe2)
+        ## Fe2Fe_total = 1 / (1 + Fe3Fe2)
         # liquid Fe2+/Mg
-        Fe2Mg = (melt_mol_fractions["FeO"] * Fe2Fe_total) / melt_mol_fractions["MgO"]
+        ## Fe2Mg = (melt_mol_fractions["FeO"] * Fe2Fe_total) / melt_mol_fractions["MgO"]
         # Equilibrium forsterite content according to Kd
-        forsterite_EQ = 1 / (1 + Kd * Fe2Mg)
+        ##forsterite_EQ = 1 / (1 + Kd * Fe2Mg)
+        forsterite_EQ = equilibrium_forsterite(Kd, melt_mol_fractions, Fe3Fe2)
         # Difference between observed Fo and equilibrium Fo
         forsterite_delta = abs(forsterite - forsterite_EQ) / forsterite
 
         iterate = forsterite_delta > fo_converge
         # iterate until equilibrium forsterite content doesn't change any more
         while sum(iterate) > 1:
-            Kd[iterate] = FeMg_toplis(
+            ## Kd[iterate] = FeMg_toplis(
+            ##     T_K[iterate],
+            ##     P_bar[iterate],
+            ##     forsterite_EQ.loc[iterate],
+            ##     SiO2mol_A.loc[iterate],
+            ## )
+            ##forsterite[iterate] = forsterite_EQ[iterate].copy()
+            ##forsterite_EQ[iterate] = 1 / (1 + Kd[iterate] * Fe2Mg[iterate])
+            Kd[iterate] = FeMg_Toplis._Kd_initial(
+                forsterite_EQ.loc[iterate],
+                melt_mol_fractions.loc[iterate],
                 T_K[iterate],
                 P_bar[iterate],
-                forsterite_EQ.loc[iterate],
-                SiO2mol_A.loc[iterate],
             )
             forsterite[iterate] = forsterite_EQ[iterate].copy()
-            forsterite_EQ[iterate] = 1 / (1 + Kd[iterate] * Fe2Mg[iterate])
+            forsterite_EQ[iterate] = equilibrium_forsterite(
+                Kd[iterate], melt_mol_fractions.loc[iterate], Fe3Fe2[iterate]
+            )
+
             forsterite_delta[iterate] = (
                 abs(forsterite[iterate] - forsterite_EQ[iterate]) / forsterite[iterate]
             )

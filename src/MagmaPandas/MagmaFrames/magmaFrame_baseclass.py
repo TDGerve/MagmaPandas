@@ -138,13 +138,15 @@ class MagmaFrame(pd.DataFrame):
             return self.copy()
 
     @property
-    @_check_attribute("_datatype", ["oxide"])
     def cations(self):
         """
         Calculate cation fractions from oxide concentrations
         """
         # Calculate oxide moles
-        moles = self.moles[self.elements]
+        if self._units != "mol fraction":
+            moles = self.moles[self.elements]
+        else:
+            moles = self[self.elements].copy()
         # Calculate cation moles
         cation_numbers = e.cation_numbers(moles.elements)
         cations = moles.mul(cation_numbers)
@@ -257,7 +259,7 @@ class MagmaFrame(pd.DataFrame):
         else:
             norm = 1
 
-        self = self.recalculate()
+        # self = self.recalculate()
         normalised = self[self.elements].copy()
 
         total = normalised.sum(axis=1)
