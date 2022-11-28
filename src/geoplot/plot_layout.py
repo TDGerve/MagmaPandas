@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import elements as e
 
+markers = ["^", "D", "s", "o", "p", "8", "h", "d", 4, 5]
 # Color palettes
 class colors:
     """
@@ -33,15 +34,75 @@ class colors:
         color=["#DFE2F2", "#88ABF2", "#4384D9", "#56BFAC", "#D9B341"]
     )
 
+    hollywood = plt.cycler(
+        color=[
+            "#8ECAE6",
+            "#FFB703",
+            "#219EBC",
+            "#FD9E02",
+            "#126782",
+            "#FB8500",
+            "#023047",
+        ],
+    )
 
-markers = plt.cycler(marker=["^", "D", "s", "o", "p"])
+    campfire = plt.cycler(color=["#588C7E", "#F2E394", "#F2AE72", "#D96459", "#8C4646"])
+
+    pastel = plt.cycler(
+        color=[
+            "#FAD2E1",
+            "#BCD4E6",
+            "#C5DEDD",
+            "#99C1DE",
+            "#EDDCD2",
+            "#DBE7E4",
+            "#FFF1E6",
+            "#F0EFEB",
+            "#FDE2E4",
+            "#D6E2E9",
+        ],
+    )
+
+    autumn = plt.cycler(
+        color=[
+            "#797D62",
+            "#FFCB69",
+            "#9B9B7A",
+            "#E8AC65",
+            "#BAA587",
+            "#D08C60",
+            "#D9AE94",
+            "#B58463",
+            "#997B66",
+            "#F1DCA7",
+        ],
+    )
+
+    rainbow = plt.cycler(
+        color=[
+            "#54478C",
+            "#83E377",
+            "#2C699A",
+            "#B9E769",
+            "#048BA8",
+            "#EFEA5A",
+            "#0DB39E",
+            "#F1C453",
+            "#16DB93",
+            "#F29E4C",
+        ]
+    )
+
+    matteblue = plt.cycler(
+        color=["#666A86", "#788AA3", "#92B6B1", "#B2C9AB", "#E8DDB5"],
+    )
 
 
-def layout(colors=colors.firenze, fontsize=14, **kwargs):
+def layout(colors=colors.hollywood, fontsize=12, **kwargs):
     axTitleSize = int(fontsize / 1.2)
     axLabelSize = int(fontsize)
     tickLabelSize = int(fontsize / 1.2)
-    markersize = kwargs.get("markersize", 10)
+    markersize = kwargs.get("markersize", 8)
     linewidth = kwargs.get("linewidth", 2)
 
     plt.rcParams["figure.constrained_layout.use"] = True
@@ -64,7 +125,7 @@ def layout(colors=colors.firenze, fontsize=14, **kwargs):
         titlesize=axTitleSize,
         labelsize=axLabelSize,
         axisbelow=True,
-        prop_cycle=colors + markers,
+        prop_cycle=colors + plt.cycler(marker=markers[: len(colors)]),
         facecolor="whitesmoke",
         linewidth=1.2,
     )

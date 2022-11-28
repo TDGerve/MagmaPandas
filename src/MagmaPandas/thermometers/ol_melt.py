@@ -46,7 +46,7 @@ def putirka2007_4(liquid, olivine, P_bar, **kwargs):
     if len(absentOxides) > 0:
         raise KeyError(f"{absentOxides} not found in melt")
 
-    # A ll oxides as mole/cation fractions on an anhydrous basis
+    # All oxides as mole/cation fractions on an anhydrous basis
     if len(fill_oxides) > 0:
         composition[list(fill_oxides)] = 0.0
 
@@ -68,7 +68,9 @@ def putirka2007_4(liquid, olivine, P_bar, **kwargs):
     liquid_cations = composition.cations
     olivine_cations = olivine.cations
 
-    C_NM = liquid_cations[["Fe", "Mn", "Mg", "Ca", "Co", "Ni"]].sum(axis=1)
+    C_NM = liquid_cations[["Fe", "Mn", "Mg", "Ca", "Co", "Ni"]].sum(
+        axis=1
+    )  # Fe = Fe total
     NF = 7 / 2 * np.log(1 - liquid_cations["Al"]) + 7 * np.log(1 - liquid_cations["Ti"])
     D_Mg = olivine_cations.loc[liquid_cations.index, "Mg"] / liquid_cations["Mg"]
 

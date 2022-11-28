@@ -243,7 +243,7 @@ class MagmaFrame(pd.DataFrame):
 
         if df._total:
             totals = df.loc[:, df.elements].sum(axis=1)
-            df.loc[:, "total"] = totals.values
+            df["total"] = totals.values
 
         if not inplace:
             return df

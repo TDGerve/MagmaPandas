@@ -2,6 +2,10 @@ import pandas as pd
 import elements as e
 
 
+def calculate_melt_temperature(args, kwargs):
+    pass
+
+
 class melt_thermometers:
     def putirka2008_14(self, **kwargs):
 
