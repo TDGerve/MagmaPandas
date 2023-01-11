@@ -1070,7 +1070,9 @@ class PEC_olivine:
 
             if self._FeO_as_function:
                 FeO_inital = self.FeO_function(corrected)
-                ax.plot(corrected["MgO"], FeO_inital, color=FeO_color, linestyle="-")
+                ax.plot(
+                    corrected["MgO"], FeO_inital, "-", color=FeO_color, linestyle="-"
+                )
                 FeO_target = sum((min(FeO_inital), max(FeO_inital))) / 2
             else:
                 ax.axhline(FeO_target, linestyle="-", color=FeO_color, linewidth=1.5)
