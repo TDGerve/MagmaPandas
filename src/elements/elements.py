@@ -1,4 +1,5 @@
 import re
+from typing import List
 from importlib import resources
 import pandas as pd
 
@@ -10,7 +11,7 @@ def periodic_table(masses_only: bool = True):
 
     if not masses_only:
         with resources.open_text("elements.data", "PeriodicTable.csv") as df:
-            return pd.read_csv(df, index_col=["AtomicNumber"])
+            return pd.read_csv(df, index_col=["Symbol"])
 
     with resources.open_text("elements.data", "PeriodicTable.csv") as df:
         return pd.read_csv(
@@ -22,24 +23,26 @@ def find_elements(compound: str):
     """
     Docstring
     """
-    elements = re.findall("([A-Z][^A-Z]*)", compound)
+    elements = re.findall("([A-Z][^A-Z]*)", str(compound))
 
     # Raise an error if no elements are found
-    if len(elements) == 0:
+    if len(elements) < 1:
         raise ValueError(f"'{compound}' does not contain valid elements")
 
     for element in elements:
-    # Raise an error for invalid elements with more than 1 lower case character
+        # Raise an error for invalid elements with more than 1 lower case character
         if sum(c.islower() for c in element) > 1:
             raise ValueError(f"'{element}' is not a valid element")
-    # Check for non-word characters
+        # Check for non-word characters
         elif len(re.findall(r"\W", element)) > 0:
             raise ValueError(f"'{element}' contains an invalid character")
 
     # Raise an error if there are any leftover characters
     length_elements = sum(len(s) for s in elements)
     if len(compound) != length_elements:
-        raise ValueError(f"There are leftover characters in '{compound}'; elements found: {elements}")
+        raise ValueError(
+            f"There are leftover characters in '{compound}'; elements found: {elements}"
+        )
 
     return elements
 
@@ -83,7 +86,7 @@ def calculate_weight(compound: str):
     return (atomic_weights[elements.index] * elements).sum()
 
 
-def compound_weights(compounds: list[str]):
+def compound_weights(compounds: List[str]):
     """
     Docstring
     """
@@ -96,35 +99,42 @@ def compound_weights(compounds: list[str]):
     return weights
 
 
-def cation_numbers(compounds: list[str]):
+def cation_numbers(compounds: List[str]):
     """
     Docstring
     """
 
-    cations = pd.Series(index=compounds, name='cations', dtype=int)
+    cations = pd.Series(index=compounds, name="cations", dtype=int)
 
     for i in cations.index:
+
         cations[i] = decompose(i)[0]
 
     return cations
 
 
-def oxygen_numbers(compounds: list[str]):
+def oxygen_numbers(compounds: List[str]):
     """
     Docstrings
     """
 
-    oxygen = pd.Series(index=compounds, name='oxygen', dtype=int)
+    oxygen = pd.Series(index=compounds, name="oxygen", dtype=int)
 
     for i in oxygen.index:
-        oxygen[i] = decompose(i)['O']
+        oxygen[i] = decompose(i)["O"]
 
     return oxygen
 
 
-def cation_names(compounds: list[str]):
+def cation_names(compounds: List[str]):
     """
     Docstrings
     """
 
-    return [decompose(oxide).index[0] for oxide in compounds]
+    names = [decompose(oxide).index[0] for oxide in compounds]
+
+    if "Fe2O3" in compounds:
+        idx = compounds.index("Fe2O3")
+        names[idx] = "Fe3"
+
+    return names

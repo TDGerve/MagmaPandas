@@ -1,2 +1,3 @@
-from .magma_baseclass import *
-from .olivine import *
+from MagmaPandas.MagmaFrames import *
+from MagmaPandas.MagmaSeries import *
+from MagmaPandas.configuration import *
