@@ -1,6 +1,6 @@
 # MagmaPandas
 
-Pandas based tool set processing of geochemical data.
+Pandas based tool set for geochemical processing and modelling.
 
 Includes algorithms for:
 
