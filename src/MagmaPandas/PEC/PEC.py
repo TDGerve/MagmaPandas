@@ -63,8 +63,7 @@ def Fe_equilibrate(
     fO2 = fO2_QFM(dQFM, temperature, P_bar)
     # Collect configured models
     Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
-    Kd_model = calculate_FeMg_Kd  # partial(
-    #  # getattr(Kd_FeMg, configuration.Kd_model)
+    Kd_model = calculate_FeMg_Kd
     # Get olivine molar oxide fractions
     if isinstance(olivine, float):
         if olivine < 0 or olivine > 1:
@@ -96,7 +95,7 @@ def Fe_equilibrate(
 
     # Fix some parameters for Kd calculation
     calculate_Kd = partial(
-        Kd_model, forsterite=forsterite, T_K=temperature, P_bar=P_bar
+        Kd_model, forsterite_initial=forsterite, T_K=temperature, P_bar=P_bar
     )
     # Calculate initial Fe speciation
     Fe3Fe2, Fe2_FeTotal = calculate_Fe2(inclusion.moles, Fe2_behaviour="buffered")
@@ -116,7 +115,7 @@ def Fe_equilibrate(
     mi_moles.loc[0] = inclusion.moles[inclusion.elements].values
     mi_moles = mi_moles.normalise()
     # Equilibrium Kd
-    Kd_equilibrium = calculate_Kd(melt_mol_fractions=mi_moles.iloc[-1], Fe3Fe2=Fe3Fe2)
+    Kd_equilibrium = calculate_Kd(Melt_mol_fractions=mi_moles.iloc[-1], Fe3Fe2=Fe3Fe2)
     # Real Kd
     olivine_MgFe = forsterite / (1 - forsterite)
     melt_MgFe = mi_moles.loc[0, "MgO"] / (mi_moles.loc[0, "FeO"] * Fe2_FeTotal)
@@ -138,7 +137,7 @@ def Fe_equilibrate(
         # Equilibrium Kd and Fe speciation for new composition
         Fe3Fe2, Fe2_FeTotal = calculate_Fe2(mi_moles.iloc[-1])
         Kd_equilibrium = calculate_Kd(
-            melt_mol_fractions=mi_moles.normalise().loc[idx], Fe3Fe2=Fe3Fe2
+            Melt_mol_fractions=mi_moles.normalise().loc[idx], Fe3Fe2=Fe3Fe2
         )
         melt_FeMg = (mi_moles.loc[idx, "FeO"] * Fe2_FeTotal) / mi_moles.loc[idx, "MgO"]
         # Equilibrium olivine composition in oxide mol fractions
@@ -156,7 +155,6 @@ def Fe_equilibrate(
             args=(mi_moles.loc[idx], olivine, temperature, P_bar),
             x0=0,
             x1=0.05,
-            # bracket=[-0.5,0.5],
         ).root
         mi_moles.loc[idx] = mi_moles.loc[idx] + olivine.mul(olivine_amount)
         olivine_crystallised = np.append(
@@ -170,7 +168,7 @@ def Fe_equilibrate(
         # New equilibrium Kd and Fe speciation
         Fe3Fe2, Fe2_FeTotal = calculate_Fe2(mi_moles.iloc[-1])
         Kd_equilibrium = calculate_Kd(
-            melt_mol_fractions=mi_moles.normalise().loc[idx], Fe3Fe2=Fe3Fe2
+            Melt_mol_fractions=mi_moles.normalise().loc[idx], Fe3Fe2=Fe3Fe2
         )
         # Real Kd
         melt_MgFe = mi_moles.loc[idx, "MgO"] / (mi_moles.loc[idx, "FeO"] * Fe2_FeTotal)
@@ -187,7 +185,7 @@ def Fe_equilibrate(
             # Reset equilibrium and real Kd
             Fe3Fe2, Fe2_FeTotal = calculate_Fe2(mi_moles.iloc[-1])
             Kd_equilibrium = calculate_Kd(
-                melt_mol_fractions=mi_moles.normalise().iloc[-1], Fe3Fe2=Fe3Fe2
+                Melt_mol_fractions=mi_moles.normalise().iloc[-1], Fe3Fe2=Fe3Fe2
             )
             idx = mi_moles.index[-1]
             melt_MgFe = mi_moles.loc[idx, "MgO"] / (
@@ -367,20 +365,13 @@ def _root_Kd(exchange_amount, melt_x_moles, exchange_vector, forsterite, P_bar, 
 def calculate_Kds(melt_x_moles, P_bar, forsterite, **kwargs):
 
     Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
-    Kd_model = calculate_FeMg_Kd  # partial(
-    #     it.calculate_Kd, model=configuration.Kd_model
-    # )  # getattr(Kd_FeMg, configuration.Kd_model)
+    Kd_model = calculate_FeMg_Kd
     dQFM = kwargs.get("dQFM", configuration.dQFM)
 
     T_K = melt_x_moles.convert_moles_wtPercent.melt_temperature(P_bar)
     fO2 = fO2_QFM(dQFM, T_K, P_bar)
     Fe3Fe2 = Fe3Fe2_model(melt_x_moles, T_K, fO2)
 
-    # melt_x_moles = melt_x_moles.normalise()
-    # Fe2_FeTotal = 1 / (1 + Fe3Fe2)
-    # melt_MgFe = melt_x_moles["MgO"] / (melt_x_moles["FeO"] * Fe2_FeTotal)
-    # olivine_MgFe = forsterite / (1 - forsterite)
-    # Kd_observed = melt_MgFe / olivine_MgFe
     Kd_observed = calculate_observed_Kd(melt_x_moles, Fe3Fe2, forsterite)
 
     Kd_eq = Kd_model(melt_x_moles, forsterite, T_K, Fe3Fe2, P_bar=P_bar)
@@ -408,10 +399,6 @@ class PEC_olivine:
         **kwargs,
     ):
 
-        # Initialise variables
-        # self.olivine_corrected = pd.Series(
-        #     dtype=float, index=inclusions.index, name="Olivine_crystallised"
-        # )
         self.olivine_corrected = pd.DataFrame(
             0.0,
             columns=[
@@ -576,8 +563,7 @@ class PEC_olivine:
         Calculate observed and modelled Kds
         """
         Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
-        Kd_model = calculate_FeMg_Kd  # partial(
-        # )  # getattr(Kd_FeMg_vectorised, configuration.Kd_model)
+        Kd_model = calculate_FeMg_Kd
 
         dQFM = kwargs.get("dQFM", configuration.dQFM)
 
@@ -883,10 +869,6 @@ class PEC_olivine:
 
             while sum(FeO_mismatch) > 0:
                 bar(sum(~FeO_mismatch) / total_inclusions)
-                # print(
-                #     f"{sum(~FeO_mismatch):0>3}/{total_inclusions:0>3} inclusions corrected",
-                #     end="\r",
-                # )
 
                 if reslice:
                     stepsize_loop = stepsize.loc[FeO_mismatch]
@@ -913,7 +895,6 @@ class PEC_olivine:
                         ),
                         x0=0,
                         x1=0.05,
-                        # bracket=[-0.5,0.5],
                     ).root
                     mi_moles_loop.loc[sample] = mi_moles_loop.loc[
                         sample
@@ -965,14 +946,8 @@ class PEC_olivine:
                 FeO_mismatch = FeO_mismatch_new
                 bar(sum(~FeO_mismatch) / total_inclusions)
 
-        # print(
-        #     f"{sum(~FeO_mismatch):0>3}/{total_inclusions:0>3} inclusions corrected",
-        #     end="\n",
-
         corrected_compositions = mi_moles.convert_moles_wtPercent
-        # Kd_equilibrium, Kd_real = self.calculate_Kds(
-        #     melt=mi_moles.normalise(), P_bar=P_bar, forsterite=forsterite
-        # )
+
         self.olivine_corrected["total_crystallisation"] = self.olivine_corrected[
             ["equilibration_crystallisation", "PE_crystallisation"]
         ].sum(axis=1)
@@ -1057,7 +1032,6 @@ class PEC_olivine:
                 corrected["FeO"],
                 ["-", ".-"][set_markers],
                 color=colors[2],
-                # label="correction",
                 linewidth=linewidth,
                 alpha=0.7,
             )

@@ -60,7 +60,7 @@ class MagmaSeries(pd.Series):
             self._weights = weights.copy()
         elif not hasattr(self, "_weights"):
 
-            self._weights = element_weights.weights_as_series(self.columns)
+            self._weights = element_weights.weights_as_series(self.index)
 
     @property
     def _constructor(self):
