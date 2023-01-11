@@ -1,7 +1,8 @@
 import numpy as np
+from ..Magma_baseclass import Magma
 
 
-def putirka2007_4(liquid, olivine, P_bar, **kwargs):
+def putirka2007_4(liquid: Magma, olivine, P_bar, **kwargs):
 
     """Olivine-liquid thermometer
 

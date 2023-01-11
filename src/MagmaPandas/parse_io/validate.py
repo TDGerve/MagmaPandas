@@ -59,7 +59,7 @@ def _check_attribute(attr_name: str, allowed_values: List[str]):
 
         def wrapper(self, *args, **kwargs):
             attr = getattr(self, attr_name)
-            if attr not in allowed_values:
+            if attr.value not in allowed_values:
                 raise ValueError(
                     f"Calculation is not valid with: {self.units}, please use: {*allowed_values,}"
                 )

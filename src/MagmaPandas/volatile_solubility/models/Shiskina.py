@@ -2,6 +2,7 @@ import numpy as np
 from scipy.optimize import root, root_scalar
 from MagmaPandas.parse_io.validate import _check_argument, _check_setter
 from MagmaPandas import MagmaSeries
+from .solubility_baseclass import Solubility_model
 
 
 """
@@ -70,7 +71,7 @@ co2_parameters = {
 }
 
 
-class h2o:
+class h2o(Solubility_model):
     @staticmethod
     def calculate_saturation(oxide_wtPercents: MagmaSeries, **kwargs):
         """ """
@@ -152,7 +153,7 @@ class h2o:
         )
 
 
-class co2:
+class co2(Solubility_model):
     @staticmethod
     def calculate_saturation(oxide_wtPercents: MagmaSeries, **kwargs):
         """ """
@@ -242,7 +243,7 @@ class co2:
         return a / b
 
 
-class mixed:
+class mixed(Solubility_model):
     @staticmethod
     @_check_argument("output", [None, "PXfl", "P", "Xfl"])
     def calculate_saturation(oxide_wtPercents: MagmaSeries, output="P", **kwargs):

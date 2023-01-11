@@ -37,11 +37,11 @@ class colors:
     hollywood = plt.cycler(
         color=[
             "#8ECAE6",
-            "#FFB703",
-            "#219EBC",
             "#FD9E02",
-            "#126782",
+            "#219EBC",
             "#FB8500",
+            "#126782",
+            "#FFB703",
             "#023047",
         ],
     )
@@ -136,7 +136,13 @@ def layout(colors=colors.hollywood, fontsize=12, **kwargs):
 
 
 def side_plots(
-    ax, x_axis: bool = False, y_axis: bool = False, side=0.1, spacing=0.03, **kwargs
+    ax,
+    x_axis: bool = False,
+    y_axis: bool = False,
+    side=0.1,
+    spacing=1.5e-2,
+    y_position="right",
+    **kwargs,
 ):
 
     axes = []
@@ -149,14 +155,29 @@ def side_plots(
         ax_kde_x.yaxis.set_visible(False)
         ax_kde_x.tick_params(axis="x", labelbottom=False, direction="in", **kwargs)
         ax_kde_x.set_xlim(ax.get_xlim())
+        ax_kde_x.spines["right"].set_visible(False)
 
     if y_axis:
-        ax_kde_y = ax.inset_axes([1.0 + spacing, 0, side, 1])
+        if y_position == "right":
+
+            ax_kde_y = ax.inset_axes([1.0 + spacing, 0, side, 1])
+            ax_kde_y.spines["right"].set_visible(False)
+            ax_kde_y.tick_params(axis="y", labelright=False, direction="in", **kwargs)
+
+        if y_position == "left":
+
+            ax_kde_y = ax.inset_axes([0 - spacing - side, 0, side, 1])
+            ax_kde_y.spines["left"].set_visible(False)
+            ax_kde_y.tick_params(axis="y", labelleft=False, direction="in", **kwargs)
+            ax_kde_y.invert_xaxis()
+            ax_kde_y.get_yaxis().tick_right()
+
         axes.append(ax_kde_y)
 
+        ax_kde_y.tick_params(axis="y", labelleft=False, direction="in", **kwargs)
         ax_kde_y.xaxis.set_visible(False)
         ax_kde_y.spines["bottom"].set_visible(False)
-        ax_kde_y.tick_params(axis="y", labelleft=False, direction="in", **kwargs)
+        # ax_kde_y.tick_params(axis="y", labelleft=False, direction="in", **kwargs)
         ax_kde_y.set_ylim(ax.get_ylim())
 
     for axis in axes:
@@ -164,7 +185,7 @@ def side_plots(
         axis.grid(False)
         axis.set_facecolor(color="white")
 
-        for spine in ["right", "top"]:
+        for spine in ["top"]:
             axis.spines[spine].set_visible(False)
 
     return axes

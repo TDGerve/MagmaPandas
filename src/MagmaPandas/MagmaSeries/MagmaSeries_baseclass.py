@@ -4,7 +4,9 @@ import elements as e
 
 from MagmaPandas.configuration import configuration
 from MagmaPandas.parse_io.validate import _check_attribute, _check_argument
-from MagmaPandas.thermometers.melt import melt_thermometers
+from MagmaPandas.thermometers import melt_thermometers
+from MagmaPandas.Elements import oxide_compositions, element_weights
+from ..Magma_baseclass import Unit, Datatype
 
 
 def _MagmaSeries_expanddim(data=None, *args, **kwargs):
@@ -49,36 +51,16 @@ class MagmaSeries(pd.Series):
         **kwargs,
     ) -> None:
 
-        self._units = units
-        self._datatype = datatype
-        # if weights is not None:
-        #     self._weights = weights.copy()
-
-        # super().__init__(data, **kwargs)
-
-        # if not hasattr(self, "_weights"):
-        #     self._weights = pd.Series(name="weight", dtype=float)
-        #     for idx in self.index:
-        #         try:
-        #             # Calculate element/oxide weight
-        #             self._weights[idx] = e.calculate_weight(idx)
-        #         except (ValueError, KeyError):
-        #             pass
+        self._units: Unit = Unit(units)
+        self._datatype: Datatype = Datatype(datatype)
 
         super().__init__(data, **kwargs)
 
         if weights is not None:
             self._weights = weights.copy()
         elif not hasattr(self, "_weights"):
-            self._weights = pd.Series(name="weight", dtype=float)
 
-            for idx in self.index.difference(self._weights.index):
-                # for col in self.columns:
-                try:
-                    # Calculate element/oxide weight
-                    self._weights[idx] = e.calculate_weight(idx)
-                except (ValueError, KeyError):
-                    pass
+            self._weights = element_weights.weights_as_series(self.columns)
 
     @property
     def _constructor(self):
@@ -141,7 +123,7 @@ class MagmaSeries(pd.Series):
         """
         Data units
         """
-        return f"{self._datatype} {self._units}"
+        return f"{self._datatype.value} {self._units.value}"
 
     @units.setter
     def units(self, value):
@@ -164,7 +146,7 @@ class MagmaSeries(pd.Series):
         """
         Calculate molar fractions from oxide concentrations
         """
-        if self._units != "mol fraction":
+        if self._units != Unit.MOL_FRACTIONS:
             return self.convert_moles_wtPercent
         else:
             return self
@@ -176,22 +158,21 @@ class MagmaSeries(pd.Series):
         Calculate cation fractions from oxide concentrations
         """
         # Calculate oxide moles
-        if self._units != "mol fraction":
+        if self._units != Unit.MOL_FRACTIONS:
             moles = self.moles[self.elements]
         else:
             moles = self[self.elements].copy()
 
-        # Calculate cation moles
-        cation_numbers = e.cation_numbers(moles.elements)
-        cations = moles.mul(cation_numbers)
+        cations = moles.mul(oxide_compositions.amount(moles.elements))
         # Rename index to cations
-        cations.index = e.cation_names(cations.elements)
+        cations.index = oxide_compositions.names(cations.elements)
+
         # Normalise to 1
         total = cations.sum()
         cations = cations.div(total)
-        cations["total"] = cations.sum()
+        cations["total"] = 1
         # Set the right datatype and elements
-        cations._datatype = "cation"
+        cations._datatype = Datatype.CATION
         cations.recalculate(inplace=True)
 
         return cations
@@ -203,20 +184,34 @@ class MagmaSeries(pd.Series):
         """
 
         converted = self.copy()[self.elements]
-        if self._units == "wt. %":
+        if self._units == Unit.WT_PERCENT:
             converted = converted.div(converted.weights)
-        elif self._units == "mol fraction":
+        elif self._units == Unit.MOL_FRACTIONS:
             converted = converted.mul(converted.weights)
         # Normalise
         total = converted.sum()
         converted = converted.div(total)
         converted["total"] = converted.sum()
         # Set the right units
-        if self._units == "wt. %":
-            converted._units = "mol fraction"
-        elif self._units == "mol fraction":
+        if self._units == Unit.WT_PERCENT:
+            converted._units = Unit.MOL_FRACTIONS
+        elif self._units == Unit.MOL_FRACTIONS:
             converted = converted.mul(100)
-            converted._units = "wt. %"
+            converted._units = Unit.WT_PERCENT
+
+        return converted
+
+    def convert_ppm_wtPercent(self):
+        """
+        Convert ppm to wt. % and vice versa
+        """
+        convert_dict = {
+            Unit.WT_PERCENT: [1e4, Unit.PPM],
+            Unit.PPM: [1e-4, Unit.WT_PERCENT],
+        }
+
+        converted = self.mul(convert_dict[self._units][0])
+        converted._units = convert_dict[self._units][1]
 
         return converted
 
@@ -247,23 +242,7 @@ class MagmaSeries(pd.Series):
 
         series = self if inplace else self.copy()
 
-        missing_elements = series.index.difference(series._weights.index)
-        extra_elements = series._weights.index.difference(series.index)
-
-        if all(i.size == 0 for i in [missing_elements, extra_elements]):
-            return
-
-        if extra_elements.size > 0:
-            series._weights = series._weights.drop(extra_elements)
-
-        if missing_elements.size > 0:
-            new_weights = pd.Series(name="weight", dtype="float32")
-            for element in missing_elements:
-                try:
-                    new_weights[element] = e.calculate_weight(element)
-                except:
-                    pass
-            series._weights = pd.concat([series._weights, new_weights])
+        series._weights = element_weights.weights_as_series(series.index)
 
         if series._total:
             series["total"] = series[series.elements].sum()
@@ -277,7 +256,7 @@ class MagmaSeries(pd.Series):
         """
         if to is not None:
             norm = to
-        elif self._units == "wt. %":
+        elif self._units == Unit.WT_PERCENT:
             norm = 100
         else:
             norm = 1
@@ -297,6 +276,6 @@ class MagmaSeries(pd.Series):
         calculate liquidus temperature for melts
         """
 
-        thermometer = getattr(melt_thermometers, configuration.melt_thermometer)
+        thermometer = melt_thermometers[configuration.melt_thermometer]
 
         return thermometer(self, *args, **kwargs)

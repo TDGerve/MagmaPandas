@@ -4,8 +4,7 @@ from scipy.optimize import root_scalar
 from alive_progress import alive_bar
 
 from MagmaPandas.MagmaFrames import Olivine, Melt
-
-from MagmaPandas.geochemistry.Kd_ol_melt import calculate_olivine_Kd
+from MagmaPandas.Kd.ol_melt import calculate_olivine_Kd
 
 
 def correct_olivine_accumulation(liquids: Melt, olivines: Olivine, pressures, **kwargs):

@@ -1,9 +1,11 @@
 from MagmaPandas.volatile_solubility import models as vsm
 from MagmaPandas.configuration import configuration
 
+from typing import Union
+
 
 def get_solubility_model(
-    model_name: str = None, species: str = None
+    model_name: Union[str, None] = None, species: Union[str, None] = None
 ) -> vsm.Solubility_model:
 
     if model_name is None:
@@ -16,7 +18,10 @@ def get_solubility_model(
 
 
 def calculate_saturation(
-    oxide_wtPercents, *args, solubility_model: vsm.Solubility_model = None, **kwargs
+    oxide_wtPercents,
+    *args,
+    solubility_model: Union[vsm.Solubility_model, None] = None,
+    **kwargs
 ):
     """
     Docstring
@@ -33,7 +38,7 @@ def calculate_solubility(
     oxide_wtPercents,
     P_bar,
     *args,
-    solubility_model: vsm.Solubility_model = None,
+    solubility_model: Union[vsm.Solubility_model, None] = None,
     **kwargs
 ):
     """

@@ -2,16 +2,17 @@ from typing import List
 import pandas as pd
 from abc import ABC, abstractmethod
 
-from MagmaPandas.MagmaFrames.magmaFrame_baseclass import MagmaFrame
+from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
+from MagmaPandas.Magma_baseclass import Unit
 from MagmaPandas.parse_io.readers import _read_file
 
 
 class Mineral(ABC):
-
     @property
     @abstractmethod
     def formula(self) -> MagmaFrame:
         pass
+
 
 def read_mineral(
     filepath: str,
@@ -41,21 +42,24 @@ def read_mineral(
 
 
 class Olivine(Mineral, MagmaFrame):
-
     @property
     def forsterite(self):
         """
         Docstrings
         """
-        if self._units == "wt. %":
+        if self._units == Unit.WT_PERCENT:
             moles = self.moles
         else:
             moles = self
+
+        type = self._datatype.value
+
         Mg = {"oxide": "MgO", "cation": "Mg"}
         Fe = {"oxide": "FeO", "cation": "Fe"}
         self.recalculate(inplace=True)
         return pd.Series(
-            moles[Mg[self._datatype]] / (moles[Fe[self._datatype]] + moles[Mg[self._datatype]]), name="Fo#"
+            moles[Mg[type]] / (moles[Fe[type]] + moles[Mg[type]]),
+            name="Fo#",
         )
 
     @property
@@ -65,8 +69,8 @@ class Olivine(Mineral, MagmaFrame):
         """
         return self.mineral_formula(O=4)
 
-class Clinopyroxene(Mineral, MagmaFrame):
 
+class Clinopyroxene(Mineral, MagmaFrame):
     @property
     def formula(self):
         """
@@ -74,15 +78,17 @@ class Clinopyroxene(Mineral, MagmaFrame):
         """
         return self.mineral_formula(O=6)
 
-class Plagioclase(Mineral, MagmaFrame):
 
+class Plagioclase(Mineral, MagmaFrame):
     @property
     def anorthite(self):
         """
         Docstrings
         """
         cations = self.cations
-        return pd.Series(cations['Ca'] * 100 / (cations['Ca'] + cations['Na']), name='An')
+        return pd.Series(
+            cations["Ca"] * 100 / (cations["Ca"] + cations["Na"]), name="An"
+        )
 
     @property
     def formula(self):
@@ -90,6 +96,3 @@ class Plagioclase(Mineral, MagmaFrame):
         Docstrings
         """
         return self.mineral_formula(O=8)
-
-
-

@@ -1,6 +1,6 @@
 from typing import List
 import pandas as pd
-from .magmaFrame_baseclass import MagmaFrame
+from .magmaFrame import MagmaFrame
 from ..parse_io.readers import _read_file
 
 
@@ -31,8 +31,6 @@ def read_clinopyroxene(
 
 
 class Clinopyroxene(MagmaFrame):
-
-
     @property
     def formula(self):
         """

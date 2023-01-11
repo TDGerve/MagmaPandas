@@ -4,6 +4,7 @@ from scipy.optimize import root_scalar, root
 
 from MagmaPandas.parse_io.validate import _check_setter, _check_argument
 from MagmaPandas import MagmaSeries
+from .solubility_baseclass import Solubility_model
 
 """
 Equations from:
@@ -154,7 +155,7 @@ CO2_coefficients = {
 }
 
 # Lower case names for classes, as to not mix up with variable names
-class h2o:
+class h2o(Solubility_model):
     @staticmethod
     def calculate_solubility(
         oxide_wtPercents: MagmaSeries, P_bar, T_K, x_fluid=1, **kwargs
@@ -255,7 +256,7 @@ class h2o:
 
 
 # Lower case names for classes, as to not mix up with variable names
-class co2:
+class co2(Solubility_model):
     @staticmethod
     def calculate_solubility(
         oxide_wtPercents: MagmaSeries, P_bar, T_K, x_fluid=0.0, **kwargs
@@ -349,7 +350,7 @@ class co2:
         )
 
 
-class mixed:
+class mixed(Solubility_model):
     @staticmethod
     @_check_argument("output", [None, "PXfl", "P", "Xfl"])
     def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, output="P", **kwargs):

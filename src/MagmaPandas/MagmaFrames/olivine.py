@@ -1,8 +1,9 @@
 from typing import List
 import pandas as pd
 
-from MagmaPandas.MagmaFrames.magmaFrame_baseclass import MagmaFrame
+from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
 from MagmaPandas.parse_io.readers import _read_file
+from ..Magma_baseclass import Unit
 
 
 class Olivine(MagmaFrame):
@@ -28,16 +29,18 @@ class Olivine(MagmaFrame):
         """
         Docstrings
         """
-        if self._units == "wt. %":
+        if self._units == Unit.WT_PERCENT:
             moles = self.moles
         else:
             moles = self
+
+        type = self._datatype.value
+
         Mg = {"oxide": "MgO", "cation": "Mg"}
         Fe = {"oxide": "FeO", "cation": "Fe"}
         self.recalculate(inplace=True)
         return pd.Series(
-            moles[Mg[self._datatype]]
-            / (moles[Fe[self._datatype]] + moles[Mg[self._datatype]]),
+            moles[Mg[type]] / (moles[Fe[type]] + moles[Mg[type]]),
             name="Fo#",
         )
 

@@ -21,9 +21,9 @@ config_handler.set_global(
 
 import elements as e
 
-from MagmaPandas.geochemistry.Kd_ol_melt import Kd_FeMg, Kd_FeMg_vectorised
-from MagmaPandas.geochemistry.Fe_redox import Fe_redox
-from MagmaPandas.geochemistry.fO2 import fO2_QFM
+from MagmaPandas.Kd.Ol_melt import calculate_FeMg_Kd
+from MagmaPandas.Fe_redox import Fe_redox
+from MagmaPandas.fO2 import fO2_QFM
 
 from MagmaPandas.MagmaSeries import MagmaSeries
 from MagmaPandas.MagmaFrames import Olivine, Melt
@@ -63,7 +63,8 @@ def Fe_equilibrate(
     fO2 = fO2_QFM(dQFM, temperature, P_bar)
     # Collect configured models
     Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
-    Kd_model = getattr(Kd_FeMg, configuration.Kd_model)
+    Kd_model = calculate_FeMg_Kd  # partial(
+    #  # getattr(Kd_FeMg, configuration.Kd_model)
     # Get olivine molar oxide fractions
     if isinstance(olivine, float):
         if olivine < 0 or olivine > 1:
@@ -366,22 +367,35 @@ def _root_Kd(exchange_amount, melt_x_moles, exchange_vector, forsterite, P_bar, 
 def calculate_Kds(melt_x_moles, P_bar, forsterite, **kwargs):
 
     Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
-    Kd_model = getattr(Kd_FeMg, configuration.Kd_model)
+    Kd_model = calculate_FeMg_Kd  # partial(
+    #     it.calculate_Kd, model=configuration.Kd_model
+    # )  # getattr(Kd_FeMg, configuration.Kd_model)
     dQFM = kwargs.get("dQFM", configuration.dQFM)
 
     T_K = melt_x_moles.convert_moles_wtPercent.melt_temperature(P_bar)
     fO2 = fO2_QFM(dQFM, T_K, P_bar)
     Fe3Fe2 = Fe3Fe2_model(melt_x_moles, T_K, fO2)
 
+    # melt_x_moles = melt_x_moles.normalise()
+    # Fe2_FeTotal = 1 / (1 + Fe3Fe2)
+    # melt_MgFe = melt_x_moles["MgO"] / (melt_x_moles["FeO"] * Fe2_FeTotal)
+    # olivine_MgFe = forsterite / (1 - forsterite)
+    # Kd_observed = melt_MgFe / olivine_MgFe
+    Kd_observed = calculate_observed_Kd(melt_x_moles, Fe3Fe2, forsterite)
+
+    Kd_eq = Kd_model(melt_x_moles, forsterite, T_K, Fe3Fe2, P_bar=P_bar)
+
+    return Kd_eq, Kd_observed
+
+
+def calculate_observed_Kd(melt_x_moles, Fe3Fe2, forsterite):
+
     melt_x_moles = melt_x_moles.normalise()
     Fe2_FeTotal = 1 / (1 + Fe3Fe2)
     melt_MgFe = melt_x_moles["MgO"] / (melt_x_moles["FeO"] * Fe2_FeTotal)
     olivine_MgFe = forsterite / (1 - forsterite)
-    Kd_observed = melt_MgFe / olivine_MgFe
 
-    Kd_eq = Kd_model(melt_x_moles, forsterite, T_K, Fe3Fe2, P_bar)
-
-    return Kd_eq, Kd_observed
+    return melt_MgFe / olivine_MgFe
 
 
 class PEC_olivine:
@@ -562,7 +576,9 @@ class PEC_olivine:
         Calculate observed and modelled Kds
         """
         Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
-        Kd_model = getattr(Kd_FeMg_vectorised, configuration.Kd_model)
+        Kd_model = calculate_FeMg_Kd  # partial(
+        # )  # getattr(Kd_FeMg_vectorised, configuration.Kd_model)
+
         dQFM = kwargs.get("dQFM", configuration.dQFM)
 
         melt = kwargs.get("melt", self.inclusions.moles)
@@ -580,7 +596,9 @@ class PEC_olivine:
         Kd_observed.rename("real", inplace=True)
         Kd_observed.index.name = "name"
 
-        Kd_equilibrium = Kd_model(melt, forsterite, T_K, Fe3Fe2, pressure)
+        Kd_equilibrium = Kd_model(melt, forsterite, T_K, Fe3Fe2, P_bar=pressure)
+        if isinstance(Kd_equilibrium, (float, int)):
+            Kd_equilibrium = pd.Series(Kd_equilibrium, index=melt.index)
         Kd_equilibrium.rename("equilibrium", inplace=True)
         Kd_equilibrium.index.name = "name"
 
@@ -952,9 +970,9 @@ class PEC_olivine:
         #     end="\n",
 
         corrected_compositions = mi_moles.convert_moles_wtPercent
-        Kd_equilibrium, Kd_real = self.calculate_Kds(
-            melt=mi_moles.normalise(), P_bar=P_bar, forsterite=forsterite
-        )
+        # Kd_equilibrium, Kd_real = self.calculate_Kds(
+        #     melt=mi_moles.normalise(), P_bar=P_bar, forsterite=forsterite
+        # )
         self.olivine_corrected["total_crystallisation"] = self.olivine_corrected[
             ["equilibration_crystallisation", "PE_crystallisation"]
         ].sum(axis=1)

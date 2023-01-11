@@ -5,15 +5,15 @@ import numpy as np
 from multiprocessing import Pool
 from alive_progress import alive_bar
 
-from MagmaPandas import volatile_solubility as vs
-from MagmaPandas.geochemistry.Fe_redox import FeRedox_QFM
-from MagmaPandas.geochemistry.Kd_ol_melt import Kd_FeMg_vectorised
-from MagmaPandas.thermometers.melt import melt_thermometers
-
-from MagmaPandas.MagmaFrames.magmaFrame_baseclass import MagmaFrame
 from MagmaPandas.configuration import configuration
 from MagmaPandas.parse_io.validate import _check_argument
 from MagmaPandas.parse_io.readers import _read_file
+
+from MagmaPandas import volatile_solubility as vs
+from MagmaPandas.Fe_redox import FeRedox_QFM
+from MagmaPandas.thermometers import melt_thermometers
+from MagmaPandas.Kd.Ol_melt import calculate_FeMg_Kd
+from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
 
 
 def read_melt(
@@ -64,7 +64,7 @@ class Melt(MagmaFrame):
 
     def temperature(self, *args, **kwargs):
 
-        thermometer = getattr(melt_thermometers, configuration.melt_thermometer)
+        thermometer = melt_thermometers[configuration.melt_thermometer]
 
         return thermometer(self, *args, **kwargs)
 
@@ -159,11 +159,9 @@ class Melt(MagmaFrame):
 
         [Fe(ol) / Fe(m)] * [Mg(m) / Mg(ol)]
         """
-        Kd_model = getattr(Kd_FeMg_vectorised, configuration.Kd_model)
-
         mol_fractions = self.moles
 
-        return Kd_model(
+        return calculate_FeMg_Kd(
             melt_mol_fractions=mol_fractions,
             forsterite_initial=forsterite,
             T_K=T_K,

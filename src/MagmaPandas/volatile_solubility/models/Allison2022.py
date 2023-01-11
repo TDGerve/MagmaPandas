@@ -7,6 +7,7 @@ from elements.elements import compound_weights
 from MagmaPandas.volatile_solubility.EOS import hollowayBlank
 from MagmaPandas.parse_io.validate import _check_argument, _check_setter
 from MagmaPandas import MagmaSeries
+from .solubility_baseclass import Solubility_model
 
 
 """
@@ -133,7 +134,7 @@ FeO_mass, Fe2O3_mass = compound_weights(["FeO", "Fe2O3"])
 fugacity_model = hollowayBlank.fugacity
 
 
-class h2o:
+class h2o(Solubility_model):
     @staticmethod
     def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, x_fluid=1.0, **kwargs):
         """
@@ -180,7 +181,7 @@ class h2o:
         return (fH2O / 104.98) ** (1 / 1.83)
 
 
-class co2:
+class co2(Solubility_model):
     @staticmethod
     def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, x_fluid=0.0, **kwargs):
 
@@ -335,7 +336,7 @@ class co2:
         return cations
 
 
-class mixed:
+class mixed(Solubility_model):
     @staticmethod
     @_check_argument("output", [None, "PXfl", "P", "Xfl"])
     def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, output="P", **kwargs):

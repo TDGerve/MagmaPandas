@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="MagmaPandas",
-    version="0.1",
+    version="1.0",
     description="...",
     author="Thomas van Gerve",
     packages=setuptools.find_packages(where="src", exclude=[]),

@@ -1,6 +1,6 @@
 from typing import List
 import pandas as pd
-from .magmaFrame_baseclass import MagmaFrame
+from .magmaFrame import MagmaFrame
 from ..parse_io.readers import _read_file
 
 
@@ -54,7 +54,9 @@ class Plagioclase(MagmaFrame):
         Docstrings
         """
         cations = self.cations
-        return pd.Series(cations['Ca'] * 100 / (cations['Ca'] + cations['Na']), name='An')
+        return pd.Series(
+            cations["Ca"] * 100 / (cations["Ca"] + cations["Na"]), name="An"
+        )
 
     @property
     def formula(self):
