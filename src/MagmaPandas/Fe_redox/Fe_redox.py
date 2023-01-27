@@ -1,9 +1,10 @@
 import warnings as w
+
 import numpy as np
 import pandas as pd
 
-from MagmaPandas.configuration import configuration
 from MagmaPandas import fO2
+from MagmaPandas.configuration import configuration
 
 
 class Fe_redox:
@@ -102,7 +103,7 @@ class Fe_redox:
             + 1.532 * moles["MgO"]
         )
         part2 = (
-            0.341 * moles["CaO"]
+            0.314 * moles["CaO"]
             + 2.030 * moles["Na2O"]
             + 3.355 * moles["K2O"]
             - 4.851 * moles["P2O5"]
