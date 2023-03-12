@@ -69,9 +69,6 @@ class MagmaFrame(pd.DataFrame):
 
     @property
     def _constructor_sliced(self):
-        """
-        Docstrings
-        """
 
         from MagmaPandas.MagmaSeries import MagmaSeries
 
@@ -103,9 +100,7 @@ class MagmaFrame(pd.DataFrame):
 
     @property
     def units(self) -> str:
-        """
-        Data units
-        """
+
         return f"{self._datatype.value} {self._units.value}"
 
     @units.setter
@@ -114,24 +109,18 @@ class MagmaFrame(pd.DataFrame):
 
     @property
     def weights(self) -> pd.Series:
-        """
-        Molar mass of the elements in the dataframe
-        """
+
         return self._weights.copy()
 
     @property
     def elements(self) -> List:
-        """
-        Names of the elements in the dataframe
-        """
+
         return list(self._weights.index).copy()
 
     @property
     @_check_attribute("_units", ["wt. %", "ppm"])
     def moles(self):
-        """
-        Calculate molar fractions from oxide concentrations
-        """
+
         if self._units != Unit.MOL_FRACTIONS:
             return self.convert_moles_wtPercent
         else:
@@ -139,9 +128,7 @@ class MagmaFrame(pd.DataFrame):
 
     @property
     def cations(self):
-        """
-        Calculate cation fractions from oxide concentrations
-        """
+
         # Calculate oxide moles
         if self._units != Unit.MOL_FRACTIONS:
             moles = self.moles[self.elements]

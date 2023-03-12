@@ -44,6 +44,7 @@ intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/docs/", None),
 }
 intersphinx_disabled_reftypes = ["*"]
+autodoc_member_order = "groupwise"
 
 
 # -- Options for HTML output -------------------------------------------------
