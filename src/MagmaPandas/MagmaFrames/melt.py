@@ -1,19 +1,19 @@
-from typing import List
-import pandas as pd
 import warnings as w
-import numpy as np
 from multiprocessing import Pool
+from typing import List
+
+import numpy as np
+import pandas as pd
 from alive_progress import alive_bar
 
-from MagmaPandas.configuration import configuration
-from MagmaPandas.parse_io.validate import _check_argument
-from MagmaPandas.parse_io.readers import _read_file
-
 from MagmaPandas import volatile_solubility as vs
+from MagmaPandas.configuration import configuration
 from MagmaPandas.Fe_redox import FeRedox_QFM
-from MagmaPandas.thermometers import melt_thermometers
 from MagmaPandas.Kd.Ol_melt import calculate_FeMg_Kd
 from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
+from MagmaPandas.parse_io.readers import _read_file
+from MagmaPandas.parse_io.validate import _check_argument
+from MagmaPandas.thermometers import melt_thermometers
 
 
 def read_melt(

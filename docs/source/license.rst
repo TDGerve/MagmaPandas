@@ -1,6 +1,8 @@
-MIT License
+===========
+MIT Licence
+===========
 
-Copyright (c) 2022 Thomas van Gerve
+Copyright (c) 2022 Thomas van Gerve.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
