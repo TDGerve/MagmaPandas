@@ -12,9 +12,8 @@ import pandas as pd
 
 import elements as e
 from MagmaPandas.Elements import element_weights, oxide_compositions
-
-from ..Magma_baseclass import Datatype, Unit
-from ..parse_io.validate import _check_argument, _check_attribute
+from MagmaPandas.enums import Datatype, Unit
+from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
 
 
 class MagmaFrame(pd.DataFrame):

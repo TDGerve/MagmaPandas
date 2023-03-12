@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..Magma_baseclass import Magma
+from ..enums import Magma
 
 
 def putirka2007_4(liquid: Magma, olivine, P_bar, **kwargs):

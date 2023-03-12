@@ -4,7 +4,7 @@ import pandas as pd
 
 from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
 
-from ..Magma_baseclass import Unit
+from ..enums import Unit
 
 
 class Olivine(MagmaFrame):

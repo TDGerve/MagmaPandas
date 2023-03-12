@@ -1,8 +1,8 @@
 import pandas as pd
 
 import elements as e
+from MagmaPandas.MagmaFrames.protocols import Magma
 
-from ..Magma_baseclass import Magma
 from .data_parsing import _anhydrous_composition, _get_oxides, parse_data
 
 

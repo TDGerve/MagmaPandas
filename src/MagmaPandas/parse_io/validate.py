@@ -1,10 +1,6 @@
 from functools import wraps
 from typing import List
 
-import pandas as pd
-
-import elements as e
-
 
 def _check_argument(var_name: str, allowed_values: List[str]):
     def decorator(func):

@@ -1,21 +1,8 @@
-from abc import abstractmethod
-from enum import Enum, Flag, auto
 from typing import Protocol
 
 import pandas as pd
 
-
-class Unit(Enum):
-    MOL_FRACTIONS = "mol fraction"
-    WT_PERCENT = "wt. %"
-    PPM = "ppm"
-    UNKNOWN = None
-
-
-class Datatype(Enum):
-    CATION = "cation"
-    OXIDE = "oxide"
-    UNKNOWN = None
+from MagmaPandas.enums import Datatype, Unit
 
 
 class Magma(Protocol):

@@ -8,7 +8,7 @@ from MagmaPandas.Elements import element_weights, oxide_compositions
 from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
 from MagmaPandas.thermometers import melt_thermometers
 
-from ..Magma_baseclass import Datatype, Unit
+from ..enums import Datatype, Unit
 
 
 def _MagmaSeries_expanddim(data=None, *args, **kwargs):
