@@ -16,34 +16,6 @@ from MagmaPandas.parse_io.validate import _check_argument
 from MagmaPandas.thermometers import melt_thermometers
 
 
-def read_melt(
-    filepath: str,
-    *args,
-    index_col: List[str] = None,
-    total_col: str = None,
-    keep_columns: List[str] = None,
-    units="wt. %",
-    datatype="oxide",
-    **kwargs,
-) -> "Melt":
-    """
-    Read melt compositions in wt. % oxide from a .csv file
-
-    """
-
-    return _read_file(
-        filepath=filepath,
-        *args,
-        phase="Melt",
-        index_col=index_col,
-        total_col=total_col,
-        keep_columns=keep_columns,
-        units=units,
-        datatype=datatype,
-        **kwargs,
-    )
-
-
 class Melt(MagmaFrame):
 
     # @property

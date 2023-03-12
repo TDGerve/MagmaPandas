@@ -4,12 +4,13 @@ import pandas as pd
 
 import elements as e
 from MagmaPandas import MagmaFrames
+from MagmaPandas.MagmaFrames import *
 
 from .validate import _check_argument
 
 
 @_check_argument("phase", [None, "Melt", "Olivine", "Clinopyroxene", "Plagioclase"])
-def _read_file(
+def read_file(
     filepath: str,
     *args,
     total_col: str,
@@ -19,7 +20,7 @@ def _read_file(
     units: str = None,
     datatype: str = None,
     **kwargs,
-):
+) -> MagmaFrame:
     """
     Read compositions from a .csv file into a pd.dataframe, clean the data and pass it to a magmaframe.
 
@@ -64,4 +65,110 @@ def _read_file(
 
     return create_class_instance(
         df, units=units, datatype=datatype, total_col=total_col
+    )
+
+
+def read_clinopyroxene(
+    filepath: str,
+    *args,
+    index_col: List[str] = None,
+    total_col: str = None,
+    keep_columns: List[str] = None,
+    **kwargs,
+) -> Clinopyroxene:
+    """
+    Read cpx compositions in wt. % oxide from a .csv file
+
+    """
+
+    return read_file(
+        filepath=filepath,
+        *args,
+        phase="Clinopyroxene",
+        index_col=index_col,
+        total_col=total_col,
+        keep_columns=keep_columns,
+        units="wt. %",
+        datatype="oxide",
+        **kwargs,
+    )
+
+
+def read_melt(
+    filepath: str,
+    *args,
+    index_col: List[str] = None,
+    total_col: str = None,
+    keep_columns: List[str] = None,
+    units="wt. %",
+    datatype="oxide",
+    **kwargs,
+) -> Melt:
+    """
+    Read melt compositions in wt. % oxide from a .csv file
+
+    """
+
+    return read_file(
+        filepath=filepath,
+        *args,
+        phase="Melt",
+        index_col=index_col,
+        total_col=total_col,
+        keep_columns=keep_columns,
+        units=units,
+        datatype=datatype,
+        **kwargs,
+    )
+
+
+def read_olivine(
+    filepath: str,
+    *args,
+    index_col: List[str] = None,
+    total_col: str = None,
+    keep_columns: List[str] = None,
+    **kwargs,
+) -> Olivine:
+    """
+    Read olivine compositions in wt. % oxide from a .csv file
+
+    """
+
+    return read_file(
+        filepath=filepath,
+        *args,
+        phase="Olivine",
+        index_col=index_col,
+        total_col=total_col,
+        keep_columns=keep_columns,
+        units="wt. %",
+        datatype="oxide",
+        **kwargs,
+    )
+
+
+def read_plagioclase(
+    filepath: str,
+    *args,
+    index_col: List[str] = None,
+    total_col: str = None,
+    keep_columns: List[str] = None,
+    **kwargs,
+) -> Plagioclase:
+    """
+    Read plagioclase compositions in wt. % oxide from a .csv file
+
+    """
+
+    return read_file(
+        filepath=filepath,
+        *args,
+        phase="plagioclase",
+        index_col=index_col,
+        total_col=total_col,
+        keep_columns=keep_columns,
+        units="wt. %",
+        datatype="oxide",
+        **kwargs,
     )

@@ -6,32 +6,6 @@ from ..parse_io.readers import _read_file
 from .magmaFrame import MagmaFrame
 
 
-def read_plagioclase(
-    filepath: str,
-    *args,
-    index_col: List[str] = None,
-    total_col: str = None,
-    keep_columns: List[str] = None,
-    **kwargs
-) -> "Plagioclase":
-    """
-    Read plagioclase compositions in wt. % oxide from a .csv file
-
-    """
-
-    return _read_file(
-        filepath=filepath,
-        *args,
-        phase="plagioclase",
-        index_col=index_col,
-        total_col=total_col,
-        keep_columns=keep_columns,
-        units="wt. %",
-        datatype="oxide",
-        **kwargs
-    )
-
-
 class Plagioclase(MagmaFrame):
 
     # @property

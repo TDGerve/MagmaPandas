@@ -52,29 +52,3 @@ class Olivine(MagmaFrame):
         Docstrings
         """
         return self.mineral_formula(O=4)
-
-
-def read_olivine(
-    filepath: str,
-    *args,
-    index_col: List[str] = None,
-    total_col: str = None,
-    keep_columns: List[str] = None,
-    **kwargs
-) -> Olivine:
-    """
-    Read olivine compositions in wt. % oxide from a .csv file
-
-    """
-
-    return _read_file(
-        filepath=filepath,
-        *args,
-        phase="Olivine",
-        index_col=index_col,
-        total_col=total_col,
-        keep_columns=keep_columns,
-        units="wt. %",
-        datatype="oxide",
-        **kwargs
-    )

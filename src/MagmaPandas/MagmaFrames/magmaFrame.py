@@ -7,13 +7,7 @@ import elements as e
 from MagmaPandas.Elements import element_weights, oxide_compositions
 
 from ..Magma_baseclass import Datatype, Unit
-from ..parse_io.readers import _read_file
 from ..parse_io.validate import _check_argument, _check_attribute
-
-
-def read_file(*args, **kwargs):
-
-    return _read_file(*args, **kwargs)
 
 
 class MagmaFrame(pd.DataFrame):
