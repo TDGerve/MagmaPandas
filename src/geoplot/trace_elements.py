@@ -27,7 +27,7 @@ REE = REE_radii.index.values
 divalent_radii = pd.Series({"Mg": 0.89, "Ba": 1.42, "Ca": 1.12, "Eu": 1.25, "Sr": 1.26})
 
 
-def C1chondrite() -> pd.Series:
+def C1_chondrite() -> pd.Series:
     """Returns C1 chondrite composition from McDonough & Sun (1995)"""
 
     with resources.open_text("geoplot.data", "Mcdonough_sun_1995.csv") as df:
@@ -36,7 +36,7 @@ def C1chondrite() -> pd.Series:
     return C1
 
 
-def primitiveMantle() -> pd.Series:
+def primitive_mantle() -> pd.Series:
     """Returns primitive mantle composition from McDonough & Sun (1995)"""
 
     with resources.open_text("geoplot.data", "Mcdonough_sun_1995.csv") as df:
