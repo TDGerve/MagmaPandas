@@ -19,7 +19,7 @@ from ..parse_io.validate import _check_argument, _check_attribute
 
 class MagmaFrame(pd.DataFrame):
     """
-    Docstrings
+    Generic MagmaPandas DataFrame class for processing geochemical data.
     """
 
     # New attributes

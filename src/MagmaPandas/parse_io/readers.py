@@ -4,7 +4,13 @@ import pandas as pd
 
 import elements as e
 from MagmaPandas import MagmaFrames
-from MagmaPandas.MagmaFrames import *
+from MagmaPandas.MagmaFrames import (
+    Clinopyroxene,
+    MagmaFrame,
+    Melt,
+    Olivine,
+    Plagioclase,
+)
 
 from .validate import _check_argument
 

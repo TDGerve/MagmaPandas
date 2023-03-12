@@ -3,7 +3,6 @@ from typing import List
 import pandas as pd
 
 from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
-from MagmaPandas.parse_io.readers import _read_file
 
 from ..Magma_baseclass import Unit
 

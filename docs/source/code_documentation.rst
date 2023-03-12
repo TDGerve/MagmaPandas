@@ -9,7 +9,7 @@ Modules
 *******
 
 
-.. automodule:: MagmaPandas.MagmaFrames.MagmaFrame
+.. automodule:: MagmaPandas.MagmaFrames.magmaFrame
     :members:
 
 

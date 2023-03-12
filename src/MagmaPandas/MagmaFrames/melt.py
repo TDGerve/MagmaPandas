@@ -11,7 +11,6 @@ from MagmaPandas.configuration import configuration
 from MagmaPandas.Fe_redox import FeRedox_QFM
 from MagmaPandas.Kd.Ol_melt import calculate_FeMg_Kd
 from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
-from MagmaPandas.parse_io.readers import _read_file
 from MagmaPandas.parse_io.validate import _check_argument
 from MagmaPandas.thermometers import melt_thermometers
 
