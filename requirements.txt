@@ -5,5 +5,7 @@ pandas
 numpy
 scipy
 alive_progress
+matplotlib
 matplotlib-label-lines
 statsmodels
+scikit-learn
