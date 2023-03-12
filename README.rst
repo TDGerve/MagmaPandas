@@ -16,6 +16,11 @@ with methods for common calculations, including those for:
 
 MagmaPandas includes a model for post-entrapment crystallisation correction of compositions of olivine hosted melt inclusions.
 
+Documentation
+-------------
+Code documentation is currently being worked on at `magmapandas.readthedocs.io <https://magmapandas.readthedocs.io>`_
+
+
 Installation
 ------------
 MagmaPandas can be installed with pip by running:
@@ -34,6 +39,3 @@ If you want to install from a specific git branch or release, use:
 where *tag* should be repleaced by the release tag or branch name (e.g. *v1.0.0* or *development*)
 
 
-Documentation
--------------
-Code documentation is currently being worked on at `magmapandas.readthedocs.io <https://magmapandas.readthedocs.io>`_
