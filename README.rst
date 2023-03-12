@@ -12,17 +12,17 @@
 
 MagmaPandas is a `Pandas <https://pandas.pydata.org/>`_ based tool set for geochemical calculations and modelling.
 It makes working with geochemical data easier by extending the Pandas DataFrame
-with methods for common calculations, including:
+with methods for common calculations, including those for:
 
    * mole and cation conversion,
-   * stoichiometric mineral composition,
+   * mineral composition by stoichiometry,
    * melt thermometry,
    * melt Fe speciation,
-   * melt volatile saturation pressure
+   * melt volatile (CO\ :sub:`2`\-H\ :sub:`2`\O) saturation pressure
    * mineral-melt element partition coefficients,
 
 
-MagmaPandas includes a model for post-entrapment crystallisation correction of olivine hosted melt inclusions.
+MagmaPandas includes a model for post-entrapment crystallisation correction of compositions of olivine hosted melt inclusions.
 
 Installation
 ------------
