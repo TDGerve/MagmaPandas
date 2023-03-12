@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 
-class Solubility_model(ABC):
 
+class Solubility_model(ABC):
     @classmethod
     @abstractmethod
     def calculate_saturation(self):
         pass
-    
-    @classmethod        
+
+    @classmethod
     @abstractmethod
     def calculate_solubility(self):
         pass

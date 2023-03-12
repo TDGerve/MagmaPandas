@@ -1,9 +1,7 @@
-from MagmaPandas.Kd.Ol_melt import calculate_FeMg_Kd
+from MagmaPandas.configuration import configuration
 from MagmaPandas.Fe_redox import Fe_redox
 from MagmaPandas.fO2 import fO2_QFM
-
-
-from MagmaPandas.configuration import configuration
+from MagmaPandas.Kd.Ol_melt import calculate_FeMg_Kd
 
 
 def _root_temperature(olivine_amount, melt_x_moles, olivine_x_moles, T_K, P_bar):

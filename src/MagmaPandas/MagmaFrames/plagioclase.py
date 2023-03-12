@@ -1,7 +1,9 @@
 from typing import List
+
 import pandas as pd
-from .magmaFrame import MagmaFrame
+
 from ..parse_io.readers import _read_file
+from .magmaFrame import MagmaFrame
 
 
 def read_plagioclase(

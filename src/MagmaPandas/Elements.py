@@ -1,6 +1,7 @@
 import numpy as np
-import elements as e
 import pandas as pd
+
+import elements as e
 
 
 class Oxide_compositions:

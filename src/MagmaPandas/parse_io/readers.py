@@ -1,8 +1,11 @@
-from .validate import _check_argument
 from typing import List
-import elements as e
+
 import pandas as pd
+
+import elements as e
 from MagmaPandas import MagmaFrames
+
+from .validate import _check_argument
 
 
 @_check_argument("phase", [None, "Melt", "Olivine", "Clinopyroxene", "Plagioclase"])

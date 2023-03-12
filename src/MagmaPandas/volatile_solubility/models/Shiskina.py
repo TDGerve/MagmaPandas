@@ -1,9 +1,10 @@
 import numpy as np
 from scipy.optimize import root, root_scalar
-from MagmaPandas.parse_io.validate import _check_argument, _check_setter
-from MagmaPandas import MagmaSeries
-from .solubility_baseclass import Solubility_model
 
+from MagmaPandas import MagmaSeries
+from MagmaPandas.parse_io.validate import _check_argument, _check_setter
+
+from .solubility_baseclass import Solubility_model
 
 """
 Equations from:

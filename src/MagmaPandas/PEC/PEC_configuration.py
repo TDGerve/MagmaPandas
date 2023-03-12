@@ -1,6 +1,5 @@
 from MagmaPandas.parse_io.validate import _check_setter, _check_value
 
-
 Fe2_options = ["buffered", "incompatible"]
 
 

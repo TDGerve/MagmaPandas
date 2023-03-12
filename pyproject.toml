@@ -22,6 +22,8 @@ dependencies = [
     "alive_progress",
     "matplotlib-label-lines",
     "statsmodels",
+    "matplotlib",
+    "scikit-learn"
 ]
 
 [project.urls]

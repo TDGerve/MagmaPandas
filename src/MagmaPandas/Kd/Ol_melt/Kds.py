@@ -1,13 +1,13 @@
-import pandas as pd
 from functools import partial
 
-from MagmaPandas.configuration import configuration
+import pandas as pd
 
 from MagmaPandas import Fe_redox
+from MagmaPandas.configuration import configuration
 from MagmaPandas.fO2 import fO2_QFM
 
-from . import Kds_vectorised as vec
 from . import Kds_iterate as it
+from . import Kds_vectorised as vec
 
 
 def observed_FeMg_Kd(melt: pd.DataFrame, forsterite: pd.Series, P_bar, **kwargs):

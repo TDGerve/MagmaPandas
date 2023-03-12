@@ -1,14 +1,15 @@
 from typing import List
+
 import numpy as np
-from scipy.optimize import root_scalar, root
 from scipy.constants import R
+from scipy.optimize import root, root_scalar
+
 from elements.elements import compound_weights
-
-from MagmaPandas.volatile_solubility.EOS import hollowayBlank
-from MagmaPandas.parse_io.validate import _check_argument, _check_setter
 from MagmaPandas import MagmaSeries
-from .solubility_baseclass import Solubility_model
+from MagmaPandas.parse_io.validate import _check_argument, _check_setter
+from MagmaPandas.volatile_solubility.EOS import hollowayBlank
 
+from .solubility_baseclass import Solubility_model
 
 """
 Equations from:

@@ -1,7 +1,7 @@
 import pandas as pd
 
-from MagmaPandas import Melt
 import elements as e
+from MagmaPandas import Melt
 
 """
 based on Iacovina and Till (2017)

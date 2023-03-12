@@ -1,6 +1,5 @@
 from .parse_io.validate import _check_setter
 
-
 Fe3Fe2_models = ["borisov", "kressCarmichael"]
 Kd_ol_FeMg_models = ["toplis", "blundy"]
 melt_thermometers = ["putirka2008_14", "putirka2008_15", "putirka2008_16"]

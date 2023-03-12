@@ -1,5 +1,4 @@
 import numpy as np
-
 from scipy.constants import R  # J*K-1*mol-1
 
 from ...Kd_baseclass import Kd_model

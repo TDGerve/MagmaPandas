@@ -1,7 +1,7 @@
 import pandas as pd
 
 from MagmaPandas.configuration import configuration
-from MagmaPandas.parse_io import match_indeces, convert_to_series
+from MagmaPandas.parse_io import convert_to_series, match_indeces
 
 from .Models import Kd_models, equilibrium_forsterite
 

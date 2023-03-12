@@ -1,3 +1,3 @@
-from .validate import *
-from .readers import *
 from .parse import *
+from .readers import *
+from .validate import *

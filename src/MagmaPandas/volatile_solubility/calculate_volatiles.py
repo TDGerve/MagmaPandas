@@ -1,7 +1,7 @@
-from MagmaPandas.volatile_solubility import models as vsm
-from MagmaPandas.configuration import configuration
-
 from typing import Union
+
+from MagmaPandas.configuration import configuration
+from MagmaPandas.volatile_solubility import models as vsm
 
 
 def get_solubility_model(

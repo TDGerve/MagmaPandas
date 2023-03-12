@@ -1,5 +1,6 @@
-import pandas as pd
 from importlib import resources
+
+import pandas as pd
 
 REE_radii = pd.Series(
     {

@@ -114,7 +114,7 @@ class EOSparams:
 
 
 def tait_eos_pressure(phase, pkbar, t, tref=298.15, **kwargs):
-    """    
+    """
     Pressure contribution to Gibb's free energy.
     Tait equation of state from Holland and Powell (2011)
 
@@ -128,7 +128,7 @@ def tait_eos_pressure(phase, pkbar, t, tref=298.15, **kwargs):
         Temperature in Kelvin
     tref        int, float
         Reference temperature in Kelvin
-    
+
     Returns
     Pth         float
         Thermal pressure term
@@ -148,12 +148,12 @@ def tait_eos_pressure(phase, pkbar, t, tref=298.15, **kwargs):
     u = theta / t
 
     # Einstein function page 345
-    xi0 = u0 ** 2 * np.exp(u0) / (np.exp(u0) - 1) ** 2.0
+    xi0 = u0**2 * np.exp(u0) / (np.exp(u0) - 1) ** 2.0
 
     # Equation 3
     a = (1.0 + dKdP) / (1.0 + dKdP + K0 * dKdP2)
     b = dKdP / K0 - dKdP2 / (1.0 + dKdP)
-    c = (1.0 + dKdP + K0 * dKdP2) / (dKdP ** 2.0 + dKdP - K0 * dKdP2)
+    c = (1.0 + dKdP + K0 * dKdP2) / (dKdP**2.0 + dKdP - K0 * dKdP2)
 
     # thermal pressure term, equation 11
     Pth = a0 * K0 * theta / xi0 * (1 / (np.exp(u) - 1.0) - 1 / (np.exp(u0) - 1.0))
@@ -196,7 +196,7 @@ def enthalpy(phase, t, tref=298.15):
         getattr(EOSparams, phase)[i] for i in ["cp_a", "cp_b", "cp_c", "cp_d"]
     ]
 
-    integral = lambda T: a * T + 0.5 * b * T**2 - c * T**-1 + 2 * d * T**(1/2)
+    integral = lambda T: a * T + 0.5 * b * T**2 - c * T**-1 + 2 * d * T ** (1 / 2)
     enthalpy = integral(t) - integral(tref)
 
     return enthalpy
@@ -229,7 +229,7 @@ def entropy(phase, t, tref=298.15):
         getattr(EOSparams, phase)[i] for i in ["cp_a", "cp_b", "cp_c", "cp_d"]
     ]
 
-    integral = lambda T: a * np.log(T) + b * T - c / 2 * T**-2 - 2 * d * T**(-1/2)
+    integral = lambda T: a * np.log(T) + b * T - c / 2 * T**-2 - 2 * d * T ** (-1 / 2)
     entropy = integral(t) - integral(tref)
 
     return entropy
@@ -267,7 +267,7 @@ def landau(phase, pkbar, T_K, **kwargs):
     t = np.array([])
     t = np.append(t, T_K)
 
-    vmax_default = getattr(EOSparams, phase)["vmax"] 
+    vmax_default = getattr(EOSparams, phase)["vmax"]
     vmax = kwargs.get("vmax", vmax_default)
 
     smax, tc0 = [getattr(EOSparams, phase)[i] for i in ["smax", "Tc0"]]
@@ -277,12 +277,16 @@ def landau(phase, pkbar, T_K, **kwargs):
     # Landau critical temperature at pkbar
     tc = tc0 + pkbar * vmax / smax
 
-    Q2 = np.zeros(shape=[len(t),])
+    Q2 = np.zeros(
+        shape=[
+            len(t),
+        ]
+    )
     if any(t < tc):
         Q2 = np.where(t > tc, 0, np.sqrt((tc - t) / tc0))
 
     G_Landau = (
-        smax * (tc0 * (Q2_0 + (Q2 ** 3 - Q2_0 ** 3) / 3) - tc * Q2 - t * (Q2_0 - Q2))
+        smax * (tc0 * (Q2_0 + (Q2**3 - Q2_0**3) / 3) - tc * Q2 - t * (Q2_0 - Q2))
         + pkbar * vmax * Q2_0
     )
 
@@ -293,7 +297,7 @@ def landau(phase, pkbar, T_K, **kwargs):
     return G_Landau
 
 
-def landau_P_dependent(phase, pkbar, t, formulation='anenberg'):
+def landau_P_dependent(phase, pkbar, t, formulation="anenberg"):
     """
     Pressure dependent excess Gibbs free energy from Landau theory.
     Calculated by subtracting the pressure independent contribution (with vmax = 0) from the total.
@@ -308,15 +312,15 @@ def landau_P_dependent(phase, pkbar, t, formulation='anenberg'):
         Pressure in kilobars
     formulation :   str
         'holland' for the formulation by Holland and Powell (1998), otherwise Michael Anenberg's
-        formulation will be used: 
-        https://fo2.rses.anu.edu.au/fo2app/ 
+        formulation will be used:
+        https://fo2.rses.anu.edu.au/fo2app/
         (see FMQ buffer details and references)
     Returns
     -------
     float
         Pressure contribution to excess Gibbs free enery from Landau theory
     """
-    if formulation == 'holland':
+    if formulation == "holland":
         landau_total = landau_Holland(phase, pkbar, t)
         landau_1bar = landau_Holland(phase, 0, t, vmax=0)
     else:
@@ -349,7 +353,7 @@ def landau_Holland(phase, pkbar, T_K, **kwargs):
     t = np.array([])
     t = np.append(t, T_K)
 
-    vmax_default = getattr(EOSparams, phase)["vmax"] 
+    vmax_default = getattr(EOSparams, phase)["vmax"]
     vmax = kwargs.get("vmax", vmax_default)
     smax, tc0, a0, K0 = [
         getattr(EOSparams, phase)[i] for i in ["smax", "Tc0", "a0", "K0"]
@@ -359,7 +363,7 @@ def landau_Holland(phase, pkbar, T_K, **kwargs):
     tc = tc0 + vmax * pkbar / smax
     # Q: oder paramter in the landau model
     Q2_0 = np.sqrt(1 - 298.15 / tc0)
-    
+
     # if t > tc:
     #     Q2 = 0
     # else:
@@ -371,14 +375,14 @@ def landau_Holland(phase, pkbar, T_K, **kwargs):
     K = K0 * (1 - 1.5e-4 * (t - 298))
 
     # Excess enthalpy at 298K from Landau model disordering
-    h = smax * tc0 * (Q2_0 - (Q2_0 ** 3) / 3)
+    h = smax * tc0 * (Q2_0 - (Q2_0**3) / 3)
     # Excess entropy at 298K from Landau model disordering
     s = smax * Q2_0
 
     # Excess volume from Landau model disordering
     vt = vmax * Q2_0 * (1 + a0 * (t - 298)) - 20 * a0 * (np.sqrt(t) - np.sqrt(298))
 
-    vtdP = vt * K / 3 * ((1 + 4 * pkbar / K)**(3 / 4) - 1)
+    vtdP = vt * K / 3 * ((1 + 4 * pkbar / K) ** (3 / 4) - 1)
 
     delta_G_landau = smax * ((t - tc0) * Q2 + (tc * Q2**3) / 3)
 

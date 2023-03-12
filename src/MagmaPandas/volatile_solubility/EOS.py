@@ -1,13 +1,14 @@
 import numpy as np
+
 from MagmaPandas.parse_io.validate import _check_argument
 
 """
 Re-written visual basic code from Holloway and Blank, 1994 (Reviews
-in Mineralogy and Geochemistry, vol. 30). 
+in Mineralogy and Geochemistry, vol. 30).
 Original python code from the supplementary material of:
 
-C. M. Allison, K. Roggensack & A. B. Clarke (2022) 
-MafiCH: a general model for H2O–CO2 solubility in mafic magmas. 
+C. M. Allison, K. Roggensack & A. B. Clarke (2022)
+MafiCH: a general model for H2O–CO2 solubility in mafic magmas.
 Contributions to Mineralogy and Petrology 177: 40
 """
 
@@ -46,7 +47,7 @@ class hollowayBlank:
         PBLN = np.log(P_bar)
         T_C = T_K - 273.15
         RXT = R * T_K
-        RT = R * T_K ** 1.5 * 0.000001
+        RT = R * T_K**1.5 * 0.000001
         P_atmos = P_bar / 1.013  # 1e-6
 
         if species == "CO2":
@@ -57,7 +58,7 @@ class hollowayBlank:
             ASUM = ACO2M / (BSUM * RT)
 
         elif species == "H2O":
-            AH2OM = 115.98 - 0.0016295 * T_K - 1.4984e-05 * T_K ** 2
+            AH2OM = 115.98 - 0.0016295 * T_K - 1.4984e-05 * T_K**2
             BSUM = 14.5
             ASUM = AH2OM / (BSUM * RT)
         else:
@@ -137,7 +138,7 @@ class hollowayBlank:
                 ZBP = 0.000001
             BPZ = 1 + BP / Z
             FP = Z - 1 - np.log(ZBP) - A2B * np.log(BPZ)
-            if FP < -37 or FP > 37: # -37 > FP > 37
+            if FP < -37 or FP > 37:  # -37 > FP > 37
                 FP = 0.000001
 
         else:
@@ -163,21 +164,21 @@ class hollowayBlank:
         PC = 73.9
 
         # Virial coefficients
-        A = 2.0614 - 2.2351 / TR ** 2 - 0.39411 * np.log(TR)
-        B = 0.055125 / TR + 0.039344 / TR ** 2
-        C = -1.8935e-06 / TR - 1.1092e-05 / TR ** 2 - 2.1892e-05 / TR ** 3
-        D = 5.0527e-11 / TR - 6.3033e-21 / TR ** 3
+        A = 2.0614 - 2.2351 / TR**2 - 0.39411 * np.log(TR)
+        B = 0.055125 / TR + 0.039344 / TR**2
+        C = -1.8935e-06 / TR - 1.1092e-05 / TR**2 - 2.1892e-05 / TR**3
+        D = 5.0527e-11 / TR - 6.3033e-21 / TR**3
 
         # Calculate molar volume
-        Z = A + B * PR + C * PR ** 2 + D * PR ** 3
+        Z = A + B * PR + C * PR**2 + D * PR**3
         V = Z * 83.0117 * T_K / P_bar
 
         # integrate from PO (4000 bars) to P to calculate ln fugacity
         LNF = (
             A * np.log(P_bar / PO)
             + (B / PC) * (P_bar - PO)
-            + (C / (2 * PC ** 2)) * (P_bar ** 2 - PO ** 2)
+            + (C / (2 * PC**2)) * (P_bar**2 - PO**2)
         )
-        LNF = LNF + (D / (3 * PC ** 3)) * (P_bar ** 3 - PO ** 3)
+        LNF = LNF + (D / (3 * PC**3)) * (P_bar**3 - PO**3)
         XLNF = LNF
         return XLNF

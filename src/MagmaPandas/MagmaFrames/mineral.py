@@ -1,9 +1,10 @@
-from typing import List
-import pandas as pd
 from abc import ABC, abstractmethod
+from typing import List
 
-from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
+import pandas as pd
+
 from MagmaPandas.Magma_baseclass import Unit
+from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
 from MagmaPandas.parse_io.readers import _read_file
 
 

@@ -1,5 +1,6 @@
-import pandas as pd
 from typing import List, Union
+
+import pandas as pd
 
 
 def match_indeces(data: Union[pd.DataFrame, pd.Series], variables: List[pd.Series]):

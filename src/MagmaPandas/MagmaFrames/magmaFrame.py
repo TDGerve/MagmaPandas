@@ -1,14 +1,14 @@
-import pandas as pd
-import numpy as np
-import elements as e
-
 from typing import List
 
-from ..parse_io.validate import _check_attribute, _check_argument
-from ..parse_io.readers import _read_file
-from ..Magma_baseclass import Unit, Datatype
+import numpy as np
+import pandas as pd
 
-from MagmaPandas.Elements import oxide_compositions, element_weights
+import elements as e
+from MagmaPandas.Elements import element_weights, oxide_compositions
+
+from ..Magma_baseclass import Datatype, Unit
+from ..parse_io.readers import _read_file
+from ..parse_io.validate import _check_argument, _check_attribute
 
 
 def read_file(*args, **kwargs):

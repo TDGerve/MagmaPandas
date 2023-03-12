@@ -1,12 +1,14 @@
 from typing import List
-import pandas as pd
-import elements as e
 
+import pandas as pd
+
+import elements as e
 from MagmaPandas.configuration import configuration
-from MagmaPandas.parse_io.validate import _check_attribute, _check_argument
+from MagmaPandas.Elements import element_weights, oxide_compositions
+from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
 from MagmaPandas.thermometers import melt_thermometers
-from MagmaPandas.Elements import oxide_compositions, element_weights
-from ..Magma_baseclass import Unit, Datatype
+
+from ..Magma_baseclass import Datatype, Unit
 
 
 def _MagmaSeries_expanddim(data=None, *args, **kwargs):

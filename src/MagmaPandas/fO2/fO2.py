@@ -1,9 +1,10 @@
-import scipy.optimize as opt
+import itertools as it
 import warnings as w
+
 import numpy as np
 import pandas as pd
+import scipy.optimize as opt
 from scipy.constants import R
-import itertools as it
 
 from . import eos_minerals
 

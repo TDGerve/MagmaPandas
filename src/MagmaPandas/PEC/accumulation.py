@@ -1,10 +1,11 @@
-import pandas as pd
 from multiprocessing import Pool
-from scipy.optimize import root_scalar
-from alive_progress import alive_bar
 
-from MagmaPandas.MagmaFrames import Olivine, Melt
-from MagmaPandas.Kd.ol_melt import calculate_olivine_Kd
+import pandas as pd
+from alive_progress import alive_bar
+from scipy.optimize import root_scalar
+
+from MagmaPandas.Kd.Ol_melt import calculate_olivine_Kd
+from MagmaPandas.MagmaFrames import Melt, Olivine
 
 
 def correct_olivine_accumulation(liquids: Melt, olivines: Olivine, pressures, **kwargs):

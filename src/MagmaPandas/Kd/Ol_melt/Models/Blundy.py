@@ -1,7 +1,6 @@
 import numpy as np
 
-from MagmaPandas import configuration
-from MagmaPandas import Fe_redox
+from MagmaPandas import Fe_redox, configuration
 from MagmaPandas.fO2 import fO2_QFM
 
 from ...Kd_baseclass import Kd_model

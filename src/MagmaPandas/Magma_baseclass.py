@@ -1,8 +1,8 @@
-import pandas as pd
-
 from abc import abstractmethod
+from enum import Enum, Flag, auto
 from typing import Protocol
-from enum import Enum, auto, Flag
+
+import pandas as pd
 
 
 class Unit(Enum):

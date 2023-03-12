@@ -1,11 +1,11 @@
-import pandas as pd
 import numpy as np
-from scipy import stats
+import pandas as pd
 import statsmodels.api as sm
-from statsmodels.tools.eval_measures import rmse
-from sklearn.model_selection import cross_validate
-from sklearn.linear_model import LinearRegression
+from scipy import stats
 from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_validate
+from statsmodels.tools.eval_measures import rmse
 
 
 # A wrapper for statsmodel, for use within sklearn

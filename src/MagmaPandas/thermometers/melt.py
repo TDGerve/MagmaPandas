@@ -1,8 +1,9 @@
 import pandas as pd
+
 import elements as e
 
-from .data_parsing import parse_data, _get_oxides, _anhydrous_composition
 from ..Magma_baseclass import Magma
+from .data_parsing import _anhydrous_composition, _get_oxides, parse_data
 
 
 def putirka2008_14(melt: Magma, **kwargs):

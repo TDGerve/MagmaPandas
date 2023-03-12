@@ -1,6 +1,7 @@
 import re
-from typing import List
 from importlib import resources
+from typing import List
+
 import pandas as pd
 
 
