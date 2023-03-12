@@ -1,3 +1,10 @@
+"""
+===========
+MagmaFrames
+===========
+Module with the generic MagmaFrame class.
+"""
+
 from typing import List
 
 import numpy as np
