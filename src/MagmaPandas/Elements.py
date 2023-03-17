@@ -1,49 +1,81 @@
+from typing import List, Optional
+
+import elements as e
 import numpy as np
 import pandas as pd
 
-import elements as e
+from MagmaPandas.parse_io.validate import _check_argument
 
 
 class Oxide_compositions:
     def __init__(self):
 
         self.oxide_names = np.array([], dtype=str)
-        self.cation_names = np.array([], dtype=str)
-        self.cation_amount = np.array([], dtype=int)
+        self._cation_names = np.array([], dtype=str)
+        self._cation_amount = np.array([], dtype=int)
+        self._oxygen_amount = np.array([], dtype=int)
 
-    def amount(self, oxides):
-        idx = self._process_names(oxides)
-        return self.cation_amount[idx]
+    def oxygen_amount(self, names, type="oxide"):
+        if type == "oxide":
+            self._process_names(names)
+        idx = self._get_indeces(names, type=type)
+        return self._oxygen_amount[idx]
 
-    def names(self, oxides):
-        idx = self._process_names(oxides)
-        return self.cation_names[idx]
+    def cation_amount(self, names, type="oxide"):
+        if type == "oxide":
+            self._process_names(names)
+        idx = self._get_indeces(names, type=type)
+        return self._cation_amount[idx]
 
-    def calculate_cations_numbers(self, oxides):
+    def cation_names(self, oxides):
+        self._process_names(oxides)
+        idx = self._get_indeces(oxides)
+        return self._cation_names[idx]
+
+    def calculate_element_numbers(self, oxides):
         oxides = np.array(oxides)
-        new_oxides = oxides[~np.in1d(oxides, self.oxide_names)]
-        if len(new_oxides) == 0:
-            return
+        # new_oxides = oxides[~np.in1d(oxides, self.oxide_names)]
+        # if len(new_oxides) == 0:
+        #     return
 
         self.oxide_names = np.append(self.oxide_names, oxides)
-        self.cation_names = np.append(self.cation_names, e.cation_names(oxides))
-        self.cation_amount = np.append(
-            self.cation_amount, e.cation_numbers(oxides).astype(int).values
+        self._cation_names = np.append(self._cation_names, e.cation_names(oxides))
+        self._cation_amount = np.append(
+            self._cation_amount, e.cation_numbers(oxides).astype(int).values
+        )
+        self._oxygen_amount = np.append(
+            self._oxygen_amount, e.oxygen_numbers(oxides).astype(int).values
         )
 
-    def _process_names(self, oxides):
+    def _process_names(self, oxides: List[str]) -> None:
         oxides = np.array(oxides)
 
         difference = np.setdiff1d(oxides, self.oxide_names)
         if len(difference) > 0:
-            self.calculate_cations_numbers(difference)
+            self.calculate_element_numbers(difference)
 
-        idx = [
-            int(np.where(self.oxide_names == o)[0])
-            for o in oxides[np.isin(oxides, self.oxide_names)]
+        # idx = self._get_indeces(oxides)
+        # [
+        #     int(np.where(self.oxide_names == o)[0])
+        #     for o in oxides[np.isin(oxides, self.oxide_names)]
+        # ]
+
+        # return idx
+
+    @_check_argument("type", [None, "oxide", "cation"])
+    def _get_indeces(self, names: List[str], type: Optional[str] = None) -> List[int]:
+
+        if type is None:
+            type = "oxide"
+
+        names_total = {"oxide": self.oxide_names, "cation": self._cation_names}[type]
+
+        names = np.array(names)
+
+        return [
+            int(np.where(names_total == name)[0])
+            for name in names[np.isin(names, names_total)]
         ]
-
-        return idx
 
 
 class Element_weights:

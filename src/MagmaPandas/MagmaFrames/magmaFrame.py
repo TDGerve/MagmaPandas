@@ -135,18 +135,47 @@ class MagmaFrame(pd.DataFrame):
         else:
             moles = self[self.elements].copy()
         # Calculate cation moles
-        cations = moles.mul(oxide_compositions.amount(moles.elements))
+        cations = moles.mul(oxide_compositions.cation_amount(moles.elements))
         # Rename columns to cations
-        cations.columns = oxide_compositions.names(moles.elements)
+        cations.columns = oxide_compositions.cation_names(moles.elements)
         # Normalise to 1
         total = cations.sum(axis=1)
         cations = cations.div(total, axis=0)
         cations["total"] = 1.0
+
         # Set the right datatype and elements
         cations._datatype = Datatype.CATION
         cations.recalculate(inplace=True)
 
         return cations
+
+    @property
+    def oxygen(self):
+        """
+        Returns
+        -------
+        pd.Series
+            oxygen per 1 mole of cations
+        """
+        # Calculate oxide moles
+        if self._datatype != Datatype.CATION:
+            cations = self.cations
+            cations = cations[cations.elements]
+        else:
+            cations = self[self.elements].copy()
+
+        oxygen_per_mole = oxide_compositions.oxygen_amount(
+            cations.elements, type="cation"
+        )
+        cation_per_mole = oxide_compositions.cation_amount(
+            cations.elements, type="cation"
+        )
+
+        oxygen_per_cation = oxygen_per_mole / cation_per_mole
+
+        oxygen = cations.mul(oxygen_per_cation).sum(axis=1)
+
+        return oxygen
 
     def convert_ppm_wtPercent(self):
         """

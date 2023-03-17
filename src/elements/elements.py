@@ -122,7 +122,10 @@ def oxygen_numbers(compounds: List[str]):
     oxygen = pd.Series(index=compounds, name="oxygen", dtype=int)
 
     for i in oxygen.index:
-        oxygen[i] = decompose(i)["O"]
+        try:
+            oxygen[i] = decompose(i)["O"]
+        except KeyError:
+            oxygen[i] = 0
 
     return oxygen
 

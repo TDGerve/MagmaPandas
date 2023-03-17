@@ -39,6 +39,65 @@ class Melt(MagmaFrame):
 
         return thermometer(self, *args, **kwargs)
 
+    def tetrahedral_cations(self):
+        """
+        Tetrahedral cations
+        Si, Ti, Al and P are assumed to be in tetrahedral coordination. Fe3+ is not taken into account. See Mysen (1983)\ [1]_ for additional information
+
+        Returns
+        -------
+        pd.Series
+            summed tertrahedral cations per 1 mole total cations
+
+        References
+        ----------
+        .. [1] Mysen, B. O. (1983) The structure of silicate melts. Ann. Rev. Earth Planet. Sci. 11. 75-97
+        """
+        cations = self.cations
+
+        tetrahedral_cations = {"Si", "Ti", "Al", "P"}
+
+        available_elements = tetrahedral_cations.intersection(cations.elements)
+
+        return cations[list(available_elements)].sum(axis=1)
+
+    def NBO(self):
+        """
+        Non-bridging oxygen in the melt
+        Formulation according to Mysen (1983)\ [1]_
+
+        Returns
+        -------
+        pd.Series
+            NBO per 1 mole cations
+
+        References
+        ----------
+        .. [1] Mysen, B. O. (1983) The structure of silicate melts. Ann. Rev. Earth Planet. Sci. 11. 75-97
+        """
+
+        oxygen = self.oxygen
+
+        return (2 * oxygen) - (4 * self.tetrahedral_cations())
+
+    def NBO_T(self):
+        """
+        NBO/T
+        The ratio of non-bridging oxygen and tetrahedral cations. Formulation according to Mysen (1983)\ [1]_
+
+        Returns
+        -------
+        pd.Series
+            NBO/T
+
+        References
+        ----------
+        .. [1] Mysen, B. O. (1983) The structure of silicate melts. Ann. Rev. Earth Planet. Sci. 11. 75-97
+
+        """
+
+        return self.NBO() / self.tetrahedral_cations()
+
     def Fe3Fe2_QFM(self, T_K=None, P_bar=None, inplace=False):
         """
         Calculate Fe-redox equilibrium at QFM oxygen buffer for silicate liquids.
