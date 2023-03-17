@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def TAS(labels=False, fontsize="medium", **kwargs):
+def TAS(ax, labels=False, fontsize="medium", **kwargs):
     """Returns a line plot element of classification of volcanic rocks
     in total-alkali vs silica plots
     """
@@ -32,7 +32,7 @@ def TAS(labels=False, fontsize="medium", **kwargs):
 
     if labels:
         for _, rock in rock_labels.items():
-            plt.text(
+            ax.text(
                 *rock[1],
                 rock[0],
                 fontsize=fontsize,
@@ -41,7 +41,7 @@ def TAS(labels=False, fontsize="medium", **kwargs):
             )
 
     for id in TAS.id.unique():
-        plt.plot(
+        ax.plot(
             TAS.loc[TAS.id == id, "x"],
             TAS.loc[TAS.id == id, "y"],
             "-",
