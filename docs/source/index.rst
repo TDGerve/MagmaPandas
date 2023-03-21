@@ -19,7 +19,7 @@ It makes working with geochemical data easier by extending the :py:class:`Pandas
 with methods for common calculations, including those for:
 
    * mole and cation conversion,
-   * stoichiometric mineral composition,
+   * mineral composition by stoichiometry,
    * melt thermometry,
    * melt Fe speciation,
    * melt volatile (CO\ :sub:`2`\-H\ :sub:`2`\O) saturation pressure
