@@ -1,23 +1,11 @@
 import re
-from importlib import resources
 from typing import List
 
 import pandas as pd
 
+from .periodic_table import get_periodic_table
 
-def periodic_table(masses_only: bool = True):
-    """
-    Docstring
-    """
-
-    if not masses_only:
-        with resources.open_text("elements.data", "PeriodicTable.csv") as df:
-            return pd.read_csv(df, index_col=["Symbol"])
-
-    with resources.open_text("elements.data", "PeriodicTable.csv") as df:
-        return pd.read_csv(
-            df, usecols=["Symbol", "AtomicMass"], index_col=["Symbol"]
-        ).squeeze("columns")
+periodic_table = get_periodic_table()
 
 
 def find_elements(compound: str):
@@ -80,11 +68,9 @@ def calculate_weight(compound: str):
     Docstring
     """
 
-    atomic_weights = periodic_table()
-
     elements = decompose(compound)
 
-    return (atomic_weights[elements.index] * elements).sum()
+    return (periodic_table[elements.index] * elements).sum()
 
 
 def compound_weights(compounds: List[str]):
