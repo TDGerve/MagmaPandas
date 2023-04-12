@@ -1,10 +1,10 @@
 from typing import List
 
+import elementMass as e
 import numpy as np
 from scipy.constants import R
 from scipy.optimize import root, root_scalar
 
-from elements.elements import compound_weights
 from MagmaPandas import MagmaSeries
 from MagmaPandas.parse_io.validate import _check_argument, _check_setter
 from MagmaPandas.volatile_solubility.EOS import hollowayBlank
@@ -78,7 +78,6 @@ class _meta_Allison_configuration(type):
         return message + parameter_settings + calibration_range
 
     def __str__(cls):
-
         variables = {"Fugacity model": "_fugacity", "Species model": "_model"}
         pad_left = 20
         pad_right = 20
@@ -131,7 +130,7 @@ class Allison_configuration(metaclass=_meta_Allison_configuration):
     #     print("\n")
 
 
-FeO_mass, Fe2O3_mass = compound_weights(["FeO", "Fe2O3"])
+FeO_mass, Fe2O3_mass = e.compound_weights(["FeO", "Fe2O3"])
 fugacity_model = hollowayBlank.fugacity
 
 
@@ -185,7 +184,6 @@ class h2o(Solubility_model):
 class co2(Solubility_model):
     @staticmethod
     def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, x_fluid=0.0, **kwargs):
-
         if oxide_wtPercents["CO2"] < 0:
             raise ValueError(f"CO2 lower than 0: {oxide_wtPercents['CO2']}")
         if not 1 >= x_fluid >= 0:
@@ -269,7 +267,6 @@ class co2(Solubility_model):
 
     @staticmethod
     def _root_partial_pressure(P_bar, T_K, deltaV, lnK0, Kf):
-
         P0 = 1e3  # reference pressure
         Ra = R * 10  # Gas constant in cm3.bar.K-1.mol-1
 
@@ -341,7 +338,6 @@ class mixed(Solubility_model):
     @staticmethod
     @_check_argument("output", [None, "PXfl", "P", "Xfl"])
     def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, output="P", **kwargs):
-
         composition = oxide_wtPercents.copy()
 
         P_H2O_saturation = h2o.calculate_saturation(composition, T_K=T_K, x_fluid=1.0)
@@ -394,7 +390,6 @@ class mixed(Solubility_model):
 
     @staticmethod
     def _saturation_rootFunction(P_x_fluid: List, oxide_wtPercents: MagmaSeries, T_K):
-
         P_bar, x_fluid = P_x_fluid
         # Keep x_fluid and P_bar within bounds
         x_fluid = np.clip(x_fluid, 0.0, 1.0)

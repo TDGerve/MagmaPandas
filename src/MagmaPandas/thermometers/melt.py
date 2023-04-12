@@ -1,13 +1,12 @@
+import elementMass as e
 import pandas as pd
 
-import elements as e
 from MagmaPandas.MagmaFrames.protocols import Magma
 
 from .data_parsing import _anhydrous_composition, _get_oxides, parse_data
 
 
 def putirka2008_14(melt: Magma, **kwargs):
-
     """
     Liquid thermometer
 
@@ -65,7 +64,6 @@ def putirka2008_14(melt: Magma, **kwargs):
 
 
 def putirka2008_15(melt, P_bar, **kwargs):
-
     """
     Liquid thermometer
 
@@ -123,7 +121,6 @@ def putirka2008_15(melt, P_bar, **kwargs):
 
 
 def putirka2008_16(melt, P_bar=None, **kwargs):
-
     """Liquid thermometer
 
     Equation 16 from Putirka (2008) calculates liquiqdus temperature for bulk compositions.

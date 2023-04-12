@@ -23,7 +23,8 @@ dependencies = [
     "matplotlib-label-lines",
     "statsmodels",
     "matplotlib",
-    "scikit-learn"
+    "scikit-learn",
+    "elementMass"
 ]
 
 [project.urls]
@@ -33,5 +34,4 @@ Homepage = "https://github.com/TDGerve/MagmaPandas"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"elements.data" = ["*.csv"]
 "geoplot.data" = ["*.csv"]

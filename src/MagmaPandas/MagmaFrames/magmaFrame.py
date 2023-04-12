@@ -7,10 +7,9 @@ Module with the generic MagmaFrame class.
 
 from typing import List
 
-import numpy as np
+import elementMass as e
 import pandas as pd
 
-import elements as e
 from MagmaPandas.Elements import element_weights, oxide_compositions
 from MagmaPandas.enums import Datatype, Unit
 from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
@@ -36,7 +35,6 @@ class MagmaFrame(pd.DataFrame):
         weights: pd.Series = None,
         **kwargs,
     ) -> None:
-
         self._units: Unit = Unit(units)
         self._datatype: Datatype = Datatype(datatype)
 
@@ -45,7 +43,6 @@ class MagmaFrame(pd.DataFrame):
         if weights is not None:
             self._weights = weights.copy()
         elif not hasattr(self, "_weights"):
-
             self._weights = element_weights.weights_as_series(self.columns)
 
     @property
@@ -69,7 +66,6 @@ class MagmaFrame(pd.DataFrame):
 
     @property
     def _constructor_sliced(self):
-
         from MagmaPandas.MagmaSeries import MagmaSeries
 
         def _c(*args, weights=None, **kwargs):
@@ -100,7 +96,6 @@ class MagmaFrame(pd.DataFrame):
 
     @property
     def units(self) -> str:
-
         return f"{self._datatype.value} {self._units.value}"
 
     @units.setter
@@ -109,18 +104,15 @@ class MagmaFrame(pd.DataFrame):
 
     @property
     def weights(self) -> pd.Series:
-
         return self._weights.copy()
 
     @property
     def elements(self) -> List:
-
         return list(self._weights.index).copy()
 
     @property
     @_check_attribute("_units", ["wt. %", "ppm"])
     def moles(self):
-
         if self._units != Unit.MOL_FRACTIONS:
             return self.convert_moles_wtPercent
         else:
@@ -128,7 +120,6 @@ class MagmaFrame(pd.DataFrame):
 
     @property
     def cations(self):
-
         # Calculate oxide moles
         if self._units != Unit.MOL_FRACTIONS:
             moles = self.moles[self.elements]

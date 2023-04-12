@@ -1,8 +1,8 @@
 from typing import List
 
+import elementMass as e
 import pandas as pd
 
-import elements as e
 from MagmaPandas.configuration import configuration
 from MagmaPandas.Elements import element_weights, oxide_compositions
 from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
@@ -52,7 +52,6 @@ class MagmaSeries(pd.Series):
         weights: pd.Series = None,
         **kwargs,
     ) -> None:
-
         self._units: Unit = Unit(units)
         self._datatype: Datatype = Datatype(datatype)
 
@@ -61,7 +60,6 @@ class MagmaSeries(pd.Series):
         if weights is not None:
             self._weights = weights.copy()
         elif not hasattr(self, "_weights"):
-
             self._weights = element_weights.weights_as_series(self.index)
 
     @property

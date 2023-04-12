@@ -1,8 +1,9 @@
+import elementMass as e
 import matplotlib.pyplot as plt
 
-import elements as e
-
 markers = ["^", "D", "s", "o", "p", "8", "h", "d", 4, 5]
+
+
 # Color palettes
 class colors:
     """
@@ -107,7 +108,6 @@ def layout(colors=colors.hollywood, fontsize=12, **kwargs):
     linewidth = kwargs.get("linewidth", 2)
 
     plt.rcParams["figure.constrained_layout.use"] = True
-    plt.rcParams["savefig.dpi"] = 300
 
     plt.rc("figure", figsize=(8, 7), facecolor="white")
 
@@ -145,7 +145,6 @@ def side_plots(
     y_position="right",
     **kwargs,
 ):
-
     axes = []
 
     if x_axis:
@@ -160,13 +159,11 @@ def side_plots(
 
     if y_axis:
         if y_position == "right":
-
             ax_kde_y = ax.inset_axes([1.0 + spacing, 0, side, 1])
             ax_kde_y.spines["right"].set_visible(False)
             ax_kde_y.tick_params(axis="y", labelright=False, direction="in", **kwargs)
 
         if y_position == "left":
-
             ax_kde_y = ax.inset_axes([0 - spacing - side, 0, side, 1])
             ax_kde_y.spines["left"].set_visible(False)
             ax_kde_y.tick_params(axis="y", labelleft=False, direction="in", **kwargs)

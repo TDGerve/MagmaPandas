@@ -1,6 +1,5 @@
 import warnings as w
 from multiprocessing import Pool
-from typing import List
 
 import numpy as np
 import pandas as pd
@@ -16,7 +15,6 @@ from MagmaPandas.thermometers import melt_thermometers
 
 
 class Melt(MagmaFrame):
-
     # @property
     # def _constructor(self):
     #     """This is the key to letting Pandas know how to keep
@@ -34,7 +32,6 @@ class Melt(MagmaFrame):
     #     return _c
 
     def temperature(self, *args, **kwargs):
-
         thermometer = melt_thermometers[configuration.melt_thermometer]
 
         return thermometer(self, *args, **kwargs)
@@ -237,7 +234,6 @@ class Melt(MagmaFrame):
             theme="smooth",
             force_tty=True,
         ) as bar:
-
             results = pool.imap_unordered(self._saturation_multicore, samples)
             pool.close()
 

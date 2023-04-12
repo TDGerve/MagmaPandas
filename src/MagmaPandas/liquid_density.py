@@ -1,6 +1,6 @@
+import elementMass as e
 import pandas as pd
 
-import elements as e
 from MagmaPandas import Melt
 
 """
@@ -69,7 +69,6 @@ dVdP = pd.Series(
 
 
 def calculate_density(composition: Melt, T_K: pd.Series, P_bar: pd.Series) -> pd.Series:
-
     mole_fractions = composition.moles[molar_volumes.index]
 
     oxide_masses = e.compound_weights(mole_fractions.columns)
@@ -92,7 +91,6 @@ def calculate_density(composition: Melt, T_K: pd.Series, P_bar: pd.Series) -> pd
 def calculate_temperature(
     composition: Melt, density: pd.Series, P_bar: pd.Series
 ) -> pd.Series:
-
     mole_fractions = composition.moles[molar_volumes.index]
 
     oxide_masses = e.compound_weights(mole_fractions.columns)
@@ -121,7 +119,6 @@ def calculate_temperature(
 
 
 def _calculate_P_contribution(P_bar: pd.Series, index):
-
     P_contribution = pd.DataFrame(columns=dVdP.index, index=index)
     P_contribution.loc[:, :] = dVdP.values[None, :]
     P_contribution = P_contribution.mul(P_bar - 1, axis=0)
@@ -130,7 +127,6 @@ def _calculate_P_contribution(P_bar: pd.Series, index):
 
 
 def _calculate_T_contribution(T_K: pd.Series, index):
-
     T_contribution = pd.DataFrame(columns=(T_reference.index), index=index)
     T_contribution.loc[:, :] = T_K.values[:, None]
     T_contribution = T_contribution.sub(T_reference, axis=1)

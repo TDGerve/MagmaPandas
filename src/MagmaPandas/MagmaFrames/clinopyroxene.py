@@ -1,7 +1,3 @@
-from typing import List
-
-import pandas as pd
-
 from .magmaFrame import MagmaFrame
 
 

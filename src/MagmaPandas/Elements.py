@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-import elements as e
+import elementMass as e
 import numpy as np
 import pandas as pd
 
@@ -9,7 +9,6 @@ from MagmaPandas.parse_io.validate import _check_argument
 
 class Oxide_compositions:
     def __init__(self):
-
         self.oxide_names = np.array([], dtype=str)
         self._cation_names = np.array([], dtype=str)
         self._cation_amount = np.array([], dtype=int)
@@ -64,7 +63,6 @@ class Oxide_compositions:
 
     @_check_argument("type", [None, "oxide", "cation"])
     def _get_indeces(self, names: List[str], type: Optional[str] = None) -> List[int]:
-
         if type is None:
             type = "oxide"
 
@@ -93,7 +91,6 @@ class Element_weights:
         return self.element_names[idx].copy()
 
     def calculate_weights(self, elements):
-
         new_elements = np.array(elements)[~np.in1d(elements, self.element_names)]
         if len(new_elements) == 0:
             return
@@ -112,7 +109,6 @@ class Element_weights:
         return pd.Series(self.all_weights[idx], index=self.element_names[idx])
 
     def _process_names(self, elements):
-
         elements = np.array(elements)
 
         difference = np.setdiff1d(

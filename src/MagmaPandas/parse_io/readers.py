@@ -1,8 +1,8 @@
 from typing import List
 
+import elementMass as e
 import pandas as pd
 
-import elements as e
 from MagmaPandas import MagmaFrames
 from MagmaPandas.MagmaFrames import (
     Clinopyroxene,

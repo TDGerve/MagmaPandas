@@ -1,11 +1,11 @@
 from functools import partial
 from typing import Union
 
+import elementMass as e
 import numpy as np
 import pandas as pd
 from scipy.optimize import root_scalar
 
-import elements as e
 from MagmaPandas.configuration import configuration
 from MagmaPandas.Fe_redox import Fe_redox
 from MagmaPandas.fO2 import fO2_QFM
@@ -114,7 +114,6 @@ def Fe_equilibrate(
     ##### MAIN LOOP #####
     #####################
     while not np.isclose(Kd_real, Kd_equilibrium, atol=Kd_converge, rtol=0):
-
         # Exchange Fe-Mg
         idx = mi_moles.index[-1] + stepsize
         mi_moles.loc[idx] = (mi_moles.iloc[-1] + FeMg_vector.mul(stepsize)).values

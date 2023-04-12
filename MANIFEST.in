@@ -1,1 +1,1 @@
-include elements/data/* geoplot/data/*
+include geoplot/data/*

@@ -9,3 +9,4 @@ matplotlib
 matplotlib-label-lines
 statsmodels
 scikit-learn
+elementMass
