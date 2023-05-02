@@ -189,7 +189,7 @@ class Melt(MagmaFrame):
         mol_fractions = self.moles
 
         return calculate_FeMg_Kd(
-            melt_mol_fractions=mol_fractions,
+            Melt_mol_fractions=mol_fractions,
             forsterite_initial=forsterite,
             T_K=T_K,
             Fe3Fe2=Fe3Fe2,

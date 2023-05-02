@@ -1,7 +1,7 @@
 import elementMass as e
 import matplotlib.pyplot as plt
 
-markers = ["^", "D", "s", "o", "p", "8", "h", "d", 4, 5]
+markers = ["^", "D", "s", "o", "p", "8", "h", "d", "4", "5"]
 
 
 # Color palettes
