@@ -100,12 +100,12 @@ class colors:
     )
 
 
-def layout(colors=colors.hollywood, fontsize=12, **kwargs):
+def layout(colors=colors.hollywood, fontsize=10, **kwargs):
     axTitleSize = int(fontsize / 1.2)
     axLabelSize = int(fontsize)
     tickLabelSize = int(fontsize / 1.2)
     markersize = kwargs.get("markersize", 8)
-    linewidth = kwargs.get("linewidth", 2)
+    linewidth = kwargs.get("linewidth", 1)
 
     plt.rcParams["figure.constrained_layout.use"] = True
 
@@ -128,7 +128,7 @@ def layout(colors=colors.hollywood, fontsize=12, **kwargs):
         axisbelow=True,
         prop_cycle=colors + plt.cycler(marker=markers[: len(colors)]),
         facecolor="whitesmoke",
-        linewidth=1.2,
+        linewidth=0.8,
     )
     plt.rc("grid", color="snow")
 
