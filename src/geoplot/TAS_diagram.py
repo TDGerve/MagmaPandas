@@ -9,7 +9,8 @@ def TAS(ax, labels=False, fontsize="medium", **kwargs):
     in total-alkali vs silica plots
     """
 
-    with resources.open_text("geoplot.data", "TAS.csv") as df:
+    # resources.open_text("geoplot.data", "TAS.csv")
+    with resources.files("geoplot.data").joinpath("TAS.csv").open("r") as df:
         TAS = pd.read_csv(df)
 
     rock_labels = {
@@ -37,7 +38,7 @@ def TAS(ax, labels=False, fontsize="medium", **kwargs):
                 rock[0],
                 fontsize=fontsize,
                 fontfamily="monospace",
-                clip_on=True
+                clip_on=True,
             )
 
     for id in TAS.id.unique():
@@ -46,5 +47,5 @@ def TAS(ax, labels=False, fontsize="medium", **kwargs):
             TAS.loc[TAS.id == id, "y"],
             "-",
             color="k",
-            **kwargs
+            **kwargs,
         )
