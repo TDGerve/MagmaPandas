@@ -4,7 +4,7 @@ import pandas as pd
 from MagmaPandas import Melt
 
 """
-based on Iacovina and Till (2017)
+based on Iacovino and Till (2017)
 """
 
 T_reference = pd.Series(
