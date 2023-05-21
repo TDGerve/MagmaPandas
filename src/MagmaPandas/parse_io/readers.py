@@ -170,7 +170,7 @@ def read_plagioclase(
     return read_file(
         filepath=filepath,
         *args,
-        phase="plagioclase",
+        phase="Plagioclase",
         index_col=index_col,
         total_col=total_col,
         keep_columns=keep_columns,
