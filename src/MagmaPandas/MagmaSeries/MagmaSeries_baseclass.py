@@ -2,7 +2,6 @@ from typing import List
 
 import elementMass as e
 import pandas as pd
-
 from MagmaPandas.configuration import configuration
 from MagmaPandas.Elements import element_weights, oxide_compositions
 from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
@@ -58,7 +57,7 @@ class MagmaSeries(pd.Series):
         super().__init__(data, **kwargs)
 
         if weights is not None:
-            self._weights = weights.copy()
+            self._weights = weights.copy(deep=True)
         elif not hasattr(self, "_weights"):
             self._weights = element_weights.weights_as_series(self.index)
 
@@ -75,9 +74,8 @@ class MagmaSeries(pd.Series):
 
         def _c(*args, weights=None, **kwargs):
             if weights is None:
-                weights = getattr(self, "_weights", None).copy(
-                    deep=True
-                )  # self._weights.copy(deep=True)
+                weights = getattr(self, "_weights", None)  # .copy(deep=True)
+
             return MagmaSeries(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
@@ -86,7 +84,8 @@ class MagmaSeries(pd.Series):
     def _constructor_expanddim(self):
         def _c(*args, weights=None, **kwargs):
             if weights is None:
-                weights = getattr(self, "_weights", None).copy(deep=True)
+                weights = getattr(self, "_weights", None)  # .copy(deep=True)
+
             return _MagmaSeries_expanddim(
                 *args, weights=weights, **kwargs
             ).__finalize__(self)
@@ -163,9 +162,13 @@ class MagmaSeries(pd.Series):
         else:
             moles = self[self.elements].copy()
 
-        cations = moles.mul(oxide_compositions.amount(moles.elements))
+        cations = moles.mul(
+            pd.Series(
+                oxide_compositions.cation_amount(moles.elements), index=moles.elements
+            )
+        )
         # Rename index to cations
-        cations.index = oxide_compositions.names(cations.elements)
+        cations.index = oxide_compositions.cation_names(cations.elements)
 
         # Normalise to 1
         total = cations.sum()

@@ -100,11 +100,11 @@ class colors:
     )
 
 
-def layout(colors=colors.hollywood, fontsize=10, **kwargs):
-    axTitleSize = int(fontsize / 1.2)
+def layout(colors=colors.hollywood, fontsize=8, **kwargs):
+    axTitleSize = int(fontsize)
     axLabelSize = int(fontsize)
-    tickLabelSize = int(fontsize / 1.2)
-    markersize = kwargs.get("markersize", 8)
+    tickLabelSize = int(fontsize)
+    markersize = kwargs.get("markersize", 6)
     linewidth = kwargs.get("linewidth", 1)
 
     plt.rcParams["figure.constrained_layout.use"] = True
@@ -115,7 +115,12 @@ def layout(colors=colors.hollywood, fontsize=10, **kwargs):
     plt.rc("font", family="sans-serif", size=fontsize)
 
     # Legend
-    plt.rc("legend", fontsize=fontsize / 1.5, fancybox=False, facecolor="white")
+    plt.rc(
+        "legend",
+        fontsize=int(fontsize * 0.8),
+        frameon=False,
+        # facecolor="white",
+    )
 
     # Axes
     plt.rc("xtick", direction="in", labelsize=tickLabelSize)
@@ -133,7 +138,7 @@ def layout(colors=colors.hollywood, fontsize=10, **kwargs):
     plt.rc("grid", color="snow")
 
     # Lines
-    plt.rc("lines", markersize=markersize, linewidth=linewidth)
+    plt.rc("lines", markersize=markersize, linewidth=linewidth, markeredgewidth=0.5)
 
 
 def side_plots(
@@ -191,9 +196,9 @@ def side_plots(
 
 def subscript_numbers(compound: str):
     string = ""
-    elements = e.find_elements(compound)
+    elements = e.elements._find_elements(compound)
     for element in elements:
-        name, quantity = e.find_quantity(element)
+        name, quantity = e.elements._find_quantity(element)
         string = string + name
         if float(quantity) > 1:
             string = string + f"$_{quantity}$"
