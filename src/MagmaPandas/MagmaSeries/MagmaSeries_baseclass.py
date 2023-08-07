@@ -2,6 +2,7 @@ from typing import List
 
 import elementMass as e
 import pandas as pd
+
 from MagmaPandas.configuration import configuration
 from MagmaPandas.Elements import element_weights, oxide_compositions
 from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
@@ -44,7 +45,6 @@ class MagmaSeries(pd.Series):
     @_check_argument("datatype", [None, "cation", "oxide"])
     def __init__(
         self,
-        data=None,
         *args,
         units: str = None,
         datatype: str = None,
@@ -54,7 +54,7 @@ class MagmaSeries(pd.Series):
         self._units: Unit = Unit(units)
         self._datatype: Datatype = Datatype(datatype)
 
-        super().__init__(data, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if weights is not None:
             self._weights = weights.copy(deep=True)
@@ -68,23 +68,27 @@ class MagmaSeries(pd.Series):
         derivatives of `MagmaBase` the same type as yours.  It should
         be enough to return the name of the Class.  However, in
         some cases, `__finalize__` is not called and `new attributes` are
-        not carried over. We can fix that by constructing a callable
+        not carried over (see: https://github.com/pandas-dev/pandas/issues/13208).
+        We can fix that by constructing a callable
         that makes sure to call `__finalize__` every time.
         """
 
-        def _c(*args, weights=None, **kwargs):
-            if weights is None:
-                weights = getattr(self, "_weights", None)  # .copy(deep=True)
+        def _c(*args, **kwargs):
+            if (weights := getattr(self, "_weights", None)) is not None:
+                weights = weights.copy(deep=True)
 
-            return MagmaSeries(*args, weights=weights, **kwargs).__finalize__(self)
+            # The finalize call crashes the Python kernel when using a dictionary as data:
+            # 'Cannot execute code, session has been disposed. Please try restarting the Kernel.'
+            # WHY?
+            return MagmaSeries(*args, weights=weights, **kwargs)  # .__finalize__(self)
 
         return _c
 
     @property
     def _constructor_expanddim(self):
-        def _c(*args, weights=None, **kwargs):
-            if weights is None:
-                weights = getattr(self, "_weights", None)  # .copy(deep=True)
+        def _c(*args, **kwargs):
+            if (weights := getattr(self, "_weights", None)) is not None:
+                weights = weights.copy(deep=True)
 
             return _MagmaSeries_expanddim(
                 *args, weights=weights, **kwargs

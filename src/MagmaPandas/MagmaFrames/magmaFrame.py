@@ -54,9 +54,9 @@ class MagmaFrame(pd.DataFrame):
         not carried over.  We can fix that by constructing a callable
         that makes sure to call `__finalize__` every time."""
 
-        def _c(*args, weights=None, **kwargs):
-            if weights is None:
-                weights = getattr(self, "_weights", None).copy(deep=True)
+        def _c(*args, **kwargs):
+            if (weights := getattr(self, "_weights", None)) is not None:
+                weights = weights.copy(deep=True)
 
             current_class = type(self)
 
@@ -68,9 +68,9 @@ class MagmaFrame(pd.DataFrame):
     def _constructor_sliced(self):
         from MagmaPandas.MagmaSeries import MagmaSeries
 
-        def _c(*args, weights=None, **kwargs):
-            if weights is None:
-                weights = getattr(self, "_weights", None).copy(deep=True)
+        def _c(*args, **kwargs):
+            if (weights := getattr(self, "_weights", None)) is not None:
+                weights = weights.copy(deep=True)
 
             return MagmaSeries(*args, weights=weights, **kwargs).__finalize__(self)
 
