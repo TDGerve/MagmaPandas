@@ -138,7 +138,13 @@ def layout(colors=colors.hollywood, fontsize=8, **kwargs):
     plt.rc("grid", color="snow")
 
     # Lines
-    plt.rc("lines", markersize=markersize, linewidth=linewidth, markeredgewidth=0.5)
+    plt.rc(
+        "lines",
+        markersize=markersize,
+        linewidth=linewidth,
+        markeredgewidth=0.5,
+        mec="k",
+    )
 
 
 def side_plots(
