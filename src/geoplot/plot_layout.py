@@ -143,7 +143,7 @@ def layout(colors=colors.hollywood, fontsize=8, **kwargs):
         markersize=markersize,
         linewidth=linewidth,
         markeredgewidth=0.5,
-        mec="k",
+        markeredgecolor="k",
     )
 
 
