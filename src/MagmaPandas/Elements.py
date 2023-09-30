@@ -32,24 +32,24 @@ class Oxide_compositions:
         return self._cation_names[idx]
 
     def calculate_element_numbers(self, oxides):
-        oxides = np.array(oxides)
+        oxides_list = list(oxides)
         # new_oxides = oxides[~np.in1d(oxides, self.oxide_names)]
         # if len(new_oxides) == 0:
         #     return
 
-        self.oxide_names = np.append(self.oxide_names, oxides)
-        self._cation_names = np.append(self._cation_names, e.cation_names(oxides))
+        self.oxide_names = np.append(self.oxide_names, oxides_list)
+        self._cation_names = np.append(self._cation_names, e.cation_names(oxides_list))
         self._cation_amount = np.append(
-            self._cation_amount, e.cation_numbers(oxides).astype(int).values
+            self._cation_amount, e.cation_numbers(oxides_list).astype(int).values
         )
         self._oxygen_amount = np.append(
-            self._oxygen_amount, e.oxygen_numbers(oxides).astype(int).values
+            self._oxygen_amount, e.oxygen_numbers(oxides_list).astype(int).values
         )
 
     def _process_names(self, oxides: List[str]) -> None:
-        oxides = np.array(oxides)
+        oxides_new = set(oxides)
 
-        difference = np.setdiff1d(oxides, self.oxide_names)
+        difference = list(oxides_new.difference(set(self.oxide_names)))
         if len(difference) > 0:
             self.calculate_element_numbers(difference)
 
@@ -68,11 +68,11 @@ class Oxide_compositions:
 
         names_total = {"oxide": self.oxide_names, "cation": self._cation_names}[type]
 
-        names = np.array(names)
+        names_arr = np.array(names)
 
         return [
             int(np.where(names_total == name)[0])
-            for name in names[np.isin(names, names_total)]
+            for name in names_arr[np.isin(names_arr, names_total)]
         ]
 
 

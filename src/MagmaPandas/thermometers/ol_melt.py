@@ -1,10 +1,7 @@
 import numpy as np
 
-from ..enums import Magma
 
-
-def putirka2007_4(liquid: Magma, olivine, P_bar, **kwargs):
-
+def putirka2007_4(liquid, olivine, P_bar, **kwargs):
     """Olivine-liquid thermometer
 
     Equation 4 from Putirka (2007) calculates liquiqdus temperature for bulk compositions.
