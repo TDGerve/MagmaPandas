@@ -9,8 +9,8 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import pathlib
-import sys
+# import pathlib
+# import sys
 
 # sys.path.insert(0, (pathlib.Path(__file__).parents[2] / "src").resolve().as_posix())
 
@@ -28,12 +28,12 @@ release = "2.0.4"
 
 extensions = [
     "myst_parser",
-    "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "nbsphinx",
     "sphinx_design",
+    "sphinx.ext.autodoc",
 ]
 
 templates_path = ["_templates"]
