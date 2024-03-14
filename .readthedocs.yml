@@ -28,5 +28,5 @@ sphinx:
 python:
    install:
      - method: pip
-       path: ./src/MagmaPandas
+       path: ./
      - requirements: requirements.txt
