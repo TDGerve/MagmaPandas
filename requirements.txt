@@ -1,6 +1,7 @@
 sphinx_rtd_theme
 myst-parser
 nbsphinx
+sphinx-design
 pandas
 numpy
 scipy

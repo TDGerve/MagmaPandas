@@ -33,7 +33,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "nbsphinx",
-    "sphinx_gallery.load_style",
+    "sphinx_design",
 ]
 
 templates_path = ["_templates"]
