@@ -5,19 +5,34 @@ MagmaFrames
 Module with the generic MagmaFrame class.
 """
 
+import re
 from typing import List
 
 import elementMass as e
+import numpy as np
 import pandas as pd
+from typing_extensions import Self
 
 from MagmaPandas.Elements import element_weights, oxide_compositions
 from MagmaPandas.enums import Datatype, Unit
+from MagmaPandas.MagmaFrames.protocols import Magma
 from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
 
 
 class MagmaFrame(pd.DataFrame):
     """
-    Generic MagmaPandas DataFrame class for processing geochemical data.
+    Generic MagmaPandas DataFrame class for geochemical data.
+
+    Parameters
+    ----------
+    data : ndarray (structured or homogeneous), Iterable, dict, or DataFrame
+        geochemical data with elements or oxides in columns
+    units : None, str
+        data units, either "mol fraction", "wt. %" or "ppm"
+    datatype : None, str
+        datatype either "cation" or "oxide"
+    weights : None, pandas Series
+        atomic weights of elements or oxides in the MagmaFrame
     """
 
     # New attributes
@@ -29,9 +44,8 @@ class MagmaFrame(pd.DataFrame):
         self,
         data=None,
         *args,
-        units: str = None,
-        datatype: str = None,
-        total_col: str = None,
+        units: None | str = None,
+        datatype: None | str = None,
         weights: pd.Series = None,
         **kwargs,
     ) -> None:
@@ -39,6 +53,13 @@ class MagmaFrame(pd.DataFrame):
         self._datatype: Datatype = Datatype(datatype)
 
         super().__init__(data, **kwargs)
+
+        if not self._total:
+            total_regex = re.search(
+                "total", "".join(self.columns.to_list()), re.IGNORECASE
+            )
+            if total_regex:
+                self.rename(columns={total_regex[0]: "total"}, inplace=True)
 
         if weights is not None:
             self._weights = weights.copy()
@@ -96,6 +117,9 @@ class MagmaFrame(pd.DataFrame):
 
     @property
     def units(self) -> str:
+        """
+        Datatype and units.
+        """
         return f"{self._datatype.value} {self._units.value}"
 
     @units.setter
@@ -104,25 +128,39 @@ class MagmaFrame(pd.DataFrame):
 
     @property
     def weights(self) -> pd.Series:
+        """
+        Atomic weights of all elements in the MagmaFrame.
+        """
         return self._weights.copy()
 
     @property
-    def elements(self) -> List:
+    def elements(self) -> List[str]:
+        """
+        Names of all elements in the MagmaFrame.
+        """
         return list(self._weights.index).copy()
 
     @property
     @_check_attribute("_units", ["wt. %", "ppm"])
-    def moles(self):
+    def moles(self) -> Self:
+        """
+        Data converted to mol fractions.
+        """
         if self._units != Unit.MOL_FRACTIONS:
-            return self.convert_moles_wtPercent
+            return self.convert_moles_wtPercent()
         else:
             return self.copy()
 
     @property
-    def cations(self):
+    def cations(self) -> Self:
+        """
+        Data converted to cation mol fractions
+        """
         # Calculate oxide moles
         if self._units != Unit.MOL_FRACTIONS:
             moles = self.moles[self.elements]
+        elif self._datatype == Datatype.CATION:
+            return self
         else:
             moles = self[self.elements].copy()
         # Calculate cation moles
@@ -141,12 +179,9 @@ class MagmaFrame(pd.DataFrame):
         return cations
 
     @property
-    def oxygen(self):
+    def oxygen(self) -> pd.Series:
         """
-        Returns
-        -------
-        pd.Series
-            oxygen per 1 mole of cations
+        oxygen per 1 mole of cations
         """
         # Calculate oxide moles
         if self._datatype != Datatype.CATION:
@@ -168,9 +203,9 @@ class MagmaFrame(pd.DataFrame):
 
         return oxygen
 
-    def convert_ppm_wtPercent(self):
+    def convert_ppm_wtPercent(self) -> Self:
         """
-        Convert ppm to wt. % and vice versa
+        ppm converted to wt. % and vice versa
         """
         convert_dict = {
             Unit.WT_PERCENT: [1e4, Unit.PPM],
@@ -182,10 +217,9 @@ class MagmaFrame(pd.DataFrame):
 
         return converted
 
-    @property
-    def convert_moles_wtPercent(self):
+    def convert_moles_wtPercent(self) -> Self:
         """
-        Convert moles to wt. % or vice versa
+        moles converted to wt. % and vice versa
         """
 
         converted = self[self.elements].copy()
@@ -206,9 +240,18 @@ class MagmaFrame(pd.DataFrame):
 
         return converted
 
-    def mineral_formula(self, O: int = None):
+    def mineral_formula(self, O: int = None) -> Self:
         """
-        Calculate mineral formulas by normalising to oxygen
+        Calculate mineral formulas by normalising to oxygen per formula unit
+
+        Parameters
+        ----------
+        O : int
+            Amount of oxygen to normalise to.
+
+        Returns
+        -------
+        mineral formulas : MagmaFrame
         """
         # Calculate cation fractions
         cations = self.cations
@@ -226,7 +269,7 @@ class MagmaFrame(pd.DataFrame):
 
         return cations
 
-    def recalculate(self, inplace=False):
+    def recalculate(self, inplace=False) -> Self:
         """
         Recalculate element masses and total weight.
         """
@@ -241,9 +284,18 @@ class MagmaFrame(pd.DataFrame):
         if not inplace:
             return df
 
-    def normalise(self, to=None):
+    def normalise(self, to=None) -> Self:
         """
-        Normalise composition.
+        Normalise compositions.
+
+        Parameters
+        ----------
+        to :    float, int
+            normalisation value
+
+        Returns
+        -------
+        normalised data : MagmaFrame
         """
         if to is not None:
             norm = to
@@ -262,3 +314,28 @@ class MagmaFrame(pd.DataFrame):
         normalised.loc[:, "total"] = normalised.sum(axis=1)
 
         return normalised
+
+    def random_sample(self, errors) -> Self:
+        """
+        Randomly resample compositions within errors.
+
+        Sampling distribution is assumed normal with measured values as means and errors as standard deviations.
+
+        Parameters
+        ----------
+        errors  : float, array-like
+            standard deviation of the normal distributions. Use int for a fixed value for all elements or an array for specific values for all elements in :py:attr:`~MagmaPandas.MagmaFrames.magmaFrame.MagmaFrame.elements`
+
+        Returns
+        -------
+        resampled data : MagmaFrame
+            Randomly resampled compositions
+        """
+
+        random_sample = np.random.normal(self[self.elements], errors)
+        random_sample[random_sample < 0] = 0
+
+        df = self.copy()
+        df[df.elements] = random_sample
+
+        return df

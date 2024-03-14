@@ -1,21 +1,26 @@
 import pandas as pd
+from typing_extensions import Self
 
-from ..enums import Unit
-from .magmaFrame import MagmaFrame
+from MagmaPandas.enums import Unit
+from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
 
 
 class Clinopyroxene(MagmaFrame):
+    """
+    Subclass of :py:class:`~MagmaPandas.MagmaFrames.magmaFrame.MagmaFrame` extended with clinopyroxene specific methods.
+    """
+
     @property
-    def formula(self):
+    def formula(self) -> Self:
         """
-        Docstrings
+        Mineral formulas normalised to 6 O p.f.u.
         """
         return self.mineral_formula(O=6)
 
     @property
-    def mg_no(self):
+    def mg_no(self) -> pd.Series:
         """
-        Docstrings
+        Mg numbers
         """
         if self._units == Unit.WT_PERCENT:
             moles = self.moles

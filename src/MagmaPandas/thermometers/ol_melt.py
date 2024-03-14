@@ -1,30 +1,39 @@
+"""
+Sub-module with olivine-melt thermometers
+"""
+
 import numpy as np
+import pandas as pd
+
+from MagmaPandas.MagmaFrames.protocols import Magma
 
 
-def putirka2007_4(liquid, olivine, P_bar, **kwargs):
-    """Olivine-liquid thermometer
+def putirka2007_4(
+    liquid: Magma, olivine: Magma, P_bar: float | pd.Series, **kwargs
+) -> pd.Series:
+    """
+    Olivine-liquid thermometer
 
-    Equation 4 from Putirka (2007) calculates liquiqdus temperature for bulk compositions.
-    Requires equilibrium with olivine.
+    Equation 4 from Putirka (2007)\ [16]_ calculates liquidus temperatures based on olivine-melt pairs.
+    Identical to equation 22 from Putirka (2008)\ [15]_.
 
     SEE = hydrous: 29, anhydrous: 45, total: 43
 
-    a.k.a. equation 22 from Putirka (2008)
-
-    FeO needs to be exclusively Fe2+
+    Total Fe is expressed as FeO
 
     Parameters
     ----------
-
-    P_bar : int or list-like
-        crystallisation pressures. Indices need to match melt if using pd.Series.
-
+    liquid  : Magma
+        melt compositions in oxide wt. %
+    olivine : pandas Series, pandas Dataframe
+        olivine compositions in oxide wt. %
+    P_bar : float, pandas Series
+        pressures in bar
 
     Returns
     -------
-    pd.Series
-        olivine liquidus temperatures in degrees Kelvin.
-
+    temperatures : pd.Series
+        olivine liquidus temperatures in Kelvin.
     """
     from ..MagmaFrames import MagmaFrame
     from ..MagmaSeries import MagmaSeries

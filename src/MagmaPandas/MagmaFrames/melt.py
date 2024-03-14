@@ -4,17 +4,23 @@ from multiprocessing import Pool
 import numpy as np
 import pandas as pd
 from alive_progress import alive_bar
+from typing_extensions import Self
 
 from MagmaPandas import volatile_solubility as vs
 from MagmaPandas.configuration import configuration
 from MagmaPandas.Fe_redox import FeRedox_QFM
 from MagmaPandas.Kd.Ol_melt import calculate_FeMg_Kd
+from MagmaPandas.liquid_density import calculate_density
 from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
 from MagmaPandas.parse_io.validate import _check_argument
 from MagmaPandas.thermometers import melt_thermometers
 
 
 class Melt(MagmaFrame):
+    """
+    Subclass of :py:class:`~MagmaPandas.MagmaFrames.magmaFrame.MagmaFrame` extended with melt specific methods.
+    """
+
     # @property
     # def _constructor(self):
     #     """This is the key to letting Pandas know how to keep
@@ -31,24 +37,71 @@ class Melt(MagmaFrame):
 
     #     return _c
 
-    def temperature(self, *args, **kwargs):
-        thermometer = melt_thermometers[configuration.melt_thermometer]
-
-        return thermometer(self, *args, **kwargs)
-
-    def tetrahedral_cations(self):
+    def temperature(self, P_bar: float | pd.Series = None, **kwargs) -> pd.Series:
         """
-        Tetrahedral cations
-        Si, Ti, Al and P are assumed to be in tetrahedral coordination. Fe3+ is not taken into account. See Mysen (1983)\ [1]_ for additional information
+        Calculate melt liquidus temperatures.
+        Model choice is set in the global :py:class:`~MagmaPandas.configuration.configuration` class.
+
+        Parameters
+        ----------
+        P_bar   : float, pandas Series
+            pressure in bar
 
         Returns
         -------
-        pd.Series
-            summed tertrahedral cations per 1 mole total cations
+        temperatures : pd.Series
+            Liquidus temperatures in Kelvin
+        """
+        thermometer = melt_thermometers[configuration.melt_thermometer]
 
-        References
+        return thermometer(self, P_bar=P_bar, **kwargs)
+
+    def density(
+        self,
+        T_K: float | pd.Series,
+        P_bar: float | pd.Series,
+        fO2_logshift: None | int = None,
+    ) -> pd.Series:
+        """
+        Calculate silicate melts densities with the Iacovino and Till (2019)\ [3]_ model
+
+        Parameters
         ----------
-        .. [1] Mysen, B. O. (1983) The structure of silicate melts. Ann. Rev. Earth Planet. Sci. 11. 75-97
+        T_K : float, pandas Series
+            temperatures in Kelvin
+        P_bar : float, pandas Series
+            pressures in bar
+        fO2_logshift : None, int
+            |fO2| buffer shift in log units of QFM. If set to None, the value set in the global configuration is used.
+
+        Returns
+        -------
+        densities : pd.Series
+            densities in kg/m\ :sup:`3`
+        """
+
+        self._match_index(arg_names=("T_K", "P_bar"), kwargs=locals())
+
+        if fO2_logshift is None:
+            fO2_logshift = configuration.dQFM
+
+        Fe3Fe2 = self.Fe3Fe2_QFM(T_K=T_K, P_bar=P_bar, fO2_logshift=fO2_logshift)
+        # calculate melt composition with Fe2O3 and FeO
+        melt = self.FeO_Fe2O3_calc(Fe3Fe2)
+
+        return calculate_density(melt, T_K=T_K, P_bar=P_bar)
+
+    def tetrahedral_cations(self) -> pd.Series:
+        """
+        Calculate tetrahedral cations based on Mysen (1983)\ [4]_
+
+        Si, Ti, Al and P are assumed to be in tetrahedral coordination and Fe\ :sup:`3+` is not taken into account
+
+        Returns
+        -------
+        tetrahedral cations : pd.Series
+            summed tertrahedral cations per 1 mole cations
+
         """
         cations = self.cations
 
@@ -61,16 +114,13 @@ class Melt(MagmaFrame):
     def NBO(self):
         """
         Non-bridging oxygen in the melt
-        Formulation according to Mysen (1983)\ [1]_
+        Formulation according to Mysen (1983)\ [4]_
 
         Returns
         -------
         pd.Series
             NBO per 1 mole cations
 
-        References
-        ----------
-        .. [1] Mysen, B. O. (1983) The structure of silicate melts. Ann. Rev. Earth Planet. Sci. 11. 75-97
         """
 
         oxygen = self.oxygen
@@ -80,59 +130,68 @@ class Melt(MagmaFrame):
     def NBO_T(self):
         """
         NBO/T
-        The ratio of non-bridging oxygen and tetrahedral cations. Formulation according to Mysen (1983)\ [1]_
+        The ratio of non-bridging oxygen and tetrahedral cations according to Mysen (1983)\ [4]_
 
         Returns
         -------
         pd.Series
             NBO/T
-
-        References
-        ----------
-        .. [1] Mysen, B. O. (1983) The structure of silicate melts. Ann. Rev. Earth Planet. Sci. 11. 75-97
-
         """
 
         return self.NBO() / self.tetrahedral_cations()
 
-    def Fe3Fe2_QFM(self, T_K=None, P_bar=None, inplace=False):
+    def Fe3Fe2_QFM(
+        self,
+        T_K: float | pd.Series,
+        P_bar: float | pd.Series,
+        fO2_logshift: None | int = None,
+        inplace=False,
+        **kwargs,
+    ) -> pd.Series:
         """
-        Calculate Fe-redox equilibrium at QFM oxygen buffer for silicate liquids.
-        Uses either equation 7 from Kress and Carmichael (1991) or equation 4 from Borisov et al. (2018).
+        Calculate melt |Fe3Fe2| ratios at the QFM |fO2| buffer.
+        Model choice is set in the global :py:class:`~MagmaPandas.configuration.configuration` class.
 
         Parameters
         ----------
 
         T_K :   float, pd.Series-like
-            temperature in Kelvin
+            temperatures in Kelvin
         Pbar    :   float, pd.Series-like
             Pressure in bars
         logshift    :   int, pd.Series-like
-            log units shift of QFM
+            |fO2| buffer shift in log units of QFM.
         inplace :   bool
-            return a new dataframe of add columns to the existing one
+
         Returns
         -------
-        melt Fe3+/Fe2+ ratio
+        melt Fe3+/Fe2+ ratios : pandas Series
 
         """
-        if T_K is None:
-            T_K = self["T_K"]
-        if P_bar is None:
-            P_bar = self["P_bar"]
+        # if T_K is None:
+        #     T_K = self["T_K"]
+        # if P_bar is None:
+        #     P_bar = self["P_bar"]
 
-        for name in ["T_K", "P_bar"]:
-            param = locals()[name]
-            if isinstance(param, pd.Series):
-                if not self.index.equals(param.index):
-                    raise RuntimeError(f"Melt and {name} indices don't match")
+        self._match_index(arg_names=["T_K", "P_bar"], kwargs=locals())
 
-        logshift = configuration.dQFM
+        # for name in ["T_K", "P_bar"]:
+        #     param = locals()[name]
+        #     if isinstance(param, pd.Series):
+        #         if not self.index.equals(param.index):
+        #             raise RuntimeError(f"Melt and {name} indices don't match")
+
+        if fO2_logshift is None:
+            fO2_logshift = configuration.dQFM
 
         mol_fractions = self.moles
 
         Fe3Fe2 = FeRedox_QFM(
-            mol_fractions=mol_fractions, T_K=T_K, P_bar=P_bar, logshift=logshift
+            mol_fractions=mol_fractions,
+            T_K=T_K,
+            P_bar=P_bar,
+            logshift=fO2_logshift,
+            **kwargs,
         )
 
         if inplace:
@@ -145,14 +204,24 @@ class Melt(MagmaFrame):
             return Fe3Fe2
 
     @_check_argument("total_Fe", ["FeO", "Fe2O3"])
-    def FeO_Fe2O3_calc(self, Fe3Fe2, total_Fe="FeO", inplace=False):
+    def FeO_Fe2O3_calc(
+        self, Fe3Fe2: float | pd.Series, total_Fe: str = "FeO", inplace: bool = False
+    ) -> Self:
         """
-        melt_mol_fractions : pd.DataFrame
-            melt composition in oxide mol fraction.
-        Fe3Fe2 :
-            melt Fe3+/Fe2+ ratio
-        total_Fe    :
-            column in melt_mol_fractions with total Fe
+        Calculate melt FeO and |Fe2O3| based on total Fe.
+
+        Parameters
+        ----------
+        Fe3Fe2 : pandas Series
+            melt |Fe3Fe2| ratios
+        total_Fe    : str
+            columname in Melt frame with total Fe
+        inplace : bool
+
+        Returns
+        -------
+        Melt    : Self
+            melt compositions inclusding FeO and |Fe2O3|
         """
 
         Fe2Fe_total = 1 / (1 + Fe3Fe2)
@@ -170,7 +239,7 @@ class Melt(MagmaFrame):
         melt_mol_fractions.recalculate(inplace=True)
 
         # Recalculate to wt. % (normalised)
-        melt = melt_mol_fractions.convert_moles_wtPercent
+        melt = melt_mol_fractions.convert_moles_wtPercent()
 
         if inplace:
             self["FeO"] = melt["FeO"]
@@ -180,11 +249,33 @@ class Melt(MagmaFrame):
         else:
             return melt
 
-    def Kd_olivine_FeMg(self, forsterite, T_K, Fe3Fe2, **kwargs):
+    def Kd_olivine_FeMg(
+        self,
+        forsterite: float | pd.Series,
+        T_K: float | pd.Series,
+        Fe3Fe2: float | pd.Series,
+        **kwargs,
+    ):
         """
-        Calulate Fe-Mg exchange coefficients between olivine (ol) and melt (m) as:
+        Calulate equilibrium Fe-Mg partitioning coefficients between olivine and melt as:
 
-        [Fe(ol) / Fe(m)] * [Mg(m) / Mg(ol)]
+        (Fe\ :sup:`2+` / Mg)\ :sub:`ol` / (Fe\ :sup:`2+` / Mg)\ :sub:`melt`
+
+        Model choice is set in the global :py:class:`~MagmaPandas.configuration.configuration` class.
+
+        Parameters
+        ----------
+        forsterite : pandas Series
+            initial olivine forsterite contents
+        T_K : pandas Series
+            temperatures in Kelvin
+        Fe3Fe2 : pandas Series
+            melt |Fe3Fe2| ratios
+
+        Returns
+        -------
+        Kds :   pandas Series
+            Fe-Mg partitioning coefficients
         """
         mol_fractions = self.moles
 
@@ -196,9 +287,19 @@ class Melt(MagmaFrame):
             **kwargs,
         )
 
-    def volatile_saturation_pressure(self, T_K, inplace=False, **kwargs):
+    def volatile_saturation_pressure(
+        self, T_K: float | pd.Series, inplace: bool = False, **kwargs
+    ):
         """
-        Calculate volatile (H2O and/or CO2) saturation pressures for given liquid compositions.
+        Calculate melt volatile (|CO2| and/or |H2O|) saturation pressures.
+
+        Model choice is set in the global :py:class:`~MagmaPandas.configuration.configuration` class.
+
+        Parameters
+        ----------
+        T_K : float, pandas Series
+            temperatures in Kelvin
+        inplace : bool
 
         Returns
         -------
@@ -273,8 +374,16 @@ class Melt(MagmaFrame):
                 solubility_model=solubility_model,
                 **kwargs,
             )
-        except Exception:
+        except Exception as e:
             result = np.nan
-            w.warn(f"Saturation pressure not found for sample {name}")
+            w.warn(f"Saturation pressure not found for sample {name}: {repr(e)}")
 
         return name, result
+
+    def _match_index(self, arg_names: list[str], kwargs):
+
+        for name in arg_names:
+            param = kwargs[name]
+            if isinstance(param, pd.Series):
+                if not self.index.equals(param.index):
+                    raise RuntimeError(f"Melt and {name} indices don't match")

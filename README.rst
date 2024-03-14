@@ -21,13 +21,19 @@ Documentation
 Code documentation is currently being worked on at `magmapandas.readthedocs.io <https://magmapandas.readthedocs.io>`_
 
 
+How to cite MagmaPandas
+------------------------------
+If have used MagmaPandas in your research, please reference  `this <https://doi.org/10.1093/petrology/egae006>`_ paper published in Journal of Petrology. To ensure reproducibility, please also mention the release version of MagmaPandas that you used.
+
+
+
 Installation
 ------------
 MagmaPandas can be installed with pip by running:
 
 .. code-block:: bash
 
-    pip install git+https://github.com/TDGerve/MagmaPandas.git
+    pip install magmapandas
 
 in a terminal.
 If you want to install from a specific git branch or release, use:

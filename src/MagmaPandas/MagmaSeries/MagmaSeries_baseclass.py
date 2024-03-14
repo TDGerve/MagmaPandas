@@ -1,7 +1,9 @@
 from typing import List
 
 import elementMass as e
+import numpy as np
 import pandas as pd
+from typing_extensions import Self
 
 from MagmaPandas.configuration import configuration
 from MagmaPandas.Elements import element_weights, oxide_compositions
@@ -35,7 +37,18 @@ def _MagmaSeries_expanddim(data=None, *args, **kwargs):
 
 class MagmaSeries(pd.Series):
     """
-    Docstrings
+    Generic MagmaSeries class for chemical data.
+
+    Parameters
+    ----------
+    data : array-like, Iterable, dict, or scalar value
+        geochemical data with elements or oxides as index
+    units : None, str
+        data units, either "mol fraction", "wt. %" or "ppm"
+    datatype : None, str
+        datatype either "cation" or "oxide"
+    weights : None, pandas Series
+        atomic weights of elements or oxides in the MagmaSeries
     """
 
     # New attributes
@@ -45,6 +58,7 @@ class MagmaSeries(pd.Series):
     @_check_argument("datatype", [None, "cation", "oxide"])
     def __init__(
         self,
+        data=None,
         *args,
         units: str = None,
         datatype: str = None,
@@ -54,7 +68,7 @@ class MagmaSeries(pd.Series):
         self._units: Unit = Unit(units)
         self._datatype: Datatype = Datatype(datatype)
 
-        super().__init__(*args, **kwargs)
+        super().__init__(data, *args, **kwargs)
 
         if weights is not None:
             self._weights = weights.copy(deep=True)
@@ -124,7 +138,7 @@ class MagmaSeries(pd.Series):
     @property
     def units(self) -> str:
         """
-        Data units
+        Datatype and units.
         """
         return f"{self._datatype.value} {self._units.value}"
 
@@ -133,32 +147,35 @@ class MagmaSeries(pd.Series):
         print("units are read only")
 
     @property
-    def weights(self):
+    def weights(self) -> pd.Series:
+        """
+        Atomic weights of all elements in the MagmaSeries.
+        """
         return self._weights
 
     @property
-    def elements(self) -> List:
+    def elements(self) -> List[str]:
         """
-        Names of the elements in the series
+        Names of all elements in the MagmaSeries
         """
         return list(self._weights.index)
 
     @property
     @_check_attribute("_datatype", ["oxide"])
-    def moles(self):
+    def moles(self) -> Self:
         """
-        Calculate molar fractions from oxide concentrations
+        Data converted to mol fractions.
         """
         if self._units != Unit.MOL_FRACTIONS:
-            return self.convert_moles_wtPercent
+            return self.convert_moles_wtPercent()
         else:
             return self
 
     @property
     @_check_attribute("_datatype", ["oxide"])
-    def cations(self):
+    def cations(self) -> Self:
         """
-        Calculate cation fractions from oxide concentrations
+        Data converted to cation mol fractions
         """
         # Calculate oxide moles
         if self._units != Unit.MOL_FRACTIONS:
@@ -184,10 +201,9 @@ class MagmaSeries(pd.Series):
 
         return cations
 
-    @property
-    def convert_moles_wtPercent(self):
+    def convert_moles_wtPercent(self) -> Self:
         """
-        Convert moles to wt. % or vice versa
+        moles converted to wt. % and vice versa
         """
 
         converted = self.copy()[self.elements]
@@ -208,9 +224,9 @@ class MagmaSeries(pd.Series):
 
         return converted
 
-    def convert_ppm_wtPercent(self):
+    def convert_ppm_wtPercent(self) -> Self:
         """
-        Convert ppm to wt. % and vice versa
+        ppm converted to wt. % and vice versa
         """
         convert_dict = {
             Unit.WT_PERCENT: [1e4, Unit.PPM],
@@ -222,9 +238,18 @@ class MagmaSeries(pd.Series):
 
         return converted
 
-    def mineral_formula(self, O: int = None):
+    def mineral_formula(self, O: int = None) -> Self:
         """
-        Calculate mineral formulas by normalising to oxygen
+        Calculate mineral formulas by normalising to oxygen per formula unit
+
+        Parameters
+        ----------
+        O : int
+            Amount of oxygen to normalise to.
+
+        Returns
+        -------
+        mineral formulas : MagmaSeries
         """
         # Calculate cation fractions
         cations = self.cations
@@ -242,9 +267,9 @@ class MagmaSeries(pd.Series):
 
         return cations
 
-    def recalculate(self, inplace=False):
+    def recalculate(self, inplace=False) -> Self:
         """
-        Recalculate element masses and total.
+        Recalculate element masses and total weight.
         """
 
         series = self if inplace else self.copy()
@@ -257,9 +282,18 @@ class MagmaSeries(pd.Series):
         if not inplace:
             return series
 
-    def normalise(self, to=None):
+    def normalise(self, to=None) -> Self:
         """
-        Normalise composition.
+        Normalise compositions.
+
+        Parameters
+        ----------
+        to :    float, int
+            normalisation value
+
+        Returns
+        -------
+        normalised data : MagmaSeries
         """
         if to is not None:
             norm = to
@@ -278,11 +312,49 @@ class MagmaSeries(pd.Series):
 
         return normalised
 
-    def melt_temperature(self, *args, **kwargs):
+    def temperature(self, *args, **kwargs) -> float:
         """
-        calculate liquidus temperature for melts
+        Calculate melt liquidus temperature.
+        Thermometer models are selected in the global configuration.
+
+        #TODO add link to the config docs.
+
+        Parameters
+        ----------
+        P_bar   : float, pandas Series
+            pressure in bar
+
+        Returns
+        -------
+        temperatures : float
+            Liquidus temperature in Kelvin
         """
 
         thermometer = melt_thermometers[configuration.melt_thermometer]
 
         return thermometer(self, *args, **kwargs)
+
+    def random_sample(self, errors) -> Self:
+        """
+        Randomly resample compositions within errors.
+
+        Sampling distribution is assumed normal with measured values as means and errors as standard deviations.
+
+        Parameters
+        ----------
+        errors  : float, array-like
+            standard deviation of the normal distributions. Use int for a fixed value for all elements or an array for specific values for all elements in :py:attr:`~MagmaPandas.MagmaFrames.magmaFrame.MagmaFrame.elements`
+
+        Returns
+        -------
+        resampled data : MagmaSeries
+            Randomly resampled compositions
+        """
+
+        random_sample = np.random.normal(self[self.elements], errors)
+        random_sample[random_sample < 0] = 0
+
+        sr = self.copy()
+        sr[sr.elements] = random_sample
+
+        return sr

@@ -6,7 +6,7 @@ import pandas as pd
 import scipy.optimize as opt
 from scipy.constants import R
 
-from . import eos_minerals
+from MagmaPandas.fO2 import eos_minerals
 
 
 def VdP_QFM(T_K, P_bar):
@@ -109,16 +109,19 @@ def muO2_QFM_P(T_K, P_bar):
     calculate chemical potential of oxygen at QFM and pressure P with equations of state
     """
 
-    try:
-        int(P_bar)
+    P_bar_is_int = False
+    T_K_is_int = False
+
+    if isinstance(P_bar, (int, float)):
+        # int(P_bar)
         P_bar_is_int = True
-    except TypeError:
-        P_bar_is_int = False
-    try:
-        int(T_K)
+    # except TypeError:
+    #     P_bar_is_int = False
+    if isinstance(T_K, (float, int)):
+        # int(T_K)
         T_K_is_int = True
-    except TypeError:
-        T_K_is_int = False
+    # except TypeError:
+    #     T_K_is_int = False
 
     # If P and T are not both numbers
     if not (P_bar_is_int and T_K_is_int):
@@ -209,8 +212,28 @@ def fO2_QFM_1bar(T_K, logshift=0):
     return np.exp(mu_O2 / (R * T_K)) * offset
 
 
-def fO2_QFM(logshift, T_K, P_bar):
-    """ """
+def fO2_QFM(
+    logshift: int | float, T_K: float | np.ndarray, P_bar: float | np.ndarray
+) -> float | np.ndarray:
+    """
+    Calculate |fO2| at the QFM buffer.
+
+    1 bar components is calculated according to O'Neill (1987)\ [5]_ and pressure contributions according to Holland and Powell (2011)\ [6]_, with Landau theory from Holland and Powell (1990, 1998)\ [7]_:sup:`,`\ [8]_ and thermal Tait equations of state parameters from Holland and Powell (2011)\ [6]_, updated by Jennings and Holland (2015)\ [9]_.
+
+    Parameters
+    ----------
+    logshift    : int, float
+        |fO2| buffer shift in log units of QFM.
+    T_K : float, array-like
+        temperatures in Kelvin
+    P_bar : float, array-like
+        pressure in bar
+
+    Returns
+    -------
+    fO2 : float, array-like
+        |fO2| in bar
+    """
     offset = 10**logshift
 
     # Chemical potential of oxygen
@@ -230,5 +253,5 @@ def fO2_QFM(logshift, T_K, P_bar):
 
     if isinstance(fO2, pd.Series):
         return fO2.squeeze()
-    else:
-        return fO2
+
+    return fO2

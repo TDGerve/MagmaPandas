@@ -1,3 +1,5 @@
+.. include:: ./substitutions.rst
+
 ==============================
 MagmaPandas quickstart
 ==============================
@@ -8,7 +10,9 @@ MagmaPandas quickstart
 
    about
    getting_started
+   examples
    code_documentation
+   changelog
    support
    license
 
@@ -22,12 +26,8 @@ with methods for common calculations, including those for:
    * mineral composition by stoichiometry,
    * melt thermometry,
    * melt Fe speciation,
-   * melt volatile (CO\ :sub:`2`\-H\ :sub:`2`\O) saturation pressure
+   * melt |CO2|-|H2O| saturation pressure
    * mineral-melt element partition coefficients,
-
-
-MagmaPandas includes a model for post-entrapment crystallisation correction of compositions of olivine hosted melt inclusions.
-
 
 Installation
 ------------

@@ -11,8 +11,7 @@ from MagmaPandas.MagmaFrames import (
     Olivine,
     Plagioclase,
 )
-
-from .validate import _check_argument
+from MagmaPandas.parse_io.validate import _check_argument
 
 
 @_check_argument("phase", [None, "Melt", "Olivine", "Clinopyroxene", "Plagioclase"])
@@ -69,9 +68,7 @@ def read_file(
 
     create_class_instance = getattr(MagmaFrames, phase)
 
-    return create_class_instance(
-        df, units=units, datatype=datatype, total_col=total_col
-    )
+    return create_class_instance(df, units=units, datatype=datatype)
 
 
 def read_clinopyroxene(

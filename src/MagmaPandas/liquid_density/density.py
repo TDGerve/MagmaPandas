@@ -1,10 +1,10 @@
 import elementMass as e
 import pandas as pd
 
-from MagmaPandas import Melt
+from MagmaPandas.MagmaFrames.protocols import Magma
 
 """
-based on Iacovino and Till (2017)
+based on Iacovino and Till (2019)
 """
 
 T_reference = pd.Series(
@@ -68,12 +68,33 @@ dVdP = pd.Series(
 )
 
 
-def calculate_density(composition: Melt, T_K: pd.Series, P_bar: pd.Series) -> pd.Series:
+def calculate_density(
+    composition: Magma, T_K: float | pd.Series, P_bar: float | pd.Series
+) -> pd.Series:
+    """
+    Calculate silicate liquid densities according to the model from Iacovino and Till (2019)\ [3]_
+
+    The model uses thermodynamic data from Lange and Carmichael (1987)\ [12]_, Lange (1997)\ [13]_, Kress and Carmichael (1991)\ [2]_ and Ochs III and Lange (1999)\ [14]_
+
+    Parameters
+    ----------
+    composition : Magma
+        melt composition in oxide wt. %
+    T_K : float, pandas Series
+        temperatures in Kelvin
+    P_bar : float, pandas Series
+        pressures in bar
+
+    Returns
+    -------
+    densities : pandas Series
+        densities in kg/m\ :sup:`3`
+    """
     mole_fractions = composition.moles[molar_volumes.index]
 
     oxide_masses = e.compound_weights(mole_fractions.columns)
 
-    # eauation 1 numerator
+    # equation 1 numerator
     mass_1_mole = mole_fractions.mul(oxide_masses, axis=1).sum(axis=1)
 
     T_contribution = _calculate_T_contribution(T_K, index=mole_fractions.index)
@@ -88,8 +109,8 @@ def calculate_density(composition: Melt, T_K: pd.Series, P_bar: pd.Series) -> pd
     return density
 
 
-def calculate_temperature(
-    composition: Melt, density: pd.Series, P_bar: pd.Series
+def _calculate_temperature(
+    composition: Magma, density: pd.Series, P_bar: pd.Series
 ) -> pd.Series:
     mole_fractions = composition.moles[molar_volumes.index]
 
@@ -127,6 +148,9 @@ def _calculate_P_contribution(P_bar: pd.Series, index):
 
 
 def _calculate_T_contribution(T_K: pd.Series, index):
+    if isinstance(T_K, (int, float)):
+        T_K = pd.Series(T_K, index=index)
+
     T_contribution = pd.DataFrame(columns=(T_reference.index), index=index)
     T_contribution.loc[:, :] = T_K.values[:, None]
     T_contribution = T_contribution.sub(T_reference, axis=1)

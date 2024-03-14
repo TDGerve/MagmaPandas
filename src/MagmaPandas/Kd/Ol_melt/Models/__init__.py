@@ -1,5 +1,5 @@
-from .Blundy import FeMg_blundy
-from .Toplis import FeMg_Toplis
+from MagmaPandas.Kd.Ol_melt.Models.Blundy import FeMg_blundy
+from MagmaPandas.Kd.Ol_melt.Models.Toplis import FeMg_Toplis
 
 Kd_models = {"toplis": FeMg_Toplis, "blundy": FeMg_blundy}
 

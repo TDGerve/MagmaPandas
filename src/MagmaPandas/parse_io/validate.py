@@ -1,3 +1,4 @@
+import inspect
 from functools import wraps
 from typing import List
 
@@ -7,10 +8,23 @@ def _check_argument(var_name: str, allowed_values: List[str]):
         """
         Check if var_name has a valid value
         """
+        # Get values for default arguments
+        sig = inspect.signature(func)
+        defaults = {
+            n: val
+            for n, val in zip(
+                sig.parameters.keys(), [val.default for val in sig.parameters.values()]
+            )
+        }
 
-        @wraps(func)
+        @wraps(func)  # comment
         def wrapper(*args, **kwargs):
-            var = kwargs.get(var_name, None)
+
+            for key in kwargs.keys():
+                # Remove user kwargs from the default dict
+                defaults.pop(key, None)
+
+            var = {**kwargs, **defaults}.get(var_name, None)
             if var not in allowed_values:
                 raise ValueError(
                     f"{var_name}: {var}, not recognised, please choose from: {allowed_values}"
@@ -28,7 +42,7 @@ def _check_setter(allowed_values):
         check if set value is valid
         """
 
-        @wraps(func)
+        @wraps(func)  # comment
         def wrapper(*args):
             var = args[1]
             if isinstance(var, (float, int)):
@@ -55,6 +69,7 @@ def _check_attribute(attr_name: str, allowed_values: List[str]):
         Check if attr_name has a valid value
         """
 
+        @wraps(func)  # comment
         def wrapper(self, *args, **kwargs):
             attr = getattr(self, attr_name)
             if attr.value not in allowed_values:
@@ -63,6 +78,7 @@ def _check_attribute(attr_name: str, allowed_values: List[str]):
                 )
             return func(self, *args, **kwargs)
 
+        # wrapper.__doc__ = func.__doc__
         return wrapper
 
     return decorator
@@ -74,7 +90,7 @@ def _check_value(var_name: str, allowed_range: List[float]):
         Check if var_name has a valid value
         """
 
-        @wraps(func)
+        @wraps(func)  # comment
         def wrapper(*args, **kwargs):
             var = kwargs.get(var_name, None)
             min, max = allowed_range

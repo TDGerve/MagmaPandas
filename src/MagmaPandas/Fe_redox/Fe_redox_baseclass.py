@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 
 
-class Kd_model(ABC):
+class Fe3Fe2_model(ABC):
     @abstractmethod
-    def calculate_Kd(
-        cls, Melt_mol_fractions, forsterite_initial, T_K, P_bar, *args, **kwargs
+    def calculate_Fe3Fe2(
+        cls, Melt_mol_fractions, T_K, fO2, *args, **kwargs
     ):
         pass
 

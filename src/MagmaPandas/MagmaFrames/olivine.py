@@ -1,11 +1,15 @@
 import pandas as pd
+from typing_extensions import Self
 
+from MagmaPandas.enums import Unit
 from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
-
-from ..enums import Unit
 
 
 class Olivine(MagmaFrame):
+    """
+    Subclass of :py:class:`~MagmaPandas.MagmaFrames.magmaFrame.MagmaFrame` extended with olivine specific methods.
+    """
+
     # @property
     # def _constructor(self):
     #     """This is the key to letting Pandas know how to keep
@@ -23,9 +27,9 @@ class Olivine(MagmaFrame):
     #     return _c
 
     @property
-    def forsterite(self):
+    def forsterite(self) -> pd.Series:
         """
-        Docstrings
+        Forsterite contents
         """
         if self._units == Unit.WT_PERCENT:
             moles = self.moles
@@ -43,8 +47,8 @@ class Olivine(MagmaFrame):
         )
 
     @property
-    def formula(self):
+    def formula(self) -> Self:
         """
-        Docstrings
+        Mineral formulas normalised to 4 O p.f.u.
         """
         return self.mineral_formula(O=4)

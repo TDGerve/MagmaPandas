@@ -1,8 +1,7 @@
 import pandas as pd
 
 from MagmaPandas.configuration import configuration
-
-from .Models import Kd_models, equilibrium_forsterite
+from MagmaPandas.Kd.Ol_melt.Models import Kd_models, equilibrium_forsterite
 
 
 def calculate_Kd(

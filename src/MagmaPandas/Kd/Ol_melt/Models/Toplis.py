@@ -1,10 +1,17 @@
 import numpy as np
+import pandas as pd
 from scipy.constants import R  # J*K-1*mol-1
 
-from ...Kd_baseclass import Kd_model
+from MagmaPandas.Kd.Kd_baseclass import Kd_model
 
 
 class FeMg_Toplis(Kd_model):
+    """
+    Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 10 from Toplis (2005)\ [10]_.
+    """
+
+    error = 0.02
+
     @classmethod
     def _Phi(cls, molar_SiO2, molar_Na2O, molar_K2O):
         """
@@ -89,9 +96,33 @@ class FeMg_Toplis(Kd_model):
         return SiO2_A
 
     @classmethod
-    def calculate_Kd(cls, melt_mol_fractions, forsterite, T_K, P_bar, *args, **kwargs):
+    def calculate_Kd(
+        cls,
+        melt_mol_fractions: pd.DataFrame,
+        forsterite: float | pd.Series,
+        T_K: float | pd.Series,
+        P_bar: float | pd.Series,
+        *args,
+        **kwargs,
+    ) -> float | pd.Series:
         """
-        Toplis (2005) Equation 10
+        Calculate equilibrium Kds for given melt compositions
+
+        Parameters
+        ----------
+        melt_mol_fractions : pandas Dataframe
+            melt compositions in oxide mol fractions
+        forsterite : float, array-like
+            initial olivine forsterite contents. Forsterite values are iteratively adjusted and initial values are not necessarily in Fe-Mg equilibrium with melts.
+        T_K : float, array-like
+            temperatures in Kelvin
+        P_bar: float, array-like
+            pressures in bar
+
+        Returns
+        -------
+        Kds : array-like
+            Fe-Mg partition coefficients
         """
 
         SiO2_A = cls._SiO2_A(melt_mol_fractions)
@@ -102,3 +133,25 @@ class FeMg_Toplis(Kd_model):
             + (3000 * (1 - 2 * forsterite) / (R * T_K))
             + (0.035 * (P_bar - 1) / (R * T_K))
         )
+
+    @classmethod
+    def get_error(cls) -> float:
+        """
+        Calculate one standard deviation errors on Kds
+
+        Returns
+        -------
+        error:  float
+            one standard deviation error
+        """
+
+        return cls.error
+
+    @classmethod
+    def get_offset_parameters(cls, n=1):
+        return np.random.normal(loc=0, scale=1, size=n)
+
+    @classmethod
+    def get_offset(cls, offset_parameters, *args, **kwargs):
+        error = cls.get_error()
+        return offset_parameters * error

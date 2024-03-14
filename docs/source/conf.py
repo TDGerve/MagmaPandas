@@ -20,7 +20,7 @@ sys.path.insert(0, (pathlib.Path(__file__).parents[2] / "src").resolve().as_posi
 project = "MagmaPandas"
 copyright = "2022, Thomas van Gerve"
 author = "Thomas van Gerve"
-release = "1.0.0"
+release = "2.0.4"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -33,6 +33,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "nbsphinx",
+    "sphinx_gallery.load_style",
 ]
 
 templates_path = ["_templates"]
@@ -51,4 +52,5 @@ autodoc_member_order = "groupwise"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_rtd_theme"
+html_theme_options = {"navigation_depth": 6}
 html_static_path = ["../_static"]

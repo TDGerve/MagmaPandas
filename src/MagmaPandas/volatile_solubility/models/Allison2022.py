@@ -1,15 +1,18 @@
-from typing import List
+"""
+|CO2|-|H2O| solubility models from Allison et al. (2022)\ [17]_
+"""
+
+from typing import List, Tuple
 
 import elementMass as e
 import numpy as np
 from scipy.constants import R
 from scipy.optimize import root, root_scalar
 
-from MagmaPandas import MagmaSeries
+from MagmaPandas.MagmaSeries.MagmaSeries_baseclass import MagmaSeries
 from MagmaPandas.parse_io.validate import _check_argument, _check_setter
 from MagmaPandas.volatile_solubility.EOS import hollowayBlank
-
-from .solubility_baseclass import Solubility_model
+from MagmaPandas.volatile_solubility.models.solubility_baseclass import Solubility_model
 
 """
 Equations from:
@@ -136,14 +139,29 @@ fugacity_model = hollowayBlank.fugacity
 
 class h2o(Solubility_model):
     @staticmethod
-    def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, x_fluid=1.0, **kwargs):
+    def calculate_saturation(
+        oxide_wtPercents: MagmaSeries, T_K: float, **kwargs
+    ) -> float:
         """
-        Equation 8 from Allison 2022
+        Calculate melt |H2O| saturation pressure according to equation 8.
+
+        Parameters
+        ----------
+        oxide_wtPercents : MagmaSeries
+            melt composition in oxide wt. %. Needs to have an 'H2O' column.
+        T_K : float
+            temperature in Kelvin
+
+        Returns
+        -------
+        P_saturation : float
+            Saturation pressure in bar
         """
+        x_fluid = kwargs.pop("x_fluid", 1.0)
 
         if oxide_wtPercents["H2O"] < 0:
             raise ValueError(f"H2O lower than 0: {oxide_wtPercents['H2O']}")
-        if not 1 >= x_fluid >= 0:
+        if not (1 >= x_fluid >= 0):
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
         if oxide_wtPercents["H2O"] == 0.0:
             return 0.0
@@ -163,9 +181,23 @@ class h2o(Solubility_model):
         return P_saturation
 
     @staticmethod
-    def calculate_solubility(P_bar, T_K, x_fluid=1.0, **kwargs):
+    def calculate_solubility(P_bar: float, T_K: float, x_fluid=1.0, **kwargs) -> float:
         """
-        Equation 8 from Allison 2022
+        Calculate melt |H2O| solubility according to equation 8.
+
+        Parameters
+        ----------
+        P_bar : float
+            Pressure in bar.
+        T_K : float
+            temperature in Kelvin
+        x_fluid : float
+            fraction of |H2O| in the fluid. Default value is 1.0
+
+        Returns
+        -------
+        H2O : float
+            melt |H2O| solubility in wt.%.
         """
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
@@ -183,7 +215,28 @@ class h2o(Solubility_model):
 
 class co2(Solubility_model):
     @staticmethod
-    def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, x_fluid=0.0, **kwargs):
+    def calculate_saturation(
+        oxide_wtPercents: MagmaSeries,
+        T_K: float,
+        **kwargs,
+    ) -> float:
+        """
+        Calculate melt |CO2| saturation pressure according to equation 5.
+
+        Parameters
+        ----------
+        oxide_wtPercents : MagmaSeries
+            melt composition in oxide wt. %. Needs to have a 'CO2' column.
+        T_K : float
+            temperature in Kelvin
+
+        Returns
+        -------
+        P_saturation : float
+            Saturation pressure in bar
+        """
+        x_fluid = kwargs.pop("x_fluid", 0.0)
+
         if oxide_wtPercents["CO2"] < 0:
             raise ValueError(f"CO2 lower than 0: {oxide_wtPercents['CO2']}")
         if not 1 >= x_fluid >= 0:
@@ -207,6 +260,7 @@ class co2(Solubility_model):
             args=(T_K, deltaV, lnK0, Kf),
             bracket=[1e-50, 1.5e4],
         ).root
+
         if x_fluid <= 0:
             return P_CO2
         else:
@@ -224,9 +278,31 @@ class co2(Solubility_model):
 
     @staticmethod
     def calculate_solubility(
-        oxide_wtPercents: MagmaSeries, P_bar, T_K, x_fluid=0.0, **kwargs
-    ):
-        """ """
+        oxide_wtPercents: MagmaSeries,
+        P_bar: float,
+        T_K: float,
+        x_fluid: float = 0.0,
+        **kwargs,
+    ) -> float:
+        """
+        Calculate melt |CO2| solubility according to equation 5.
+
+        Parameters
+        ----------
+        oxide_wtPercents : MagmaSeries
+            melt composition in oxide wt. %.
+        P_bar : float
+            Pressure in bar
+        T_K : float
+            temperature in Kelvin
+        x_fluid : float
+            fraction of |H2O| in the fluid. Default value is 0.0
+
+        Returns
+        -------
+        solublities : float
+            melt |CO2| solubility in wt. %.
+        """
 
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
@@ -337,7 +413,29 @@ class co2(Solubility_model):
 class mixed(Solubility_model):
     @staticmethod
     @_check_argument("output", [None, "PXfl", "P", "Xfl"])
-    def calculate_saturation(oxide_wtPercents: MagmaSeries, T_K, output="P", **kwargs):
+    def calculate_saturation(
+        oxide_wtPercents: MagmaSeries,
+        T_K: float | np.ndarray,
+        output: str = "P",
+        **kwargs,
+    ) -> float | Tuple[float, float]:
+        """
+        Calculate volatile saturation pressure for systems with mixed |CO2|-|H2O| fluids.
+
+        Parameters
+        ----------
+        oxide_wtPercents : MagmaSeries
+            melt composision in oxide wt. %. Needs to have 'H2O' and 'CO2' columns.
+        T_K : float
+            Temperature in kelvin
+        output : str
+            Output format. 'P' for pressure only, 'Xfl' for |H2O| fluid fraction only and 'PXfl' for both.
+
+        Returns
+        -------
+        saturation : float, (float, float)
+            Depending on the value of ``output``: saturation pressure in bar, |H2O| fluid fraction or (saturation pressure, fluid fraction)
+        """
         composition = oxide_wtPercents.copy()
 
         P_H2O_saturation = h2o.calculate_saturation(composition, T_K=T_K, x_fluid=1.0)
@@ -373,9 +471,34 @@ class mixed(Solubility_model):
     @staticmethod
     @_check_argument("output", [None, "both", "CO2", "H2O"])
     def calculate_solubility(
-        oxide_wtPercents: MagmaSeries, P_bar, T_K, x_fluid, output="both", **kwargs
+        oxide_wtPercents: MagmaSeries,
+        P_bar: float,
+        T_K: float,
+        x_fluid: float,
+        output: None | str = "both",
+        **kwargs,
     ):
-        """ """
+        """
+        Calculate volatile solubilities for systems with mixed |CO2|-|H2O| fluids.
+
+        Parameters
+        ----------
+        oxide_wtPercents : MagmaSeries
+            melt composision in oxide wt. %.
+        P_bar : float
+            pressure in bar
+        T_K : float
+            Temperature in kelvin
+        x_fluid: float
+            fraction of |H2O| in the fluid.
+        output : str
+            Output format. 'CO2' for |CO2| only, 'H2O' for |H2O| only and 'both' for both.
+
+        Returns
+        -------
+        saturation : float, (float, float)
+            Solubility in wt. %. Depending on the value of ``output``: |CO2|, |H2O| or (|CO2|, |H2O|).
+        """
 
         if not 1 >= x_fluid >= 0:
             raise ValueError(f"x_fluid: {x_fluid} is not between 0 and 1")
@@ -413,5 +536,5 @@ class mixed(Solubility_model):
         return abs(calculated_concentrations - sample_concentrations)
 
 
-def _root_fugacity_pressure(P_bar, T_K, fCO2, species):
-    return fCO2 - fugacity_model(T_K, P_bar, species)
+def _root_fugacity_pressure(P_bar, T_K, fugacity, species):
+    return fugacity - fugacity_model(T_K=T_K, P_bar=P_bar, species=species)
