@@ -10,7 +10,7 @@ with methods for common calculations, including those for:
    * mineral composition by stoichiometry,
    * melt thermometry,
    * melt Fe speciation,
-   * *f*O\ :sub:`2`,
+   * \ *f*O\ :sub:`2`,
    * melt volatile (CO\ :sub:`2`\-H\ :sub:`2`\O) saturation pressure
    * mineral-melt element partition coefficients,
 
