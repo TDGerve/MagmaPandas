@@ -15,7 +15,7 @@ with methods for common calculations, including those for:
    * mineral-melt element partition coefficients,
 
 
-MagmaPandas can be combined with `MagmaPEC <https://github.com/TDGerve/MagmaPEC>`_ for post-entrapment crystallisation correction of compositions of olivine hosted melt inclusions.
+MagmaPandas can be combined with `MagmaPEC <https://github.com/TDGerve/MagmaPEC>`_ for post-entrapment crystallisation correction of olivine hosted melt inclusions.
 
 Documentation
 -------------
