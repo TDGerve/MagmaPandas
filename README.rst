@@ -10,11 +10,12 @@ with methods for common calculations, including those for:
    * mineral composition by stoichiometry,
    * melt thermometry,
    * melt Fe speciation,
+   * *f*O\ :sub:`2`,
    * melt volatile (CO\ :sub:`2`\-H\ :sub:`2`\O) saturation pressure
    * mineral-melt element partition coefficients,
 
 
-MagmaPandas includes a model for post-entrapment crystallisation correction of compositions of olivine hosted melt inclusions.
+MagmaPandas can be combined with `MagmaPEC <https://github.com/TDGerve/MagmaPEC>`_ for post-entrapment crystallisation correction of compositions of olivine hosted melt inclusions.
 
 Documentation
 -------------
@@ -23,7 +24,7 @@ Code documentation is currently being worked on at `magmapandas.readthedocs.io <
 
 How to cite MagmaPandas
 ------------------------------
-If have used MagmaPandas in your research, please reference  `this <https://doi.org/10.1093/petrology/egae006>`_ paper published in Journal of Petrology. To ensure reproducibility, please also mention the release version of MagmaPandas that you used.
+If have used MagmaPandas in your research, please reference  `this <https://doi.org/10.1093/petrology/egae006>`_ paper published in Journal of Petrology. To ensure reproducibility, please also mention the release version of MagmaPandas and reference the specific models you used (see `documentation <https://magmapandas.readthedocs.io/en/latest/code_documentation.html#references>`_).
 
 
 

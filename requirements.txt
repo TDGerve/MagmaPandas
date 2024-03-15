@@ -5,6 +5,7 @@ sphinx-design
 pandas
 numpy
 scipy
+typing-extensions
 alive_progress
 matplotlib
 matplotlib-label-lines
