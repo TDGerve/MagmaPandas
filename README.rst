@@ -30,7 +30,7 @@ If have used MagmaPandas in your research, please reference  `this <https://doi.
 
 Installation
 ------------
-MagmaPandas can be installed with pip by running:
+MagmaPandas versions 2.0.0 and above can be installed with pip by running:
 
 .. code-block:: bash
 
