@@ -56,7 +56,7 @@ class MagmaFrame(pd.DataFrame):
 
         if not self._total:
             total_regex = re.search(
-                "total", "".join(self.columns.to_list()), re.IGNORECASE
+                "total", "".join(map(str, self.columns.to_list())), re.IGNORECASE
             )
             if total_regex:
                 self.rename(columns={total_regex[0]: "total"}, inplace=True)
