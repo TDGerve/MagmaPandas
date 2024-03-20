@@ -24,7 +24,8 @@ dependencies = [
     "statsmodels",
     "matplotlib",
     "scikit-learn",
-    "elementMass"
+    "elementMass",
+    "typing_extensions"
 ]
 
 [project.urls]

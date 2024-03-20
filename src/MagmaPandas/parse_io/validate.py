@@ -49,7 +49,7 @@ def _check_setter(allowed_values):
                 min, max = allowed_values
                 if not (min < var < max):
                     raise ValueError(
-                        f"value: {var}, not within bounds {*allowed_values,}"
+                        f"value: {var}, outside allowed range: {*allowed_values,}"
                     )
             elif isinstance(var, str):
                 if var not in allowed_values:
@@ -94,7 +94,7 @@ def _check_value(var_name: str, allowed_range: List[float]):
         def wrapper(*args, **kwargs):
             var = kwargs.get(var_name, None)
             min, max = allowed_range
-            if min < var < max:
+            if not (min < var < max):
                 raise ValueError(
                     f"{var_name}: {var}, outside allowed range: {min} - {max}"
                 )
