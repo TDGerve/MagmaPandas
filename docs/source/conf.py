@@ -20,7 +20,7 @@
 project = "MagmaPandas"
 copyright = "2022, Thomas van Gerve"
 author = "Thomas van Gerve"
-release = "2.0.5"
+release = "2.0.6"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
