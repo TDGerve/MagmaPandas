@@ -6,7 +6,6 @@ import warnings as w
 
 import elementMass as e
 import pandas as pd
-
 from MagmaPandas.MagmaFrames.protocols import Magma
 from MagmaPandas.thermometers.data_parsing import (
     _anhydrous_composition,
@@ -119,6 +118,9 @@ def putirka2008_14(melt: Magma, *args, **kwargs) -> float | pd.Series:
         - 9.176 * H2O
     ) + 273.15
 
+    if any(T_K < 0):
+        w.warn("Negative temperatures found!")
+
     return pd.Series(T_K, name="T_K").squeeze()
 
 
@@ -197,6 +199,13 @@ def putirka2008_15(
         + 39.16 * P_GPa
         - 12.83 * H2O
     ) + 273.15
+
+    try:
+        if any(T_K < 0):
+            w.warn("Negative temperatures found!")
+    except TypeError:
+        if T_K < 0:
+            w.warn("Negative temperatures found!")
 
     return pd.Series(T_K, name="T_K").squeeze()
 
