@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
-from scipy.constants import R  # J*K-1*mol-1
-
 from MagmaPandas.Kd.Kd_baseclass import Kd_model
+from scipy.constants import R  # J*K-1*mol-1
 
 
 class FeMg_Toplis(Kd_model):
@@ -36,7 +35,7 @@ class FeMg_Toplis(Kd_model):
         try:
             if sum(np.array(molar_SiO2) > 60) > 1:
                 raise RuntimeError("SiO2 >60 mol% present")
-        except:
+        except TypeError:
             if molar_SiO2 > 60:
                 raise RuntimeError("SiO2 >60 mol%")
 
