@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
-from MagmaPandas.Kd.Kd_baseclass import Kd_model
 from scipy.constants import R  # J*K-1*mol-1
+
+from MagmaPandas.Kd.Kd_baseclass import Kd_model
 
 
 class FeMg_Toplis(Kd_model):
@@ -15,8 +16,6 @@ class FeMg_Toplis(Kd_model):
     def _Phi(cls, molar_SiO2, molar_Na2O, molar_K2O):
         """
         Equation 12 from Toplis (2005) calculates a Phi parameter to correct SiO2 for alkali-bearing liquids.
-        This expression is only valid for SiO2 <= 60 mol %
-
 
         Parameters
         ----------
@@ -33,11 +32,36 @@ class FeMg_Toplis(Kd_model):
         """
 
         try:
-            if sum(np.array(molar_SiO2) > 60) > 1:
-                raise RuntimeError("SiO2 >60 mol% present")
+            if sum(high_SiO2 := np.array(molar_SiO2) > 60) > 1:
+                # raise RuntimeError("SiO2 >60 mol% present")
+                results = cls._Phi_lowSiO2(molar_SiO2, molar_Na2O, molar_K2O)
+                results[high_SiO2] = cls._Phi_highSiO2(
+                    molar_SiO2[high_SiO2], molar_Na2O[high_SiO2], molar_K2O[high_SiO2]
+                )
+                return results
+
         except TypeError:
             if molar_SiO2 > 60:
-                raise RuntimeError("SiO2 >60 mol%")
+                # raise RuntimeError("SiO2 >60 mol%")
+                return cls._Phi_highSiO2(molar_SiO2, molar_Na2O, molar_K2O)
+
+        return cls._Phi_lowSiO2(molar_SiO2, molar_Na2O, molar_K2O)
+
+    @classmethod
+    def _Phi_highSiO2(cls, molar_SiO2, molar_Na2O, molar_K2O):
+        """
+        Phi for SiO2 > 60 mol%
+        """
+
+        return (11 - 5.5 * 100 / (100 - molar_SiO2)) * np.exp(
+            -0.31 * (molar_Na2O + molar_K2O)
+        )
+
+    @classmethod
+    def _Phi_lowSiO2(cls, molar_SiO2, molar_Na2O, molar_K2O):
+        """
+        Phi for SiO2 < 60 mol%
+        """
 
         return (0.46 * (100 / (100 - molar_SiO2)) - 0.93) * (molar_Na2O + molar_K2O) + (
             -5.33 * (100 / (100 - molar_SiO2)) + 9.69
