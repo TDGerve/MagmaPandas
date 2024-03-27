@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-
 from MagmaPandas import Fe_redox, configuration
 from MagmaPandas.fO2 import fO2_QFM
 from MagmaPandas.Kd.Kd_baseclass import Kd_model
@@ -14,7 +13,7 @@ class FeMg_blundy(Kd_model):
     errors = pd.Series({6: 0.019, 9: 0.04, 100: 0.063})
 
     @classmethod
-    def _get_Fe3FeTotal(Melt_mol_fractions, T_K, P_bar=1, **kwargs):
+    def _get_Fe3FeTotal(cls, Melt_mol_fractions, T_K, P_bar=1, **kwargs):
         Fe3Fe2_model = Fe_redox.Fe3Fe2_borisov
         dQFM = kwargs.get("dQFM", configuration.dQFM)
 
