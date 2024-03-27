@@ -9,6 +9,24 @@ class Fe3Fe2_kressCarmichael(Fe3Fe2_model):
     Calculate melt |Fe3Fe2| ratios according to equation 7 from Kress and Carmichael (1991)\ [2]_.
     """
 
+    components = ["Al2O3", "FeO", "CaO", "Na2O", "K2O"]
+
+    # Parameters from table 7
+    a = 0.196
+    b = 1.1492e4
+    c = -6.675
+
+    dCoefficients = pd.Series(
+        {"Al2O3": -2.243, "FeO": -1.828, "CaO": 3.201, "Na2O": 5.854, "K2O": 6.215},
+        name="dCoeff",
+    )
+
+    e = -3.36
+    f = -7.01e-7
+    g = -1.54e-10
+    h = 3.85e-17
+    T0 = 1673
+
     FeO_error = 0.21
     Fe2O3_error = 0.42
 
@@ -38,30 +56,19 @@ class Fe3Fe2_kressCarmichael(Fe3Fe2_model):
 
         LNfO2 = np.log(fO2)
 
-        components = ["Al2O3", "FeO", "CaO", "Na2O", "K2O"]
+        axis = [0, 1][isinstance(Melt_mol_fractions, pd.DataFrame)]
 
-        # Parameters from table 7
-        a = 0.196
-        b = 1.1492e4
-        c = -6.675
-
-        dCoefficients = pd.Series(
-            {"Al2O3": -2.243, "FeO": -1.828, "CaO": 3.201, "Na2O": 5.854, "K2O": 6.215},
-            name="dCoeff",
-        )
-
-        e = -3.36
-        f = -7.01e-7
-        g = -1.54e-10
-        h = 3.85e-17
-        T0 = 1673
         sumComponents = (
-            Melt_mol_fractions.loc[:, components].mul(dCoefficients).sum(axis=1)
+            Melt_mol_fractions[cls.components].mul(cls.dCoefficients).sum(axis=axis)
         )
 
-        part1 = a * LNfO2 + b / T_K + c + sumComponents
-        part2 = e * (1 - T0 / T_K - np.log(T_K / T0))
-        part3 = f * P_Pa / T_K + g * ((T_K - T0) * P_Pa) / T_K + h * P_Pa**2 / T_K
+        part1 = cls.a * LNfO2 + cls.b / T_K + cls.c + sumComponents
+        part2 = cls.e * (1 - cls.T0 / T_K - np.log(T_K / cls.T0))
+        part3 = (
+            cls.f * P_Pa / T_K
+            + cls.g * ((T_K - cls.T0) * P_Pa) / T_K
+            + cls.h * P_Pa**2 / T_K
+        )
 
         return 2 * np.exp(part1 + part2 + part3)
 
