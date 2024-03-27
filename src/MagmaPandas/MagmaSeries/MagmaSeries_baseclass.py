@@ -168,7 +168,7 @@ class MagmaSeries(pd.Series):
         if self._units != Unit.MOL_FRACTIONS:
             return self.convert_moles_wtPercent()
         else:
-            return self
+            return self.copy()
 
     @property
     @_check_attribute("_datatype", ["oxide"])
@@ -301,8 +301,7 @@ class MagmaSeries(pd.Series):
         else:
             norm = 1
 
-        self.recalculate(inplace=True)
-        normalised = self.copy()[self.elements]
+        normalised = self.recalculate()[self.elements]
 
         total = normalised.sum()
         normalised = normalised.div(total)
@@ -332,6 +331,52 @@ class MagmaSeries(pd.Series):
         thermometer = melt_thermometers[configuration.melt_thermometer]
 
         return thermometer(self, *args, **kwargs)
+
+    @_check_argument("total_Fe", ["FeO", "Fe2O3"])
+    def FeO_Fe2O3_calc(
+        self, Fe3Fe2: float, total_Fe: str = "FeO", inplace: bool = False
+    ) -> Self:
+        """
+        Calculate melt FeO and |Fe2O3| based on total Fe.
+
+        Parameters
+        ----------
+        Fe3Fe2 : pandas Series
+            melt |Fe3Fe2| ratios
+        total_Fe    : str
+            columname in Melt frame with total Fe
+        inplace : bool
+
+        Returns
+        -------
+        Melt    : Self
+            melt compositions inclusding FeO and |Fe2O3|
+        """
+
+        Fe2Fe_total = 1 / (1 + Fe3Fe2)
+        melt_mol_fractions = self.moles
+
+        if total_Fe == "FeO":
+            Fe2 = melt_mol_fractions["FeO"] * Fe2Fe_total
+            Fe3 = melt_mol_fractions["FeO"] * (1 - Fe2Fe_total) / 2
+        if total_Fe == "Fe2O3":
+            Fe2 = melt_mol_fractions["Fe2O3"] * Fe2Fe_total * 2
+            Fe3 = melt_mol_fractions["Fe2O3"] * (1 - Fe2Fe_total)
+
+        melt_mol_fractions["FeO"] = Fe2
+        melt_mol_fractions["Fe2O3"] = Fe3
+        melt_mol_fractions.recalculate(inplace=True)
+
+        # Recalculate to wt. % (normalised)
+        melt = melt_mol_fractions.convert_moles_wtPercent()
+
+        if inplace:
+            self["FeO"] = melt["FeO"]
+            self["Fe2O3"] = melt["Fe2O3"]
+            self.recalculate(inplace=True)
+
+        else:
+            return melt
 
     def random_sample(self, errors) -> Self:
         """

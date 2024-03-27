@@ -140,8 +140,8 @@ class MagmaFrame(pd.DataFrame):
         """
         return list(self._weights.index).copy()
 
+    # @_check_attribute("_units", ["wt. %", "ppm"])
     @property
-    @_check_attribute("_units", ["wt. %", "ppm"])
     def moles(self) -> Self:
         """
         Data converted to mol fractions.
