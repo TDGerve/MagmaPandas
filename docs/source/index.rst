@@ -11,6 +11,7 @@ MagmaPandas quickstart
    about
    getting_started
    examples
+   extending
    code_documentation
    changelog
    support
