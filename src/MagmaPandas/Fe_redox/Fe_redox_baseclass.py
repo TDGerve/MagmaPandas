@@ -42,7 +42,10 @@ class Fe3Fe2_model(ABC):
     @abstractmethod
     def get_offset_parameters(cls, n: int, *args, **kwargs) -> float | np.ndarray:
         """
-        Randomly sample within a standard normal distribution.
+        Randomly sample a standard normal distribution *n* times.
+
+        n   : int
+            sample amount.
         """
         pass
 
