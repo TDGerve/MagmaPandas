@@ -1,9 +1,3 @@
-from MagmaPandas.Kd.Ol_melt.Models.Blundy import FeMg_blundy
-from MagmaPandas.Kd.Ol_melt.Models.Toplis import FeMg_Toplis
-
-Kd_models = {"toplis": FeMg_Toplis, "blundy": FeMg_blundy}
-
-
 def equilibrium_forsterite(Kd, Fe2Mg_liquid):
     """
     Parameters
