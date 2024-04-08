@@ -4,7 +4,13 @@ Global configuration of MagmaPandas settings.
 
 from MagmaPandas.parse_io.validate import _check_setter
 
-Fe3Fe2_models = ["borisov", "kressCarmichael"]
+Fe3Fe2_models = [
+    "borisov",
+    "kressCarmichael",
+    "jayasuriya",
+    "putirka2016_6b",
+    "putirka2016_6c",
+]
 Kd_ol_FeMg_models = ["toplis", "blundy"]
 melt_thermometers = ["putirka2008_14", "putirka2008_15", "putirka2008_16"]
 volatile_solubility_models = ["IaconoMarziano", "Allison2022", "Shiskina"]
