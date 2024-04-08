@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from MagmaPandas.Fe_redox.Fe_redox_baseclass import Fe3Fe2_model
+from MagmaPandas.parse_io import check_components
 
 
 def _is_Fe3Fe2_model(cls):
@@ -19,25 +20,25 @@ def _is_Fe3Fe2_model(cls):
         return False
 
 
-def _check_components(melt_mol_fractions, components):
-    moles = melt_mol_fractions.copy()
+# def check_components(melt_mol_fractions, components):
+#     moles = melt_mol_fractions.copy()
 
-    if isinstance(moles, pd.DataFrame):
-        missing_oxides = set(components).difference(moles.columns)
-    elif isinstance(moles, pd.Series):
-        missing_oxides = set(components).difference(moles.index)
+#     if isinstance(moles, pd.DataFrame):
+#         missing_oxides = set(components).difference(moles.columns)
+#     elif isinstance(moles, pd.Series):
+#         missing_oxides = set(components).difference(moles.index)
 
-    if len(missing_oxides) == 0:
-        return moles
+#     if len(missing_oxides) == 0:
+#         return moles
 
-    for oxide in missing_oxides:
-        moles[oxide] = 0.0
+#     for oxide in missing_oxides:
+#         moles[oxide] = 0.0
 
-    w.warn(
-        f"{', '.join(str(i) for i in missing_oxides)} missing in composition and set to 0."
-    )
+#     w.warn(
+#         f"{', '.join(str(i) for i in missing_oxides)} missing in composition and set to 0."
+#     )
 
-    return moles.recalculate()
+#     return moles.recalculate()
 
 
 class borisov(Fe3Fe2_model):
@@ -73,7 +74,7 @@ class borisov(Fe3Fe2_model):
             melt |Fe3Fe2| ratio
         """
 
-        moles = _check_components(Melt_mol_fractions, cls.components)
+        moles = check_components(Melt_mol_fractions, cls.components)
 
         part1 = (
             0.207 * np.log10(fO2)
@@ -170,7 +171,7 @@ class kressCarmichael(Fe3Fe2_model):
             melt |Fe3Fe2| ratio
         """
 
-        moles = _check_components(Melt_mol_fractions, cls.components)
+        moles = check_components(Melt_mol_fractions, cls.components)
 
         P_Pa = P_bar * 1e-5
 
@@ -263,7 +264,7 @@ class jayasuriya(Fe3Fe2_model):
         cls, Melt_mol_fractions, T_K, fO2, *args, **kwargs
     ) -> float | np.ndarray:
 
-        moles = _check_components(Melt_mol_fractions, cls.components)
+        moles = check_components(Melt_mol_fractions, cls.components)
 
         axis = [0, 1][isinstance(moles, pd.DataFrame)]
 
@@ -306,7 +307,7 @@ class putirka2016_6b(Fe3Fe2_model):
         cls, Melt_mol_fractions, T_K, fO2, *args, **kwargs
     ) -> float | np.ndarray:
 
-        moles = _check_components(Melt_mol_fractions, cls.components)
+        moles = check_components(Melt_mol_fractions, cls.components)
 
         axis = [0, 1][isinstance(moles, pd.DataFrame)]
 
@@ -371,7 +372,7 @@ class putirka2016_6c(Fe3Fe2_model):
         cls, Melt_mol_fractions, T_K, fO2, *args, **kwargs
     ) -> float | np.ndarray:
 
-        moles = _check_components(
+        moles = check_components(
             melt_mol_fractions=Melt_mol_fractions, components=cls.components
         )
         axis = [0, 1][isinstance(moles, pd.DataFrame)]

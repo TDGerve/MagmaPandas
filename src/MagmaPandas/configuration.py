@@ -11,7 +11,14 @@ Fe3Fe2_models = [
     "putirka2016_6b",
     "putirka2016_6c",
 ]
-Kd_ol_FeMg_models = ["toplis", "blundy"]
+Kd_ol_FeMg_models = [
+    "toplis",
+    "blundy",
+    "putirka2016_8a",
+    "putirka2016_8b",
+    "putirka2016_8c",
+    "putirka2016_8d",
+]
 melt_thermometers = ["putirka2008_14", "putirka2008_15", "putirka2008_16"]
 volatile_solubility_models = ["IaconoMarziano", "Allison2022", "Shiskina"]
 volatile_species_options = ["co2", "h2o", "mixed"]

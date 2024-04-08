@@ -30,7 +30,7 @@ class Kd_model(ABC):
     @abstractmethod
     def get_error(cls, *args, **kwargs):
         """
-        Calculate one standard deviation errors on partition coefficients.
+        Return one standard deviation errors on partition coefficients.
 
         Returns
         -------

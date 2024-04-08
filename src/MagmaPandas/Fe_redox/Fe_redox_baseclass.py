@@ -30,7 +30,7 @@ class Fe3Fe2_model(ABC):
     @abstractmethod
     def get_error(cls, *args, **kwargs) -> float | np.ndarray:
         """
-        Calculate one standard deviation errors on |Fe3Fe2| ratios.
+        Return one standard deviation errors on |Fe3Fe2| ratios.
 
         Returns
         -------
