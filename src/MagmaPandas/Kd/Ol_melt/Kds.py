@@ -1,12 +1,9 @@
-from functools import partial
-
 import pandas as pd
 
 from MagmaPandas import Fe_redox
 from MagmaPandas.configuration import configuration
-from MagmaPandas.fO2 import fO2_QFM
-from MagmaPandas.Kd.Ol_melt import Kds_iterate as it
-from MagmaPandas.Kd.Ol_melt import Kds_vectorised as vec
+from MagmaPandas.fO2 import calculate_fO2
+from MagmaPandas.Kd.Ol_melt.models import Kd_models
 from MagmaPandas.MagmaFrames import MagmaFrame
 
 
@@ -45,12 +42,14 @@ def observed_FeMg_Kd(
     melt_x_moles = melt.moles
 
     Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
-    dQFM = kwargs.get("dQFM", configuration.dQFM)
+    dfO2 = kwargs.get("dfO2", configuration.dfO2)
 
     if T_K is None:
-        T_K = melt_x_moles.convert_moles_wtPercent().temperature(P_bar)
-    fO2 = fO2_QFM(dQFM, T_K, P_bar)
-    Fe3Fe2 = Fe3Fe2_model(melt_x_moles, T_K, fO2)
+        T_K = melt_x_moles.temperature(P_bar)
+    fO2 = calculate_fO2(T_K=T_K, P_bar=P_bar, dfO2=dfO2)
+    Fe3Fe2 = Fe3Fe2_model.calculate_Fe3Fe2(
+        melt_mol_fractions=melt_x_moles, T_K=T_K, fO2=fO2, P_bar=P_bar
+    )
 
     melt_x_moles = melt_x_moles.normalise()
     Fe2_FeTotal = 1 / (1 + Fe3Fe2)
@@ -62,10 +61,8 @@ def observed_FeMg_Kd(
 
 
 def calculate_FeMg_Kd(
-    Melt_mol_fractions: pd.Series | pd.DataFrame,
-    forsterite_initial: float | pd.Series,
+    melt_mol_fractions: pd.Series | pd.DataFrame,
     T_K: float | pd.Series,
-    Fe3Fe2: float | pd.Series,
     *args,
     **kwargs,
 ) -> pd.Series:
@@ -76,7 +73,7 @@ def calculate_FeMg_Kd(
 
     Parameters
     ----------
-    Melt_mol_fractions : pandas Series, pandas Dataframe
+    melt_mol_fractions : pandas Series, pandas Dataframe
         melt composition in oxide mol fractions
     forsterite_initial  : float, pandas Series
         initial forsterite contents. Forsterite values are iteratively adjusted and initial values are not necessarily in Fe-Mg equilibrium with melts.
@@ -90,16 +87,23 @@ def calculate_FeMg_Kd(
     Kds : pandas Series
     """
 
-    if isinstance(Melt_mol_fractions, pd.Series):
-        Kd_func = it.calculate_Kd
-    elif isinstance(Melt_mol_fractions, pd.DataFrame):
-        Kd_func = vec.calculate_Kd
+    Kd_model_name = kwargs.get("Kd_model", configuration.Kd_model)
+    Kd_model = Kd_models[Kd_model_name]
 
-    return Kd_func(
-        Melt_mol_fractions=Melt_mol_fractions,
-        forsterite_initial=forsterite_initial,
-        T_K=T_K,
-        Fe3Fe2=Fe3Fe2,
-        *args,
-        **kwargs,
+    return Kd_model.calculate_Kd(
+        melt_mol_fractions=melt_mol_fractions, T_K=T_K, *args, **kwargs
     )
+
+    # if isinstance(melt_mol_fractions, pd.Series):
+    #     Kd_func = it.calculate_Kd
+    # elif isinstance(melt_mol_fractions, pd.DataFrame):
+    #     Kd_func = vec.calculate_Kd
+
+    # return Kd_func(
+    #     melt_mol_fractions=melt_mol_fractions,
+    #     forsterite_initial=forsterite_initial,
+    #     T_K=T_K,
+    #     Fe3Fe2=Fe3Fe2,
+    #     *args,
+    #     **kwargs,
+    # )

@@ -6,14 +6,14 @@ import numpy as np
 class Kd_model(ABC):
     @abstractmethod
     def calculate_Kd(
-        cls, Melt_mol_fractions, T_K, P_bar, *args, **kwargs
+        cls, melt_mol_fractions, T_K, P_bar, *args, **kwargs
     ) -> float | np.ndarray:
         """
         Calculate mineral-melt partition coefficients
 
         Parameters
         ----------
-        Melt_mol_fractions   :   :py:class:`Pandas DataFrame <pandas:pandas.DataFrame>`
+        melt_mol_fractions   :   :py:class:`Pandas DataFrame <pandas:pandas.DataFrame>`
             Melt composition in oxide mol fractions
         T_K :   float, array-like
             temperature in Kelvin
