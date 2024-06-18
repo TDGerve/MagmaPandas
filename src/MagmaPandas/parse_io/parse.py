@@ -1,6 +1,8 @@
+import itertools as it
 import warnings as w
 from typing import List, Union
 
+import numpy as np
 import pandas as pd
 
 
@@ -13,6 +15,10 @@ def match_indeces(data: Union[pd.DataFrame, pd.Series], variables: List[pd.Serie
                 raise RuntimeError(f"Data and {var.name} indices don't match")
         except AttributeError:
             pass
+
+
+def make_iterable(*args):
+    return [np.array([a]).flatten() for a in args]
 
 
 def convert_to_series(variables: List, index):
@@ -28,22 +34,41 @@ def convert_to_series(variables: List, index):
     return new_vars
 
 
-def check_components(melt_mol_fractions, components):
-    moles = melt_mol_fractions.copy()
+def check_components(composition, components):
+    comp = composition.copy()
 
-    if isinstance(moles, pd.DataFrame):
-        missing_oxides = set(components).difference(moles.columns)
-    elif isinstance(moles, pd.Series):
-        missing_oxides = set(components).difference(moles.index)
+    if isinstance(comp, pd.DataFrame):
+        missing_oxides = set(components).difference(comp.columns)
+    elif isinstance(comp, pd.Series):
+        missing_oxides = set(components).difference(comp.index)
 
     if len(missing_oxides) == 0:
-        return moles
+        return comp.fillna(0.0)
 
     for oxide in missing_oxides:
-        moles[oxide] = 0.0
+        comp[oxide] = 0.0
 
     w.warn(
         f"{', '.join(str(i) for i in missing_oxides)} missing in composition and set to 0."
     )
 
-    return moles.recalculate()
+    return comp.fillna(0.0).recalculate()
+
+
+def repeat_vars(var1, var2):
+
+    var1_is_int, var2_is_int = (
+        True if isinstance(var, (int, float)) else False for var in (var1, var2)
+    )
+    if bool(var1_is_int) & bool(var2_is_int):
+        return make_iterable(var1, var2)
+    # If only one variable, P or T, is a single value
+    if not (bool(var1_is_int) ^ bool(var2_is_int)):
+        return var1, var2
+
+    var1, var2 = (np.array([var]).flatten() for var in (var1, var2))
+    # Cycle the short variable
+    var1 = np.repeat(var1, len(var2)) if var1_is_int else var1
+    var2 = np.repeat(var2, len(var1)) if var2_is_int else var2
+
+    return var1, var2

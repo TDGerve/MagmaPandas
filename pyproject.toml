@@ -36,3 +36,4 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "geoplot.data" = ["*.csv"]
+"MagmaPandas.fO2.data" = [".*csv"]

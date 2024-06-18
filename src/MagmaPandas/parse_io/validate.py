@@ -1,6 +1,10 @@
 import inspect
+import warnings as w
 from functools import wraps
 from typing import List
+
+import numpy as np
+import pandas as pd
 
 
 def _check_argument(var_name: str, allowed_values: List[str]):
@@ -74,7 +78,7 @@ def _check_attribute(attr_name: str, allowed_values: List[str]):
             attr = getattr(self, attr_name)
             if attr.value not in allowed_values:
                 raise ValueError(
-                    f"Calculation is not valid with: {self.units}, please use: {*allowed_values,}"
+                    f"Calculation is not valid with: {attr.value}, please use: {*allowed_values,}"
                 )
             return func(self, *args, **kwargs)
 
@@ -84,7 +88,7 @@ def _check_attribute(attr_name: str, allowed_values: List[str]):
     return decorator
 
 
-def _check_value(var_name: str, allowed_range: List[float]):
+def _check_value(var_name: str, allowed_range: List[float], error=True):
     def decorator(func):
         """
         Check if var_name has a valid value
@@ -93,13 +97,38 @@ def _check_value(var_name: str, allowed_range: List[float]):
         @wraps(func)  # comment
         def wrapper(*args, **kwargs):
             var = kwargs.get(var_name, None)
-            min, max = allowed_range
-            if not (min < var < max):
-                raise ValueError(
-                    f"{var_name}: {var}, outside allowed range: {min} - {max}"
-                )
+            xmin, xmax = allowed_range
+            try:
+                # ints and floats
+                within_range = xmin < var < xmax
+            except ValueError:
+                # array-likes
+                within_range = np.any((var > xmin) & (var < xmax))
+            if not within_range:
+                if error:
+                    raise ValueError(
+                        f"(some) values of {var_name} are outside allowed range: {xmin:.3f} - {xmax:.3f}"
+                    )
+                else:
+                    w.warn(
+                        f"(some) values of {var_name} are outside allowed range: {xmin:.3f} - {xmax:.3f})"
+                    )
+            # if not (min < var < max):
+            #     raise ValueError(
+            #         f"{var_name}: {var}, outside allowed range: {min} - {max}"
+            #     )
             return func(*args, **kwargs)
 
         return wrapper
 
     return decorator
+
+
+def _match_index(x, arg_names: list[str], kwargs):
+
+    for name in arg_names:
+        param = kwargs[name]
+        if not isinstance(param, (pd.Series, pd.DataFrame)):
+            continue
+        if not x.index.equals(param.index):
+            raise RuntimeError(f"index doesn't match with {name}")

@@ -42,11 +42,9 @@ melt |Fe3Fe2|
 .. automodule:: MagmaPandas.Fe_redox
     :members: 
         
-        .. autofunction:: FeRedox_QFM 
-        .. autoclass:: Fe3Fe2_borisov
-            :members:
-        .. autoclass:: Fe3Fe2_kressCarmichael
-            :members:
+        .. autofunction:: calculate_Fe3Fe2 
+.. automodule:: MagmaPandas.Fe_redox.models
+    :members:
 
 |fO2|
 #####
@@ -133,7 +131,7 @@ NBO parameterisation
 ************
 
 .. [5] O'Neill H. St. C. (1987) Quartz-fayalite-iron and quartz-fayalite-magnetite equilibria and the free energy of formation of fayalite (Fe2SiO4) and magnetite (Fe3O4). American Mineralogist. 72.
-.. [6]  Holland T. J. B., Powell R. (2011) An improved and extended internally consistent thermodynamic dataset for phases of petrological interest, involving new equations of state for solids. Journal of metamorphic geology. 16.
+.. [6] Holland T. J. B., Powell R. (2011) An improved and extended internally consistent thermodynamic dataset for phases of petrological interest, involving new equations of state for solids. Journal of metamorphic geology. 16.
 .. [7] Holland T. J. B., Powell R. (1990). An enlarged and updated internally consistent thermodynamic dataset with uncertainties and correlations: the system K2O–Na2O–CaO–MgO–MnO–FeO–Fe2O3–Al2O3–TiO2–SiO2–C–H2–O2. Journal of Metamorphic Geology. 8.
 .. [8] Holland T. J. B., Powell R. (1998). An internally consistent thermodynamic data set for phases of petrological interest. Journal of Metamorphic Geology. 16.
 .. [9] Jennings E. S., Holland T. J. B. (2015). A simple thermodynamic model for melting of peridotite in the system NCFMASOCr. Journal of Petrology. 56.
@@ -166,6 +164,9 @@ Thermometers
 .. [18] Iacono-Marziano G., Morizet Y., Le Trong E., Gaillard F. (2012) New experimental data and semi-empirical parameterization of |H2O|–|CO2| solubility in mafic melts. Geochimica et cosmochimica Acta. 97.
 .. [19] Shiskina T. A., Botcharnikov R. E., Holtz F., Almeev R. R., Portnyagin M. V. (2010) Solubility of |H2O|- and |CO2|-bearing fluids in tholeiitic basalts at pressures up to 500 MPa. Chemical Geology. 277.
 
+Equations of state
+******************
+.. [20] Katsura T., Tange Y. (2019) A simple derivation of the Birch-Murnaghan equations of state (EOSs) and comparions with EOSs derived from other definitions of finite strain. Minerals. 9:745
 
         
 

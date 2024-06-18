@@ -10,6 +10,13 @@ Fe3Fe2_models = [
     "jayasuriya",
     "putirka2016_6b",
     "putirka2016_6c",
+    "Deng2020",
+    "Oneill2006",
+    "Oneill2018",
+    "Armstrong2019",
+    "Zhang2017",
+    "Hirschmann2022",
+    "Sun2024",
 ]
 Kd_ol_FeMg_models = [
     "toplis",
@@ -19,13 +26,14 @@ Kd_ol_FeMg_models = [
     "putirka2016_8c",
     "putirka2016_8d",
 ]
+fO2_buffers = ["QFM", "IW"]
 melt_thermometers = ["putirka2008_14", "putirka2008_15", "putirka2008_16"]
 volatile_solubility_models = ["IaconoMarziano", "Allison2022", "Shiskina"]
 volatile_species_options = ["co2", "h2o", "mixed"]
 
 
 _variables = {
-    "fO2 buffers": ["QFM"],
+    "fO2 buffers": fO2_buffers,
     "Melt Fe3+/Fe2+ models": Fe3Fe2_models,
     "Ol-melt Fe-Mg Kd models": Kd_ol_FeMg_models,
     "Melt thermometers": melt_thermometers,
@@ -33,9 +41,13 @@ _variables = {
     "Volatile species": volatile_species_options,
 }
 
-_names_length = max([len(i) for i in _variables.keys()]) + 3
-_pad_right = max([len(", ".join(i)) for i in _variables.values()]) + 3
-_pad_total = _names_length + _pad_right
+_names_length = max([len(i) for i in _variables.keys()]) + 5
+_pad_right = max([len(", ".join(i)) for i in _variables.values()])
+# _pad_total = _names_length + _pad_right
+
+[len(", ".join(i)) for i in _variables.values()]
+_pad_total = 70
+_pad_right = _pad_total - _names_length
 _new_line = "\n"
 
 configuration_options = (
@@ -44,28 +56,61 @@ configuration_options = (
     f"{_new_line}{'Configuration options':_<{_pad_total}}"
 )
 
-for param, val in _variables.items():
-    configuration_options += (
-        f"{_new_line}{param:.<{_names_length}}{', '.join(val):.>{_pad_right}}"
-    )
+for param, values in _variables.items():
+
+    val_string_2 = ""
+    idxs = [0, 0]
+    start_idx = 0
+    while idxs[-1] < len(values):
+
+        for i, _ in enumerate(values):
+            if len(", ".join(values[start_idx : i + 1])) > (_pad_total - _names_length):
+                idxs.insert(-1, i)
+                start_idx = i
+                continue
+            idxs[-1] = i + 1
+
+    if len(idxs) > 2:
+        val_string_1 = ", ".join(values[: idxs[1]])
+        val_string_2 = f""
+        for i, idx in enumerate(idxs[2:]):
+            val_string_2 += (
+                f"{_new_line}{', '.join(values[idxs[i+1]:idx]):>{_pad_total}}"
+            )
+        val_string_2 += f"{_new_line}"
+    else:
+        val_string_1 = ", ".join(values)
+
+    line = f"{_new_line}{param:.<{_names_length}}{val_string_1:.>{_pad_right}}{val_string_2}"
+    configuration_options += line
 
 
 class _meta_configuration(type):
     def __init__(cls, *args, **kwargs):
-        cls._dQFM = 1
+        cls._fO2buffer = "QFM"
+        cls._dfO2 = 1
         cls._Kd_model = "toplis"
-        cls._Fe3Fe2_model = "borisov"
+        cls._Fe3Fe2_model = "Sun2024"
         cls._melt_thermometer = "putirka2008_15"
         cls._volatile_solubility = "IaconoMarziano"
         cls._volatile_species = "mixed"
 
     @property
-    def dQFM(cls):
-        return cls._dQFM
+    def fO2buffer(cls):
+        return cls._fO2buffer
 
-    @dQFM.setter
-    def dQFM(cls, value):
-        cls._dQFM = value
+    @fO2buffer.setter
+    @_check_setter(fO2_buffers)
+    def fO2buffer(cls, value: str):
+        cls._fO2buffer = value
+
+    @property
+    def dfO2(cls):
+        return cls._dfO2
+
+    @dfO2.setter
+    def dfO2(cls, value: float | int):
+        cls._dfO2 = value
 
     @property
     def Kd_model(cls):
@@ -115,7 +160,8 @@ class _meta_configuration(type):
     def __str__(cls):
 
         variables = {
-            "\u0394 buffer": "_dQFM",
+            "fO2 buffer": "_fO2buffer",
+            "\u0394 fO2": "_dfO2",
             "Melt Fe3+/Fe2+": "_Fe3Fe2_model",
             "Kd Fe-Mg ol-melt": "_Kd_model",
             "Melt thermometer": "_melt_thermometer",
@@ -132,7 +178,7 @@ class _meta_configuration(type):
             f"{new_line}{' MagmaPandas ':#^{pad_total}}"
             f"{new_line}{'':#^{pad_total}}"
             f"{new_line}{'General settings':_<{pad_total}}"
-            f"{new_line}{'fO2 buffer':.<{names_length}}{'QFM':.>{pad_right}}"
+            # f"{new_line}{'fO2 buffer':.<{names_length}}{'QFM':.>{pad_right}}"
         )
 
         parameter_settings = ""
@@ -169,9 +215,10 @@ class configuration(metaclass=_meta_configuration):
         """
         Reset to default values
         """
-        cls._dQFM = 1
+        cls._fO2buffer = "QFM"
+        cls._dfO2 = 1
         cls._Kd_model = "toplis"
-        cls._Fe3Fe2_model = "borisov"
+        cls._Fe3Fe2_model = "Sun2024"
         cls._melt_thermometer = "putirka2008_15"
         cls._volatile_solubility = "IaconoMarziano"
         cls._volatile_species = "mixed"
