@@ -8,11 +8,12 @@ from typing_extensions import Self
 
 from MagmaPandas import volatile_solubility as vs
 from MagmaPandas.configuration import configuration
-from MagmaPandas.Fe_redox import FeRedox_QFM
-from MagmaPandas.Kd.Ol_melt import calculate_FeMg_Kd
+from MagmaPandas.enums import Datatype, Unit
+from MagmaPandas.Fe_redox import calculate_Fe3Fe2
+from MagmaPandas.Kd.Ol_melt.models import Kd_models
 from MagmaPandas.liquid_density import calculate_density
 from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
-from MagmaPandas.parse_io.validate import _check_argument
+from MagmaPandas.parse_io.validate import _check_argument, _match_index
 from MagmaPandas.thermometers import melt_thermometers
 
 
@@ -54,7 +55,7 @@ class Melt(MagmaFrame):
         """
         thermometer = melt_thermometers[configuration.melt_thermometer]
 
-        return thermometer(self, P_bar=P_bar, **kwargs)
+        return thermometer(self.wt_pc, P_bar=P_bar, **kwargs)
 
     def density(
         self,
@@ -80,12 +81,12 @@ class Melt(MagmaFrame):
             densities in kg/m\ :sup:`3`
         """
 
-        self._match_index(arg_names=("T_K", "P_bar"), kwargs=locals())
+        self._match_index(self, arg_names=("T_K", "P_bar"), kwargs=locals())
 
         if fO2_logshift is None:
-            fO2_logshift = configuration.dQFM
+            fO2_logshift = configuration.dfO2
 
-        Fe3Fe2 = self.Fe3Fe2_QFM(T_K=T_K, P_bar=P_bar, fO2_logshift=fO2_logshift)
+        Fe3Fe2 = self.Fe3Fe2(T_K=T_K, P_bar=P_bar, fO2_logshift=fO2_logshift)
         # calculate melt composition with Fe2O3 and FeO
         melt = self.FeO_Fe2O3_calc(Fe3Fe2)
 
@@ -140,7 +141,7 @@ class Melt(MagmaFrame):
 
         return self.NBO() / self.tetrahedral_cations()
 
-    def Fe3Fe2_QFM(
+    def Fe3Fe2(
         self,
         T_K: float | pd.Series,
         P_bar: float | pd.Series,
@@ -173,7 +174,7 @@ class Melt(MagmaFrame):
         # if P_bar is None:
         #     P_bar = self["P_bar"]
 
-        self._match_index(arg_names=["T_K", "P_bar"], kwargs=locals())
+        self._match_index(self, arg_names=["T_K", "P_bar"], kwargs=locals())
 
         # for name in ["T_K", "P_bar"]:
         #     param = locals()[name]
@@ -182,15 +183,15 @@ class Melt(MagmaFrame):
         #             raise RuntimeError(f"Melt and {name} indices don't match")
 
         if fO2_logshift is None:
-            fO2_logshift = configuration.dQFM
+            fO2_logshift = configuration.dfO2
 
         mol_fractions = self.moles
 
-        Fe3Fe2 = FeRedox_QFM(
+        Fe3Fe2 = calculate_Fe3Fe2(
             mol_fractions=mol_fractions,
             T_K=T_K,
             P_bar=P_bar,
-            logshift=fO2_logshift,
+            dfO2=fO2_logshift,
             **kwargs,
         )
 
@@ -205,7 +206,11 @@ class Melt(MagmaFrame):
 
     @_check_argument("total_Fe", ["FeO", "Fe2O3"])
     def FeO_Fe2O3_calc(
-        self, Fe3Fe2: float | pd.Series, total_Fe: str = "FeO", inplace: bool = False
+        self,
+        Fe3Fe2: float | pd.Series,
+        total_Fe: str = "FeO",
+        inplace: bool = False,
+        wtpc=True,
     ) -> Self:
         """
         Calculate melt FeO and |Fe2O3| based on total Fe.
@@ -239,7 +244,8 @@ class Melt(MagmaFrame):
         melt_mol_fractions.recalculate(inplace=True)
 
         # Recalculate to wt. % (normalised)
-        melt = melt_mol_fractions.convert_moles_wtPercent()
+
+        melt = melt_mol_fractions.wt_pc if wtpc else melt_mol_fractions
 
         if inplace:
             self["FeO"] = melt["FeO"]
@@ -251,9 +257,7 @@ class Melt(MagmaFrame):
 
     def Kd_olivine_FeMg(
         self,
-        forsterite: float | pd.Series,
-        T_K: float | pd.Series,
-        Fe3Fe2: float | pd.Series,
+        *args,
         **kwargs,
     ):
         """
@@ -269,21 +273,27 @@ class Melt(MagmaFrame):
             initial olivine forsterite contents
         T_K : pandas Series
             temperatures in Kelvin
-        Fe3Fe2 : pandas Series
-            melt |Fe3Fe2| ratios
+        kwargs
+            Potential extra keyword arguments:
+
+            #. 'T_K', temperature in Kelvin
+            #. 'P_bar', pressure in bar
+            #. 'Fe3Fe2', melt Fe\ :sup:`3+` /Fe\ :sup:`2+` ratios
+            #. 'forsterite_initial', olivine forsterite content.
+
+            Which extra keyword arguments are needed depends on the configured Kd model.
 
         Returns
         -------
         Kds :   pandas Series
             Fe-Mg partitioning coefficients
         """
-        mol_fractions = self.moles
+        Kd_model_name = kwargs.get("Kd_model", configuration.Kd_model)
+        Kd_model = Kd_models[Kd_model_name]
 
-        return calculate_FeMg_Kd(
-            Melt_mol_fractions=mol_fractions,
-            forsterite_initial=forsterite,
-            T_K=T_K,
-            Fe3Fe2=Fe3Fe2,
+        return Kd_model.calculate_Kd(
+            melt_mol_fractions=self.moles,
+            *args,
             **kwargs,
         )
 
@@ -380,10 +390,10 @@ class Melt(MagmaFrame):
 
         return name, result
 
-    def _match_index(self, arg_names: list[str], kwargs):
+    # def _match_index(self, arg_names: list[str], kwargs):
 
-        for name in arg_names:
-            param = kwargs[name]
-            if isinstance(param, pd.Series):
-                if not self.index.equals(param.index):
-                    raise RuntimeError(f"Melt and {name} indices don't match")
+    #     for name in arg_names:
+    #         param = kwargs[name]
+    #         if isinstance(param, pd.Series):
+    #             if not self.index.equals(param.index):
+    #                 raise RuntimeError(f"Melt and {name} indices don't match")
