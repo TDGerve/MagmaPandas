@@ -144,25 +144,50 @@ class MagmaFrame(pd.DataFrame):
     @property
     def moles(self) -> Self:
         """
-        Data converted to mol fractions.
+        Data converted to mol fraction.
         """
-        if self._units != Unit.MOL_FRACTIONS:
-            return self.convert_moles_wtPercent()
-        else:
-            return self.copy()
+        if self._units == Unit.WT_PERCENT:
+            return self._convert_moles_wtPercent()
+        elif self._units == Unit.PPM:
+            return self.convert_ppm_wtPercent()._convert_moles_wtPercent()
+
+        return self.copy()
+
+    @property
+    def wt_pc(self) -> Self:
+        """
+        Data converted to wt. %.
+        """
+        if self._units == Unit.MOL_FRACTIONS:
+            return self._convert_moles_wtPercent()
+        elif self._units == Unit.PPM:
+            return self.convert_ppm_wtPercent()
+
+        return self.copy()
+
+    @property
+    def ppm(self) -> Self:
+        """
+        Data converted to ppm.
+        """
+        if self._units == Unit.WT_PERCENT:
+            return self.convert_ppm_wtPercent()
+        elif self._units == Unit.MOL_FRACTIONS:
+            return self._convert_moles_wtPercent().convert_ppm_wtPercent()
+
+        return self.copy()
 
     @property
     def cations(self) -> Self:
         """
-        Data converted to cation mol fractions
+        Data converted to cation mol fraction
         """
         # Calculate oxide moles
-        if self._units != Unit.MOL_FRACTIONS:
-            moles = self.moles[self.elements]
-        elif self._datatype == Datatype.CATION:
+        if self._datatype == Datatype.CATION:
             return self
-        else:
-            moles = self[self.elements].copy()
+
+        moles = self.moles[self.elements]
+
         # Calculate cation moles
         cations = moles.mul(oxide_compositions.cation_amount(moles.elements))
         # Rename columns to cations
@@ -203,6 +228,7 @@ class MagmaFrame(pd.DataFrame):
 
         return oxygen
 
+    @_check_attribute("_units", ["wt. %", "ppm"])
     def convert_ppm_wtPercent(self) -> Self:
         """
         ppm converted to wt. % and vice versa
@@ -217,7 +243,8 @@ class MagmaFrame(pd.DataFrame):
 
         return converted
 
-    def convert_moles_wtPercent(self) -> Self:
+    @_check_attribute("_units", ["wt. %", "mol fraction"])
+    def _convert_moles_wtPercent(self) -> Self:
         """
         moles converted to wt. % and vice versa
         """
@@ -225,18 +252,20 @@ class MagmaFrame(pd.DataFrame):
         converted = self[self.elements].copy()
         if self._units == Unit.WT_PERCENT:
             converted = converted.div(converted.weights)
+            units = Unit.MOL_FRACTIONS
         elif self._units == Unit.MOL_FRACTIONS:
             converted = converted.mul(converted.weights)
+            units = Unit.WT_PERCENT
         # Normalise
         total = converted.sum(axis=1)
         converted = converted.div(total, axis=0)
         converted["total"] = converted.sum(axis=1)
         # Set the right units
-        if self._units == Unit.WT_PERCENT:
-            converted._units = Unit.MOL_FRACTIONS
-        elif self._units == Unit.MOL_FRACTIONS:
+
+        if self._units == Unit.MOL_FRACTIONS:
             converted = converted.mul(100)
-            converted._units = Unit.WT_PERCENT
+
+        converted._units = units
 
         return converted
 
@@ -279,7 +308,7 @@ class MagmaFrame(pd.DataFrame):
 
         if df._total:
             totals = df.loc[:, df.elements].sum(axis=1)
-            df["total"] = totals.values
+            df.loc[:, "total"] = totals.values
 
         if not inplace:
             return df
