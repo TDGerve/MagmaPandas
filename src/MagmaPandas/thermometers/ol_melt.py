@@ -6,10 +6,22 @@ import numpy as np
 import pandas as pd
 
 from MagmaPandas.MagmaFrames.protocols import Magma
+from MagmaPandas.parse_io import check_components
+from MagmaPandas.thermometers.data_parsing import _anhydrous_composition, _get_elements
+
+errors = pd.Series({"putirka2007_4_dry": 45, "putirka2007_4_wet": 29})
+
+components = {
+    "putirka2007_4": ["MgO", "FeO", "Na2O", "K2O", "CaO", "SiO2", "K2O", "TiO2"]
+}
 
 
 def putirka2007_4(
-    liquid: Magma, olivine: Magma, P_bar: float | pd.Series, **kwargs
+    liquid: Magma,
+    olivine: Magma,
+    P_bar: float | pd.Series,
+    offset: float = 0.0,
+    **kwargs,
 ) -> pd.Series:
     """
     Olivine-liquid thermometer
@@ -29,47 +41,51 @@ def putirka2007_4(
         olivine compositions in oxide wt. %
     P_bar : float, pandas Series
         pressures in bar
+    offset : float
+        offset value in standard deviations. Temperatures are calculated as ``temnperature + offset * thermometer error (SEE)``.
 
     Returns
     -------
     temperatures : pd.Series
         olivine liquidus temperatures in Kelvin.
     """
-    from ..MagmaFrames import MagmaFrame
-    from ..MagmaSeries import MagmaSeries
+    # from ..MagmaFrames import MagmaFrame
+    # from ..MagmaSeries import MagmaSeries
 
-    composition = liquid.copy(deep=True)
-    composition = composition.fillna(0.0)
+    # if isinstance(composition, MagmaFrame):
+    #     elements = composition.columns
+    # elif isinstance(composition, MagmaSeries):
+    #     elements = composition.index
 
-    if isinstance(composition, MagmaFrame):
-        elements = composition.columns
-    elif isinstance(composition, MagmaSeries):
-        elements = composition.index
+    elements = _get_elements(liquid)
 
-    oxides = set(["MgO", "FeO", "Na2O", "K2O", "CaO", "SiO2", "K2O", "TiO2"])
-    optional_oxides = {"MnO", "CoO", "NiO"}
-    absentOxides = oxides.difference(elements)
-    fill_oxides = optional_oxides.difference(elements)
+    composition = check_components(
+        composition=liquid, components=components["putirka2007_4"]
+    )
 
-    if len(absentOxides) > 0:
-        raise KeyError(f"{absentOxides} not found in melt")
+    # composition = liquid.copy(deep=True)
+    # composition = composition.fillna(0.0)
+
+    # oxides = set(["MgO", "FeO", "Na2O", "K2O", "CaO", "SiO2", "K2O", "TiO2"])
+    # optional_oxides = {"MnO", "CoO", "NiO"}
+    # absentOxides = oxides.difference(elements)
+    # fill_oxides = optional_oxides.difference(elements)
+
+    # if len(absentOxides) > 0:
+    #     raise KeyError(f"{absentOxides} not found in melt")
 
     # All oxides as mole/cation fractions on an anhydrous basis
-    if len(fill_oxides) > 0:
-        composition[list(fill_oxides)] = 0.0
+    # if len(fill_oxides) > 0:
+    #     composition[list(fill_oxides)] = 0.0
 
     if "H2O" not in elements:
+        error = errors["putirka2007_4_dry"]
         H2O = 0.0
     else:
+        error = errors["putirka2007_4_wet"]
         H2O = composition["H2O"].copy()
         # moles are calculated on an anhydrous basis
-        try:
-            composition = composition.drop("H2O")
-        except KeyError:
-            composition = composition.drop(columns=["H2O"])
-
-    # weight % oxides not renormalised to 100%, even when hydrous
-    composition = composition.recalculate()
+        composition = _anhydrous_composition(composition)
 
     # Calculate molar oxide fractions
     liquid_moles = composition.moles
@@ -92,4 +108,8 @@ def putirka2007_4(
 
     denominator = denominator_a + denominator_b
 
-    return (numerator / denominator) + 273.15
+    T_K = (numerator / denominator) + 273.15
+
+    T_K = T_K + error * offset
+
+    return pd.Series(T_K, name="T_K").squeeze()

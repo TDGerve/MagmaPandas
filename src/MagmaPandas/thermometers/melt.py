@@ -6,52 +6,40 @@ import warnings as w
 
 import elementMass as e
 import pandas as pd
+
 from MagmaPandas.MagmaFrames.protocols import Magma
+from MagmaPandas.parse_io import check_components
 from MagmaPandas.thermometers.data_parsing import (
     _anhydrous_composition,
-    _get_oxides,
-    parse_data,
+    _check_calibration_range,
+    _get_elements,
 )
 
+calibration_range = {
+    "putirka2008_14": [
+        ["SiO2", 31, 73.64],
+        [["Na2O", "K2O"], 0, 14.3],
+        ["H2O", 0, 18.6],
+    ],
+    "putirka2008_15": [
+        ["SiO2", 31, 73.64],
+        [["Na2O", "K2O"], 0, 14.3],
+        ["H2O", 0, 18.6],
+    ],
+}
 
-def _check_calibration_range_Series(melt: pd.Series) -> None:
+errors = pd.Series({"putirka2008_14": 58, "putirka2008_15": 46, "putirka2008_16": 26})
 
-    SiO2_range = not (31 < melt["SiO2"] < 73.64)
-    alkali_range = melt[["Na2O", "K2O"]].sum() > 14.3
-    H2O_range = melt["H2O"] > 18.6
-
-    outside_range = SiO2_range | alkali_range | H2O_range
-
-    if not outside_range:
-        return
-    w.warn(f"sample has composition outside the thermometer calibration range")
-
-
-def _check_calibration_range_dataframe(melt: Magma) -> None:
-
-    SiO2_range = ~melt["SiO2"].between(31, 73.64)
-    alkali_range = melt[["Na2O", "K2O"]].sum(axis=1) > 14.3
-    H2O_range = melt["H2O"] > 18.6
-
-    outside_range = SiO2_range | alkali_range | H2O_range
-
-    if outside_range.sum() < 1:
-        return
-
-    w.warn(
-        f"samples {*melt.index[outside_range],} have compositions outside the thermometer calibration range"
-    )
+components = {
+    "putrika2008_14": ["MgO", "FeO", "Na2O", "K2O"],
+    "putrika2008_15": ["MgO", "FeO", "Na2O", "K2O"],
+    "putrika2008_16": ["SiO2", "Al2O3", "MgO"],
+}
 
 
-def _check_calibration_range(melt: pd.Series | Magma) -> None:
-
-    if isinstance(melt, pd.Series):
-        _check_calibration_range_Series(melt)
-    elif isinstance(melt, pd.DataFrame):
-        _check_calibration_range_dataframe(melt)
-
-
-def putirka2008_14(melt: Magma, *args, **kwargs) -> float | pd.Series:
+def putirka2008_14(
+    melt: Magma, offset: float = 0.0, warn=True, *args, **kwargs
+) -> float | pd.Series:
     """
     melt-only thermometer
 
@@ -77,20 +65,28 @@ def putirka2008_14(melt: Magma, *args, **kwargs) -> float | pd.Series:
     melt : Magma
         melt compositions in oxide wt. %
 
+    offset : float
+        offset value in standard deviations. Temperatures are calculated as ``temnperature + offset * thermometer error (SEE)``.
+
     Returns
     -------
     temperatures : float, pandas Series
         liquidus temperatures in Kelvin.
     """
+    if warn:
+        _check_calibration_range(
+            melt=melt, calibration_range=calibration_range["putirka2008_14"]
+        )
 
-    _check_calibration_range(melt)
+    elements = _get_elements(melt)
+    composition = check_components(
+        composition=melt, components=components["putrika2008_14"]
+    )
+    # oxides_needed = set(["MgO", "FeO", "Na2O", "K2O"])
 
-    oxides = _get_oxides(melt)
-    oxides_needed = set(["MgO", "FeO", "Na2O", "K2O"])
+    # composition = parse_data(melt, oxides_needed)
 
-    composition = parse_data(melt, oxides_needed)
-
-    if "H2O" not in oxides:
+    if "H2O" not in elements:
         H2O = 0.0
     else:
         H2O = composition["H2O"].copy()
@@ -103,7 +99,7 @@ def putirka2008_14(melt: Magma, *args, **kwargs) -> float | pd.Series:
         mol_fractions["MgO"] + mol_fractions["FeO"]
     )  # Putirka doesn't specify whether this should be Fe2+ or Fe(total)
 
-    if "Fe2O3" in oxides:
+    if "Fe2O3" in elements:
         FeO_w, Fe2O3_w = e.compound_weights(["FeO", "Fe2O3"])
         composition["FeO"] = composition["FeO"] + (
             2 * composition["Fe2O3"] * (FeO_w / Fe2O3_w)
@@ -121,11 +117,17 @@ def putirka2008_14(melt: Magma, *args, **kwargs) -> float | pd.Series:
     if any(T_K < 0):
         w.warn("Negative temperatures found!")
 
+    T_K = T_K + errors["putirka2008_14"] * offset
+
     return pd.Series(T_K, name="T_K").squeeze()
 
 
 def putirka2008_15(
-    melt: Magma, P_bar: float | pd.Series = None, **kwargs
+    melt: Magma,
+    P_bar: float | pd.Series = None,
+    offset: float = 0.0,
+    warn=True,
+    **kwargs,
 ) -> float | pd.Series:
     """
     melt-only thermometer
@@ -155,21 +157,30 @@ def putirka2008_15(
     P_bar : float, pandas Series
         pressures in bar.
 
+    offset : float
+        offset value in standard deviations. Temperatures are calculated as ``temnperature + offset * thermometer error (SEE)``.
+
     Returns
     -------
     temperatures : float, pandas Series
         liquidus temperatures in Kelvin.
     """
-    _check_calibration_range(melt)
+    if warn:
+        _check_calibration_range(
+            melt=melt, calibration_range=calibration_range["putirka2008_15"]
+        )
 
     if P_bar is None:
         P_bar = melt["P_bar"]
 
-    oxides = _get_oxides(melt)
-    oxides_needed = set(["MgO", "FeO", "Na2O", "K2O"])
-    composition = parse_data(melt, oxides_needed)
+    elements = _get_elements(melt)
+    composition = check_components(
+        composition=melt, components=components["putrika2008_15"]
+    )
+    # oxides_needed = set(["MgO", "FeO", "Na2O", "K2O"])
+    # composition = parse_data(melt, oxides_needed)
 
-    if "H2O" not in oxides:
+    if "H2O" not in elements:
         H2O = 0.0
     else:
         H2O = composition["H2O"].copy()
@@ -184,7 +195,7 @@ def putirka2008_15(
         mol_fractions["MgO"] + mol_fractions["FeO"]
     )  # Putirka doesn't specify whether this should be Fe2+ or Fe(total)
 
-    if "Fe2O3" in oxides:
+    if "Fe2O3" in elements:
         FeO_w, Fe2O3_w = e.compound_weights(["FeO", "Fe2O3"])
         composition["FeO"] = composition["FeO"] + (
             2 * composition["Fe2O3"] * (FeO_w / Fe2O3_w)
@@ -207,19 +218,22 @@ def putirka2008_15(
         if T_K < 0:
             w.warn("Negative temperatures found!")
 
+    T_K = T_K + errors["putirka2008_14"] * offset
+
     return pd.Series(T_K, name="T_K").squeeze()
 
 
 def putirka2008_16(
-    melt: Magma, P_bar: float | pd.Series = None, **kwargs
+    melt: Magma, P_bar: float | pd.Series = None, offset: float = 0.0, **kwargs
 ) -> float | pd.Series:
     """
     melt-only thermometer
 
     Equation 16 from Putirka (2008)\ [15]_ calculates liquiqdus temperatures based on melt compositions.
-    Requires equilibrium with olivine + plagioclase + clinopyroxene.
+    Requires equilibrium with olivine + plagioclase + clinopyroxene and saturation with additional phases drastically increases the standard error of estimate.
 
-    SEE = 19 degrees
+    SEE = 26 degrees (saturation in olivine + plagioclase + clinopyroxene)
+        = 60 degrees (saturation with additional phases)
 
     Parameters
     ----------
@@ -229,15 +243,21 @@ def putirka2008_16(
     P_bar : float, pandas Series
         pressures in bar
 
+    offset : float
+        offset value in standard deviations. Temperatures are calculated as ``temnperature + offset * thermometer error (SEE)``.
+
     Returns
     -------
     temperatures : float, pandas Series
         liquidus temperatures in Kelvin.
     """
-    oxides = _get_oxides(melt)
-    oxides_needed = set(["SiO2", "Al2O3", "MgO"])
+    elements = _get_elements(melt)
+    composition = check_components(
+        composition=melt, components=components["putrika2008_16"]
+    )
+    # oxides_needed = set(["SiO2", "Al2O3", "MgO"])
 
-    composition = parse_data(melt, oxides_needed)
+    # composition = parse_data(melt, oxides_needed)
     # import MagmaPandas as mp
 
     if P_bar is None:
@@ -247,7 +267,7 @@ def putirka2008_16(
         if not melt.index.equals(P_bar.index):
             raise RuntimeError("Melt and P_bar indices don't match")
 
-    if "H2O" in oxides:
+    if "H2O" in elements:
         composition = _anhydrous_composition(composition)
 
     # Convert pressure from bars to GPa
@@ -265,5 +285,7 @@ def putirka2008_16(
     part_2 = -31440 * mol_fractions["SiO2"] * mol_fractions["Al2O3"] + 77.67 * P_GPa
 
     T_K = part_1 + part_2 + 273.15
+
+    T_K = T_K + errors["putirka2008_14"] * offset
 
     return pd.Series(T_K, name="T_K").squeeze()
