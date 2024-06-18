@@ -1,14 +1,13 @@
-from MagmaPandas import fO2
+from MagmaPandas import fO2 as f
 from MagmaPandas.configuration import configuration
 from MagmaPandas.Fe_redox.models import Fe3Fe2_models
 
 
-def FeRedox_QFM(mol_fractions, T_K, P_bar, logshift, **kwargs):
+def calculate_Fe3Fe2(mol_fractions, T_K, P_bar, fO2=None, **kwargs):
     """
-    Calculate melt |Fe3Fe2| ratios at the QFM *f*\ O2 buffer, with
-    models from Borisov et al. (2018)\ [1]_ or Kress and Carmichael (1991)\ [2]_.
+    Calculate melt |Fe3Fe2| with the configured *f*\ O2 buffer and |Fe3Fe2| model.
 
-    Model choice is set in the global :py:class:`~MagmaPandas.configuration.configuration` class.
+    Model choices are set in the global :py:class:`~MagmaPandas.configuration.configuration` class.
 
     Parameters
     ----------
@@ -31,6 +30,7 @@ def FeRedox_QFM(mol_fractions, T_K, P_bar, logshift, **kwargs):
     Fe_model_name = kwargs.get("Fe_model", configuration.Fe3Fe2_model)
     Fe_model = Fe3Fe2_models[Fe_model_name]  # getattr(Fe_redox, Fe_model_name)
 
-    fO2_bar = kwargs.get("fO2", fO2.fO2_QFM(logshift, T_K, P_bar))
+    if fO2 is None:
+        fO2 = f.calculate_fO2(T_K=T_K, P_bar=P_bar, **kwargs)
 
-    return Fe_model.calculate_Fe3Fe2(mol_fractions, T_K, fO2_bar, P_bar)
+    return Fe_model.calculate_Fe3Fe2(mol_fractions, T_K, fO2, P_bar)
