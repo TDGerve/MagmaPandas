@@ -1,7 +1,8 @@
 import elementMass as e
 import matplotlib.pyplot as plt
 
-markers = ["^", "D", "s", "o", "p", "8", "h", "d", "4", "5"]
+markers = ("<", "^", "s", "v", ">", "*", "p", ".", "P", "X", "8", "d")
+marker_size = (1.5, 1.5, 1.5, 1.5, 1.5, 1, 1.2, 1, 1.2, 1.2, 1.5, 1.2)
 
 
 # Color palettes
@@ -9,6 +10,37 @@ class colors:
     """
     Color palettes for plots
     """
+
+    bright = plt.cycler(
+        color=[
+            "xkcd:bright lime green",
+            "xkcd:dandelion",
+            "xkcd:blood orange",
+            "xkcd:white",
+            "xkcd:ultramarine blue",
+            "xkcd:barbie pink",
+            "xkcd:light pink",
+            "xkcd:green teal",
+            "xkcd:neon yellow",
+            "xkcd:cool blue",
+            "xkcd:white",
+            "xkcd:vivid purple",
+        ],
+        edgecolor=[
+            "xkcd:forest",
+            "xkcd:orange",
+            "xkcd:white",
+            "xkcd:black",
+            "xkcd:white",
+            "xkcd:deep violet",
+            "xkcd:easter purple",
+            "xkcd:navy",
+            "xkcd:off green",
+            "xkcd:dark grey",
+            "xkcd:vibrant blue",
+            "xkcd:pale lilac",
+        ],
+    )
 
     flatDesign = plt.cycler(
         color=["#e27a3d", "#344d5c", "#df5a49", "#43b29d", "#efc94d"]
@@ -106,8 +138,8 @@ def layout(colors=colors.hollywood, fontsize=8, **kwargs):
     tickLabelSize = int(fontsize)
     markersize = kwargs.pop("markersize", 6)
     linewidth = kwargs.pop("linewidth", 1)
-    facecolor = kwargs.pop("facecolor", "whitesmoke")
-    gridcolor = kwargs.pop("gridcolor", "snow")
+    facecolor = kwargs.pop("facecolor", "white")
+    gridcolor = kwargs.pop("gridcolor", "whitesmoke")
 
     plt.rcParams["figure.constrained_layout.use"] = True
 
@@ -133,7 +165,10 @@ def layout(colors=colors.hollywood, fontsize=8, **kwargs):
         titlesize=axTitleSize,
         labelsize=axLabelSize,
         axisbelow=True,
-        prop_cycle=colors + plt.cycler(marker=markers[: len(colors)]),
+        prop_cycle=colors
+        + plt.cycler(
+            marker=markers[: len(colors)], markersize=marker_size[: len(colors)]
+        ),
         facecolor=facecolor,
         linewidth=0.8,
     )
