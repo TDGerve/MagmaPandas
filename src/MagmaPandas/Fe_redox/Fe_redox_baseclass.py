@@ -80,10 +80,15 @@ class Fe3Fe2_model(ABC):
 
         errors = error_1bar.copy()
 
-        if isinstance(pressure, (float, int)):
-            pressure = np.array([pressure])
-            errors = np.array([errors])
-            error_high_pressure = np.array([error_high_pressure])
+        # catch index errors for ints, floats and 0-dimensional arrays.
+        try:
+            error_high_pressure[0]
+        except (TypeError, IndexError):
+            # convert everyting to a 1-dimensional arrays.
+            pressure = np.array([pressure]).flatten()
+            errors = np.array([errors]).flatten()
+            error_high_pressure = np.array([error_high_pressure]).flatten()
+
         hp = pressure > 1
         errors[hp] = error_high_pressure[hp]
 
