@@ -133,7 +133,7 @@ def putirka2008_15(
     melt-only thermometer
 
     Equation 15 from Putirka (2008)\ [15]_ calculates liquidus temperatures based on melt compositions.
-    Requires equilibrium with olivine.
+    Requires saturation in olivine.
 
     SEE = 46 degrees
 
