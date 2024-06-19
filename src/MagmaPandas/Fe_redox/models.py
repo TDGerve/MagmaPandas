@@ -1,24 +1,14 @@
 import inspect
-import math
 import sys
-import warnings as w
-from typing import Optional
 
 import numpy as np
 import pandas as pd
-from scipy import interpolate
 from scipy.constants import Avogadro, R
 from scipy.optimize import fsolve
 
 from MagmaPandas.EOSs.birch_murnaghan import birch_murnaghan_4th_order
-from MagmaPandas.Fe_redox.Fe3Fe2_errors import (
-    error_params_1bar,
-    error_params_high_pressure,
-)
 from MagmaPandas.Fe_redox.Fe_redox_baseclass import Fe3Fe2_model
-from MagmaPandas.model_errors import _error_func
 from MagmaPandas.parse_io import check_components, make_iterable
-from MagmaPandas.parse_io.validate import _check_value
 
 
 def _is_Fe3Fe2_model(cls):

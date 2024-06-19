@@ -3,27 +3,23 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+from scipy import interpolate
+
 from MagmaPandas.Fe_redox.Fe3Fe2_errors import (
     error_params_1bar,
     error_params_high_pressure,
 )
 from MagmaPandas.model_errors import _error_func
-from MagmaPandas.parse_io.validate import _check_value
-from scipy import interpolate
 
 # Fe3+/Fe2+ limits of the moving standard deviation in a 30 point window of the validation dataset (provided at ./data/Fe3Fe2_validation_data.csv).
 validation_limits_1bar = (0.0351966873706004, 5.948890681577911)
 validation_limits_high_pressure = (0.052631579, 2.160641174)
 
 
-@_check_value(var_name="Fe3Fe2", allowed_range=validation_limits_1bar, error=False)
 def _Fe3Fe2_error_func(a, b, c, d, Fe3Fe2):
     return _error_func(data=Fe3Fe2, a=a, b=b, c=c, d=d)
 
 
-@_check_value(
-    var_name="Fe3Fe2", allowed_range=validation_limits_high_pressure, error=False
-)
 def _Fe3Fe2_spline(Fe3Fe2, parameters):
     return interpolate.splev(Fe3Fe2, parameters)
 
