@@ -1,8 +1,9 @@
 import elementMass as e
 import matplotlib.pyplot as plt
+import numpy as np
 
 markers = ("<", "^", "s", "v", ">", "*", "p", ".", "P", "X", "8", "d")
-marker_size = (1.5, 1.5, 1.5, 1.5, 1.5, 1, 1.2, 1, 1.2, 1.2, 1.5, 1.2)
+marker_sizes = np.array([1.5, 1.5, 1.5, 1.5, 1.5, 1, 1.2, 1, 1.2, 1.2, 1.5, 1.2])
 
 
 # Color palettes
@@ -26,7 +27,7 @@ class colors:
             "xkcd:white",
             "xkcd:vivid purple",
         ],
-        edgecolor=[
+        markeredgecolor=[
             "xkcd:forest",
             "xkcd:orange",
             "xkcd:white",
@@ -136,7 +137,7 @@ def layout(colors=colors.hollywood, fontsize=8, **kwargs):
     axTitleSize = int(fontsize)
     axLabelSize = int(fontsize)
     tickLabelSize = int(fontsize)
-    markersize = kwargs.pop("markersize", 6)
+    markersize = kwargs.pop("markersize", 3)
     linewidth = kwargs.pop("linewidth", 1)
     facecolor = kwargs.pop("facecolor", "white")
     gridcolor = kwargs.pop("gridcolor", "whitesmoke")
@@ -167,7 +168,8 @@ def layout(colors=colors.hollywood, fontsize=8, **kwargs):
         axisbelow=True,
         prop_cycle=colors
         + plt.cycler(
-            marker=markers[: len(colors)], markersize=marker_size[: len(colors)]
+            marker=markers[: len(colors)],
+            markersize=(marker_sizes * markersize)[: len(colors)],
         ),
         facecolor=facecolor,
         linewidth=0.8,
