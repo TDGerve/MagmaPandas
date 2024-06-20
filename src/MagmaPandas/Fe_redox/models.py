@@ -699,14 +699,14 @@ class Oneill2006(Fe3Fe2_model):
 
 class Oneill2018(Fe3Fe2_model):
 
-    components = ["Na2O", "K2O", "P2O5"]
+    components = ["CaO", "Na2O", "K2O", "P2O5"]
 
     error_params = [-1.99768682e-02, 7.41622563e-02, 9.80282471e-01, 1.28905955e02]
 
     @classmethod
     def calculate_Fe3Fe2(cls, melt_mol_fractions, T_K, fO2, *args, **kwargs):
         """
-        Calculate melt |Fe3Fe2| ratios with equation 10.
+        Calculate melt |Fe3Fe2| ratios with equation 9a.
 
         Parameters
         ----------
