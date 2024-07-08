@@ -28,7 +28,7 @@ def equilibrium_forsterite(melt_mol_fractions, Kd, Fe3Fe2):
     return 1 / (1 + Kd * Fe2Mg_liquid)
 
 
-def iterate_Kd(
+def iterate_Kd_scalar(
     melt_mol_fractions: pd.Series,
     forsterite_initial,
     T_K,

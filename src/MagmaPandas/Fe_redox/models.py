@@ -1199,9 +1199,7 @@ class Sun2024(Fe3Fe2_model):
         )
 
     @classmethod
-    def calculate_Fe3Fe2(
-        cls, melt_mol_fractions, T_K, P_bar, fO2, Fe3Fe2_init=0.3, *args, **kwargs
-    ):
+    def calculate_Fe3Fe2(cls, melt_mol_fractions, T_K, P_bar, fO2, *args, **kwargs):
         """
         Calculate melt |Fe3Fe2| ratios with equation 9.
 
