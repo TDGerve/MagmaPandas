@@ -4,12 +4,13 @@ from functools import partial
 
 import numpy as np
 import pandas as pd
+from scipy.constants import R  # J*K-1*mol-1
+
 from MagmaPandas import Fe_redox, configuration
 from MagmaPandas.fO2 import calculate_fO2
 from MagmaPandas.Kd.Kd_baseclass import Kd_model
-from MagmaPandas.Kd.Ol_melt.iterative import iterate_Kd, iterate_Kd_vectorized
+from MagmaPandas.Kd.Ol_melt.iterative import iterate_Kd_scalar, iterate_Kd_vectorized
 from MagmaPandas.parse_io import check_components
-from scipy.constants import R  # J*K-1*mol-1
 
 
 def _is_Kd_model(cls):
@@ -136,6 +137,7 @@ class toplis(Kd_model):
         return SiO2_A
 
     @classmethod
+    @np.errstate(invalid="raise")
     def _calculate_Kd(
         cls,
         melt_mol_fractions: pd.DataFrame,
@@ -208,7 +210,7 @@ class toplis(Kd_model):
         """
 
         if isinstance(melt_mol_fractions, pd.Series):
-            Kd_func = iterate_Kd
+            Kd_func = iterate_Kd_scalar
         elif isinstance(melt_mol_fractions, pd.DataFrame):
             Kd_func = iterate_Kd_vectorized
 
@@ -330,7 +332,7 @@ class blundy(Kd_model):
         _ = kwargs.pop("Fe3Fe2", None)
 
         if isinstance(melt_mol_fractions, pd.Series):
-            Kd_func = iterate_Kd
+            Kd_func = iterate_Kd_scalar
         elif isinstance(melt_mol_fractions, pd.DataFrame):
             Kd_func = iterate_Kd_vectorized
 
