@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 markers = ("<", "^", "s", "v", ">", "*", "p", ".", "P", "X", "8", "d")
-marker_sizes = np.array([1.5, 1.5, 1.5, 1.5, 1.5, 1, 1.2, 1, 1.2, 1.2, 1.5, 1.2])
+marker_sizes = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.5, 1.2, 1.5, 1.2, 1.2, 1.0, 1.2])
 
 
 # Color palettes
@@ -19,11 +19,11 @@ class colors:
             "xkcd:blood orange",
             "xkcd:white",
             "xkcd:ultramarine blue",
-            "xkcd:barbie pink",
             "xkcd:light pink",
             "xkcd:green teal",
             "xkcd:neon yellow",
             "xkcd:cool blue",
+            "xkcd:barbie pink",
             "xkcd:white",
             "xkcd:vivid purple",
         ],
@@ -32,12 +32,12 @@ class colors:
             "xkcd:orange",
             "xkcd:white",
             "xkcd:black",
-            "xkcd:white",
-            "xkcd:deep violet",
+            "xkcd:pale cyan",
             "xkcd:easter purple",
             "xkcd:navy",
             "xkcd:off green",
             "xkcd:dark grey",
+            "xkcd:deep violet",
             "xkcd:vibrant blue",
             "xkcd:pale lilac",
         ],
