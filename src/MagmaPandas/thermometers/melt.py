@@ -114,8 +114,12 @@ def putirka2008_14(
         - 9.176 * H2O
     ) + 273.15
 
-    if any(T_K < 0):
-        w.warn("Negative temperatures found!")
+    try:
+        if any(T_K < 0):
+            w.warn("Negative temperatures found!")
+    except TypeError:
+        if T_K < 0:
+            w.warn("Negative temperatures found!")
 
     T_K = T_K + errors["putirka2008_14"] * offset
 
@@ -218,7 +222,7 @@ def putirka2008_15(
         if T_K < 0:
             w.warn("Negative temperatures found!")
 
-    T_K = T_K + errors["putirka2008_14"] * offset
+    T_K = T_K + errors["putirka2008_15"] * offset
 
     return pd.Series(T_K, name="T_K").squeeze()
 
@@ -286,6 +290,13 @@ def putirka2008_16(
 
     T_K = part_1 + part_2 + 273.15
 
-    T_K = T_K + errors["putirka2008_14"] * offset
+    try:
+        if any(T_K < 0):
+            w.warn("Negative temperatures found!")
+    except TypeError:
+        if T_K < 0:
+            w.warn("Negative temperatures found!")
+
+    T_K = T_K + errors["putirka2008_16"] * offset
 
     return pd.Series(T_K, name="T_K").squeeze()
