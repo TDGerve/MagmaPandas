@@ -27,6 +27,39 @@ class Kd_model(ABC):
         """
         pass
 
+    @classmethod
+    def _calculate_Kd_(
+        cls, melt_mol_fractions, T_K, P_bar, offset_parameters=0.0, *args, **kwargs
+    ):
+
+        Kd = cls.calculate_Kd(
+            melt_mol_fractions=melt_mol_fractions, T_K=T_K, P_bar=P_bar, *args, **kwargs
+        )
+
+        if offset_parameters == 0.0:
+            return Kd
+
+        offset = cls.get_offset(
+            melt_composition=melt_mol_fractions,
+            offset_parameters=offset_parameters,
+        )
+        Kd = Kd + offset
+
+        # Make sure no negative values are returned
+        try:
+            Kd[Kd <= 0.0] = 1e-6
+        except TypeError:
+            Kd = 1e-6 if Kd <= 0.0 else Kd
+
+        # Make sure arrays of length 1 are returned as floats instead
+        try:
+            if len(Kd) == 1:
+                return np.array(Kd)[0]
+            return Kd
+
+        except TypeError:
+            return Kd
+
     @abstractmethod
     def get_error(cls, *args, **kwargs):
         """

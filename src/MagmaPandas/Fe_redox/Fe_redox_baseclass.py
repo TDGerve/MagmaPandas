@@ -3,13 +3,12 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from scipy import interpolate
-
 from MagmaPandas.Fe_redox.Fe3Fe2_errors import (
     error_params_1bar,
     error_params_high_pressure,
 )
 from MagmaPandas.model_errors import _error_func
+from scipy import interpolate
 
 # Fe3+/Fe2+ limits of the moving standard deviation in a 30 point window of the validation dataset (provided at ./data/Fe3Fe2_validation_data.csv).
 validation_limits_1bar = (0.0351966873706004, 5.948890681577911)
@@ -47,6 +46,48 @@ class Fe3Fe2_model(ABC):
             melt |Fe3Fe2| ratio
         """
         pass
+
+    @classmethod
+    def _calculate_Fe3Fe2_(
+        cls, melt_mol_fractions, T_K, fO2, offset_parameters=0.0, *args, **kwargs
+    ):
+        """
+        Calculate melt Fe3Fe2 ratios and offset results by ``offset_paramaters`` * standard deviation of the model.
+        """
+        Fe3Fe2 = cls.calculate_Fe3Fe2(
+            melt_mol_fractions=melt_mol_fractions,
+            T_K=T_K,
+            fO2=fO2,
+            **kwargs,
+        )
+
+        if offset_parameters == 0.0:
+            return Fe3Fe2
+
+        # if self._Fe3Fe2_offset_parameters != 0.0:
+        offset = cls.get_offset(
+            melt_composition=melt_mol_fractions,
+            Fe3Fe2=Fe3Fe2,
+            offset_parameters=offset_parameters,
+            pressure=kwargs["P_bar"],
+        )
+
+        Fe3Fe2 = Fe3Fe2 + offset
+
+        # Make sure no negative values are returned
+        try:
+            Fe3Fe2[Fe3Fe2 <= 0.0] = 1e-6
+        except TypeError:
+            Fe3Fe2 = 1e-6 if Fe3Fe2 <= 0 else Fe3Fe2
+
+        # Make sure arrays of length 1 are returned as floats instead
+        try:
+            if len(Fe3Fe2) == 1:
+                return np.array(Fe3Fe2)[0]
+            return Fe3Fe2
+
+        except TypeError:
+            return Fe3Fe2
 
     @classmethod
     def get_error(
