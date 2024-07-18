@@ -1,7 +1,6 @@
 from typing import Callable
 
 import pandas as pd
-
 from MagmaPandas.parse_io import convert_to_series, match_indeces
 
 
@@ -134,8 +133,8 @@ def iterate_Kd_vectorized(
     forsterite, T_K, Fe3Fe2, *args = convert_to_series(
         [forsterite_initial, T_K, Fe3Fe2, *kwargs.values()], melt_mol_fractions.index
     )
-    if len(kwargs.keys()) < 2:
-        args = [args]
+    # if len(kwargs.keys()) < 2:
+    #     args = [args]
 
     kwargs = {key: value for key, value in zip(kwargs.keys(), args)}
 
