@@ -49,3 +49,17 @@ def fO2_NNO_1bar(
     fO2 = np.exp(muO2 / (R * T_K)) * offset
 
     return fO2
+
+
+def fO2_NNO_frost(logshift, T_K, P_bar):
+    """
+    From Table 1 in:
+
+    B. R. Frost (1991) Introduction to oxygen fugacity and its petrological importance. In: Oxide minerals: petrologic and magnetic significance.
+    """
+
+    offset = 10**logshift
+
+    log10fO2 = -24930 / T_K + 9.36 + 4.6e-2 * (P_bar - 1) / T_K
+
+    return 10 ** (log10fO2) * offset
