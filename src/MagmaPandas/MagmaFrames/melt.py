@@ -81,7 +81,7 @@ class Melt(MagmaFrame):
             densities in kg/m\ :sup:`3`
         """
 
-        self._match_index(self, arg_names=("T_K", "P_bar"), kwargs=locals())
+        _match_index(self, arg_names=("T_K", "P_bar"), kwargs=locals())
 
         if fO2_logshift is None:
             fO2_logshift = configuration.dfO2
@@ -174,7 +174,7 @@ class Melt(MagmaFrame):
         # if P_bar is None:
         #     P_bar = self["P_bar"]
 
-        self._match_index(self, arg_names=["T_K", "P_bar"], kwargs=locals())
+        _match_index(self, arg_names=["T_K", "P_bar"], kwargs=locals())
 
         # for name in ["T_K", "P_bar"]:
         #     param = locals()[name]

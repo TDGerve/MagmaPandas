@@ -460,13 +460,13 @@ class mixed(Solubility_model):
         """
         composition = oxide_wtPercents.copy()
 
+        P_H2O_saturation = h2o.calculate_saturation(composition, T_K=T_K, x_fluid=1.0)
+        P_CO2_saturation = co2.calculate_saturation(composition, T_K=T_K, x_fluid=0.0)
+
         if oxide_wtPercents["H2O"] <= 0.0:
             return P_CO2_saturation
         if oxide_wtPercents["CO2"] <= 0.0:
             return P_H2O_saturation
-
-        P_H2O_saturation = h2o.calculate_saturation(composition, T_K=T_K, x_fluid=1.0)
-        P_CO2_saturation = co2.calculate_saturation(composition, T_K=T_K, x_fluid=0.0)
 
         P_guess = 0
 
