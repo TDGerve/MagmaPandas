@@ -5,6 +5,7 @@ Sub-module with melt-only thermometers
 import warnings as w
 
 import elementMass as e
+import numpy as np
 import pandas as pd
 
 from MagmaPandas.MagmaFrames.protocols import Magma
@@ -13,6 +14,8 @@ from MagmaPandas.thermometers.data_parsing import (
     _anhydrous_composition,
     _check_calibration_range,
     _get_elements,
+    _remove_elements,
+    moles_per_oxygen,
 )
 
 calibration_range = {
@@ -28,13 +31,30 @@ calibration_range = {
     ],
 }
 
-errors = pd.Series({"putirka2008_14": 58, "putirka2008_15": 46, "putirka2008_16": 26})
+errors = pd.Series(
+    {"putirka2008_14": 58, "putirka2008_15": 46, "putirka2008_16": 26, "sun2020": 49}
+)
 
 components = {
-    "putrika2008_14": ["MgO", "FeO", "Na2O", "K2O"],
-    "putrika2008_15": ["MgO", "FeO", "Na2O", "K2O"],
-    "putrika2008_16": ["SiO2", "Al2O3", "MgO"],
+    "putirka2008_14": ["MgO", "FeO", "Na2O", "K2O"],
+    "putirka2008_15": ["MgO", "FeO", "Na2O", "K2O"],
+    "putirka2008_16": ["SiO2", "Al2O3", "MgO"],
+    "sun2020": ["MgO", "CaO", "K2O", "TiO2", "FeO", "CO2", "H2O"],
 }
+
+
+def _check_temperature(T_K):
+    """
+    Find negative or NaN temperatures
+    """
+    try:
+        if (neg := any(T_K < 0)) or (nan := any(np.isnan(T_K))):
+            str_arr = np.array(["negative", "NaN"])[np.array([neg, nan])]
+            w.warn(f"{', '.join(str_arr)} temperatures found!")
+    except TypeError:
+        if (neg := (T_K < 0)) or (nan := (T_K != T_K)):
+            str_arr = np.array(["negative", "NaN"])[np.array([neg, nan])]
+            raise ValueError(f"{', '.join(str_arr)} temperature found!")
 
 
 def putirka2008_14(
@@ -80,7 +100,7 @@ def putirka2008_14(
 
     elements = _get_elements(melt)
     composition = check_components(
-        composition=melt, components=components["putrika2008_14"]
+        composition=melt, components=components["putirka2008_14"]
     )
     # oxides_needed = set(["MgO", "FeO", "Na2O", "K2O"])
 
@@ -114,12 +134,7 @@ def putirka2008_14(
         - 9.176 * H2O
     ) + 273.15
 
-    try:
-        if any(T_K < 0):
-            w.warn("Negative temperatures found!")
-    except TypeError:
-        if T_K < 0:
-            w.warn("Negative temperatures found!")
+    _check_temperature(T_K)
 
     T_K = T_K + errors["putirka2008_14"] * offset
 
@@ -179,7 +194,7 @@ def putirka2008_15(
 
     elements = _get_elements(melt)
     composition = check_components(
-        composition=melt, components=components["putrika2008_15"]
+        composition=melt, components=components["putirka2008_15"]
     )
     # oxides_needed = set(["MgO", "FeO", "Na2O", "K2O"])
     # composition = parse_data(melt, oxides_needed)
@@ -215,12 +230,7 @@ def putirka2008_15(
         - 12.83 * H2O
     ) + 273.15
 
-    try:
-        if any(T_K < 0):
-            w.warn("Negative temperatures found!")
-    except TypeError:
-        if T_K < 0:
-            w.warn("Negative temperatures found!")
+    _check_temperature(T_K)
 
     T_K = T_K + errors["putirka2008_15"] * offset
 
@@ -257,7 +267,7 @@ def putirka2008_16(
     """
     elements = _get_elements(melt)
     composition = check_components(
-        composition=melt, components=components["putrika2008_16"]
+        composition=melt, components=components["putirka2008_16"]
     )
     # oxides_needed = set(["SiO2", "Al2O3", "MgO"])
 
@@ -290,13 +300,53 @@ def putirka2008_16(
 
     T_K = part_1 + part_2 + 273.15
 
-    try:
-        if any(T_K < 0):
-            w.warn("Negative temperatures found!")
-    except TypeError:
-        if T_K < 0:
-            w.warn("Negative temperatures found!")
+    _check_temperature(T_K)
 
     T_K = T_K + errors["putirka2008_16"] * offset
+
+    return pd.Series(T_K, name="T_K").squeeze()
+
+
+def sun2020(melt, P_bar, offset: float = 0.0, **kwargs):
+    """
+    Equation 4 from:
+
+    Sun, C., Dasgupta, R. (2020) Thermobarometry of CO2-rich, silica-undersaturated melts constrains cratonic lithosphere thinning through time in areas of kimberlitic magmatism. Earth and Planetary Sience Letters. 550
+
+    Calibrated at:
+    ~ 2 - 10 GPa
+    ~ 950 - 1600 degrees C
+    """
+
+    P_GPa = P_bar / 1e4
+
+    composition = check_components(composition=melt, components=components["sun2020"])
+    moles = composition.moles
+
+    composition_volatile_free = _remove_elements(
+        composition=moles, drop=["H2O", "CO2", "F", "S", "Cl"]
+    )
+    moles_unit_oxygen = moles_per_oxygen(moles=composition_volatile_free)
+
+    Omega = (
+        2.59
+        + 3.5 * (moles_unit_oxygen["Ca1O"] - 2 * moles_unit_oxygen["K2O"])
+        + 4.85 * moles_unit_oxygen["Ti1/2O"]
+        + 1.4
+        * (
+            moles_unit_oxygen["Mg1O"]
+            / (moles_unit_oxygen["Mg1O"] + moles_unit_oxygen["Fe1O"])
+        )
+        + 0.5 * moles_unit_oxygen["Mg1O"] * np.sqrt(composition["CO2"])
+        + 5.7e-2 * composition["H2O"]
+    )
+
+    T_K = 1e4 / (
+        Omega - 0.34 * np.sqrt(P_GPa) - 1.26 * np.log(moles_unit_oxygen["Mg1O"])
+    )
+
+    _check_temperature(T_K)
+
+    T_K = T_K + errors["sun2020"] * offset
 
     return pd.Series(T_K, name="T_K").squeeze()

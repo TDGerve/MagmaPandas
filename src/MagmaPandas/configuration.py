@@ -25,9 +25,10 @@ Kd_ol_FeMg_models = [
     "putirka2016_8b",
     "putirka2016_8c",
     "putirka2016_8d",
+    "sun2020",
 ]
 fO2_buffers = ["QFM", "IW"]
-melt_thermometers = ["putirka2008_14", "putirka2008_15", "putirka2008_16"]
+melt_thermometers = ["putirka2008_14", "putirka2008_15", "putirka2008_16", "sun2020"]
 volatile_solubility_models = ["IaconoMarziano", "Allison2022", "Shiskina"]
 volatile_species_options = ["co2", "h2o", "mixed"]
 

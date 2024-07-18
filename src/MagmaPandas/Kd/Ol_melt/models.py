@@ -11,6 +11,7 @@ from MagmaPandas.fO2 import calculate_fO2
 from MagmaPandas.Kd.Kd_baseclass import Kd_model
 from MagmaPandas.Kd.Ol_melt.iterative import iterate_Kd_scalar, iterate_Kd_vectorized
 from MagmaPandas.parse_io import check_components
+from MagmaPandas.thermometers.data_parsing import _remove_elements, moles_per_oxygen
 
 
 def _is_Kd_model(cls):
@@ -706,6 +707,83 @@ class putirka2016_8d(Kd_model):
             random samples of a standard normal distribution.
         """
         return cls.get_error() * offset_parameters
+
+
+class sun2020(Kd_model):
+    """
+    Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 7 from Sun & Dasgupta (2020)\ [10]_.
+
+    Sun, C., Dasgupta, R. (2020) Thermobarometry of CO2-rich, silica-undersaturated melts constrains cratonic lithosphere thinning through time in areas of kimberlitic magmatism. Earth and Planetary Sience Letters. 550
+    """
+
+    volatiles = ["H2O", "CO2", "F", "S", "Cl"]
+    components = ["MgO", "Na2O", "H2O"]
+    error = 0.03
+
+    @classmethod
+    @np.errstate(invalid="raise")
+    def calculate_Kd(
+        cls, melt_mol_fractions, Fe3Fe2, *args, **kwargs
+    ) -> float | pd.Series:
+        """
+        Calculate Kds for given melt compositions and fixed forsterite content.
+
+        Parameters
+        ----------
+        melt_mol_fractions : pandas Dataframe
+            melt compositions in oxide mol fractions
+        forsterite : float, array-like
+            olivine forsterite contents.
+        T_K : float, array-like
+            temperatures in Kelvin
+        P_bar: float, array-like
+            pressures in bar
+
+        Returns
+        -------
+        Kds : array-like
+            Fe-Mg partition coefficients
+        """
+        composition = check_components(
+            composition=melt_mol_fractions, components=cls.components
+        )
+        melt_volatile_free = _remove_elements(composition, drop=cls.volatiles)
+        melt_per_oxygen = moles_per_oxygen(moles=melt_volatile_free)
+        melt_wtpc = composition.wt_pc
+
+        Kd_Fe_total = np.exp(
+            -1.65
+            + 1.22 * np.sqrt(melt_per_oxygen["Mg1O"])
+            + 2.45 * melt_per_oxygen["Na2O"]
+            + 0.54 * melt_wtpc["H2O"] / 100
+        )
+        Fe3FeTotal = Fe3Fe2 / (1 + Fe3Fe2)
+
+        Kd_Fe2 = Kd_Fe_total / (1 - Fe3FeTotal)
+
+        return Kd_Fe2
+
+    @classmethod
+    def get_error(cls) -> float:
+        """
+        Calculate one standard deviation errors on Kds
+
+        Returns
+        -------
+        error:  float
+            one standard deviation error
+        """
+
+        return cls.error
+
+    @classmethod
+    def get_offset_parameters(cls, n=1):
+        return np.random.normal(loc=0, scale=1, size=n)
+
+    @classmethod
+    def get_offset(cls, offset_parameters, *args, **kwargs):
+        error = cls.get_error()
+        return offset_parameters * error
 
 
 _clsmembers = inspect.getmembers(sys.modules[__name__], inspect.isclass)
