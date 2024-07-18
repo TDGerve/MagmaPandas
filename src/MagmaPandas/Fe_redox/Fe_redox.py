@@ -33,4 +33,6 @@ def calculate_Fe3Fe2(mol_fractions, T_K, P_bar, fO2=None, **kwargs):
     if fO2 is None:
         fO2 = f.calculate_fO2(T_K=T_K, P_bar=P_bar, **kwargs)
 
-    return Fe_model.calculate_Fe3Fe2(mol_fractions, T_K, fO2, P_bar)
+    return Fe_model.calculate_Fe3Fe2(
+        melt_mol_fractions=mol_fractions, T_K=T_K, P_bar=P_bar, fO2=fO2
+    )
