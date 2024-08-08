@@ -3,12 +3,11 @@ import sys
 
 import numpy as np
 import pandas as pd
-from scipy.constants import Avogadro, R
-from scipy.optimize import fsolve
-
 from MagmaPandas.EOSs.birch_murnaghan import birch_murnaghan_4th_order
 from MagmaPandas.Fe_redox.Fe_redox_baseclass import Fe3Fe2_model
 from MagmaPandas.parse_io import check_components, make_iterable
+from scipy.constants import Avogadro, R
+from scipy.optimize import fsolve
 
 
 def _is_Fe3Fe2_model(cls):
@@ -408,7 +407,9 @@ class Deng2020(Fe3Fe2_model):
             if len(moles) != (l := len(T_K)):
                 moles = moles.loc[moles.index.repeat(l)].reset_index(drop=True)
         except TypeError:
-            T_K, fO2, gibbs0, dVdP = make_iterable(T_K, fO2, gibbs0, dVdP)
+            pass
+        # force everything to an iteratble
+        T_K, fO2, gibbs0, dVdP = make_iterable(T_K, fO2, gibbs0, dVdP)
 
         Fe3Fe2_func = (
             lambda Fe3Fe2_guess, moles, T, fO2, G, dVdP: cls._Fe3Fe2_solver(
@@ -644,8 +645,9 @@ class Oneill2006(Fe3Fe2_model):
             if len(moles) != (l := len(T_K)):
                 moles = moles.loc[moles.index.repeat(l)].reset_index(drop=True)
         except TypeError:
-            # make floats into iterable lists
-            P_bar, T_K, fO2 = make_iterable(P_bar, T_K, fO2)
+            pass
+        # force everything into an iterable
+        P_bar, T_K, fO2 = make_iterable(P_bar, T_K, fO2)
 
         Fe3Fe2_func = (
             lambda Fe3Fe2_guess, moles, P, T, fO2: cls._calculate_Fe3Fe2(
@@ -809,8 +811,9 @@ class Armstrong2019(Fe3Fe2_model):
             if len(moles) != (l := len(T_K)):
                 moles = moles.loc[moles.index.repeat(l)].reset_index(drop=True)
         except TypeError:
-            # make floats into iterable lists
-            P_bar, T_K, fO2 = make_iterable(P_bar, T_K, fO2)
+            pass
+        # force everything into iterables
+        P_bar, T_K, fO2 = make_iterable(P_bar, T_K, fO2)
 
         Fe3Fe2_func = (
             lambda Fe3Fe2_guess, moles, T, P, fO2: cls._calculate_Fe3Fe2(
