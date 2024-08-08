@@ -91,7 +91,7 @@ def _anhydrous_composition(composition):
     except KeyError:
         composition_H2O = composition_H2O.drop(columns=["H2O"])
 
-    return composition_H2O.recalculate()
+    return composition_H2O.recalculate().normalise()
 
 
 def _remove_elements(composition, drop: List[str]):

@@ -7,7 +7,6 @@ import warnings as w
 import elementMass as e
 import numpy as np
 import pandas as pd
-
 from MagmaPandas.MagmaFrames.protocols import Magma
 from MagmaPandas.parse_io import check_components
 from MagmaPandas.thermometers.data_parsing import (
@@ -58,7 +57,7 @@ def _check_temperature(T_K):
 
 
 def putirka2008_14(
-    melt: Magma, offset: float = 0.0, warn=True, *args, **kwargs
+    melt: Magma, warn=True, offset: float = 0.0, *args, **kwargs
 ) -> float | pd.Series:
     """
     melt-only thermometer

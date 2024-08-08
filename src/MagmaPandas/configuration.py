@@ -85,6 +85,8 @@ for param, values in _variables.items():
     line = f"{_new_line}{param:.<{_names_length}}{val_string_1:.>{_pad_right}}{val_string_2}"
     configuration_options += line
 
+configuration_options += f"{_new_line}{'':#^{_pad_total}}"
+
 
 class _meta_configuration(type):
     def __init__(cls, *args, **kwargs):
@@ -188,7 +190,7 @@ class _meta_configuration(type):
                 f"{new_line}{param:.<{names_length}}{getattr(cls, value):.>{pad_right}}"
             )
 
-        return message + parameter_settings
+        return message + parameter_settings + f"{new_line}{'':#^{pad_total}}"
 
 
 class configuration(metaclass=_meta_configuration):
