@@ -340,10 +340,12 @@ class Melt(MagmaFrame):
         with Pool() as pool, alive_bar(
             total,
             spinner=None,
-            length=30,
+            length=25,
             manual=True,
             theme="smooth",
             force_tty=True,
+            title="Saturation pressure...",
+            title_length=25,
         ) as bar:
             results = pool.imap_unordered(self._saturation_multicore, samples)
             pool.close()
