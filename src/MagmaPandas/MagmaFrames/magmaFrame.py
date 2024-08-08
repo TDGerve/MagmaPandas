@@ -146,6 +146,10 @@ class MagmaFrame(pd.DataFrame):
         """
         Data converted to mol fraction.
         """
+
+        if self._units == Unit.MOL_FRACTIONS:
+            return self.copy()
+
         if self._units == Unit.WT_PERCENT:
             return self._convert_moles_wtPercent()
         elif self._units == Unit.PPM:
@@ -158,6 +162,10 @@ class MagmaFrame(pd.DataFrame):
         """
         Data converted to wt. %.
         """
+
+        if self._units == Unit.WT_PERCENT:
+            return self.copy()
+
         if self._units == Unit.MOL_FRACTIONS:
             return self._convert_moles_wtPercent()
         elif self._units == Unit.PPM:
@@ -170,6 +178,10 @@ class MagmaFrame(pd.DataFrame):
         """
         Data converted to ppm.
         """
+
+        if self._units == Unit.PPM:
+            return self.copy()
+
         if self._units == Unit.WT_PERCENT:
             return self.convert_ppm_wtPercent()
         elif self._units == Unit.MOL_FRACTIONS:
@@ -184,7 +196,7 @@ class MagmaFrame(pd.DataFrame):
         """
         # Calculate oxide moles
         if self._datatype == Datatype.CATION:
-            return self
+            return self.copy()
 
         moles = self.moles[self.elements]
 

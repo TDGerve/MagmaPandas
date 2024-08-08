@@ -160,11 +160,13 @@ class MagmaSeries(pd.Series):
         return list(self._weights.index)
 
     @property
-    @_check_attribute("_datatype", ["oxide"])
     def moles(self) -> Self:
         """
         Data converted to mol fractions.
         """
+        if self._units == Unit.MOL_FRACTIONS:
+            return self.copy()
+
         if self._units == Unit.WT_PERCENT:
             return self._convert_moles_wtPercent()
         elif self._units == Unit.PPM:
@@ -177,6 +179,9 @@ class MagmaSeries(pd.Series):
         """
         Data converted to wt. %.
         """
+        if self._units == Unit.WT_PERCENT:
+            return self.copy()
+
         if self._units == Unit.MOL_FRACTIONS:
             return self._convert_moles_wtPercent()
         elif self._units == Unit.PPM:
@@ -186,6 +191,10 @@ class MagmaSeries(pd.Series):
 
     @property
     def ppm(self) -> Self:
+
+        if self._units == Unit.PPM:
+            return self.copy()
+
         if self._units == Unit.WT_PERCENT:
             return self.convert_ppm_wtPercent()
         elif self._units == Unit.MOL_FRACTIONS:
@@ -194,7 +203,6 @@ class MagmaSeries(pd.Series):
         return self.copy()
 
     @property
-    @_check_attribute("_datatype", ["oxide"])
     def cations(self) -> Self:
         """
         Data converted to cation mol fractions
@@ -354,7 +362,7 @@ class MagmaSeries(pd.Series):
 
         thermometer = melt_thermometers[configuration.melt_thermometer]
 
-        return thermometer(self.wt_pc, *args, **kwargs)
+        return thermometer(melt=self.wt_pc, *args, **kwargs)
 
     @_check_argument("total_Fe", ["FeO", "Fe2O3"])
     def FeO_Fe2O3_calc(
