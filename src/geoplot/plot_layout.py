@@ -188,37 +188,61 @@ def layout(colors=colors.hollywood, fontsize=8, **kwargs):
 
 def side_plots(
     ax,
-    x_axis: bool = False,
+    x_axis: bool = True,
     y_axis: bool = False,
-    side=0.1,
-    spacing=1.5e-2,
+    size=0.1,
+    spacing=0,
     y_position="right",
+    inside=False,
     **kwargs,
 ):
     axes = []
 
+    if inside:
+        spacing = -1
+
     if x_axis:
-        ax_kde_x = ax.inset_axes([0, 1.0 + spacing, 1, side])
+        ax_kde_x = ax.inset_axes([0, 1.0 + spacing, 1, size], sharex=ax)
         axes.append(ax_kde_x)
 
         ax_kde_x.spines["left"].set_visible(False)
         ax_kde_x.yaxis.set_visible(False)
         ax_kde_x.tick_params(axis="x", labelbottom=False, direction="in", **kwargs)
-        ax_kde_x.set_xlim(ax.get_xlim())
+        # ax_kde_x.set_xlim(ax.get_xlim())
         ax_kde_x.spines["right"].set_visible(False)
+
+    spacing = (spacing, -size)[inside]
 
     if y_axis:
         if y_position == "right":
-            ax_kde_y = ax.inset_axes([1.0 + spacing, 0, side, 1])
-            ax_kde_y.spines["right"].set_visible(False)
-            ax_kde_y.tick_params(axis="y", labelright=False, direction="in", **kwargs)
+            ax_position = ("right", "left")[inside]
+            ax_kde_y = ax.inset_axes([1.0 + spacing, 0, size, 1], sharey=ax)
+            ax_kde_y.spines[ax_position].set_visible(False)
+            ax_kde_y.tick_params(
+                axis="y",
+                left=not inside,
+                right=inside,
+                labelright=False,
+                direction="in",
+                **kwargs,
+            )
+            if inside:
+                ax_kde_y.invert_xaxis()
 
         if y_position == "left":
-            ax_kde_y = ax.inset_axes([0 - spacing - side, 0, side, 1])
-            ax_kde_y.spines["left"].set_visible(False)
-            ax_kde_y.tick_params(axis="y", labelleft=False, direction="in", **kwargs)
-            ax_kde_y.invert_xaxis()
-            ax_kde_y.get_yaxis().tick_right()
+            ax_position = ("left", "right")[inside]
+            ax_kde_y = ax.inset_axes([0 - spacing - size, 0, size, 1], sharey=ax)
+            ax_kde_y.spines[ax_position].set_visible(False)
+            ax_kde_y.tick_params(
+                axis="y",
+                left=inside,
+                right=not inside,
+                labelleft=False,
+                direction="in",
+                **kwargs,
+            )
+            if not inside:
+                ax_kde_y.invert_xaxis()
 
         axes.append(ax_kde_y)
 
@@ -226,7 +250,7 @@ def side_plots(
         ax_kde_y.xaxis.set_visible(False)
         ax_kde_y.spines["bottom"].set_visible(False)
         # ax_kde_y.tick_params(axis="y", labelleft=False, direction="in", **kwargs)
-        ax_kde_y.set_ylim(ax.get_ylim())
+        # ax_kde_y.set_ylim(ax.get_ylim())
 
     for axis in axes:
         # axis.set_frame_on(False)
