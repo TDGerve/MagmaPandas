@@ -164,7 +164,7 @@ class _meta_configuration(type):
 
         variables = {
             "fO2 buffer": "_fO2buffer",
-            "\u0394 fO2": "_dfO2",
+            "\u0394fO2": "_dfO2",
             "Melt Fe3+/Fe2+": "_Fe3Fe2_model",
             "Kd Fe-Mg ol-melt": "_Kd_model",
             "Melt thermometer": "_melt_thermometer",
@@ -190,7 +190,7 @@ class _meta_configuration(type):
                 f"{new_line}{param:.<{names_length}}{getattr(cls, value):.>{pad_right}}"
             )
 
-        return message + parameter_settings + f"{new_line}{'':#^{pad_total}}"
+        return message + parameter_settings + f"{new_line}{'':#^{pad_total}}{new_line}"
 
 
 class configuration(metaclass=_meta_configuration):
