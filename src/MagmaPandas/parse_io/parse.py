@@ -21,6 +21,18 @@ def make_iterable(*args):
     return [np.array([a]).flatten() for a in args]
 
 
+def make_equal_length(*args):
+    total = len(args)
+    args_iterable = make_iterable(*args)
+    lengths = [len(a) for a in args_iterable]
+    max_length = max(lengths)
+
+    if sum([(1 < l < max_length) for l in lengths]) > 0:
+        ValueError("Argument has invalid length: 1 < length < max_length")
+
+    return (np.repeat(a, max_length) if len(a) == 1 else a for a in args_iterable)
+
+
 def convert_to_series(variables: List, index):
 
     new_vars = []

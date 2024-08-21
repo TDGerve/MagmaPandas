@@ -3,11 +3,12 @@ import sys
 
 import numpy as np
 import pandas as pd
-from MagmaPandas.EOSs.birch_murnaghan import birch_murnaghan_4th_order
-from MagmaPandas.Fe_redox.Fe_redox_baseclass import Fe3Fe2_model
-from MagmaPandas.parse_io import check_components, make_iterable
 from scipy.constants import Avogadro, R
 from scipy.optimize import fsolve
+
+from MagmaPandas.EOSs.birch_murnaghan import birch_murnaghan_4th_order
+from MagmaPandas.Fe_redox.Fe_redox_baseclass import Fe3Fe2_model
+from MagmaPandas.parse_io import check_components, make_equal_length, make_iterable
 
 
 def _is_Fe3Fe2_model(cls):
@@ -409,7 +410,7 @@ class Deng2020(Fe3Fe2_model):
         except TypeError:
             pass
         # force everything to an iteratble
-        T_K, fO2, gibbs0, dVdP = make_iterable(T_K, fO2, gibbs0, dVdP)
+        T_K, fO2, gibbs0, dVdP = make_equal_length(T_K, fO2, gibbs0, dVdP)
 
         Fe3Fe2_func = (
             lambda Fe3Fe2_guess, moles, T, fO2, G, dVdP: cls._Fe3Fe2_solver(
@@ -431,10 +432,10 @@ class Deng2020(Fe3Fe2_model):
         #         melt_mol_fractions=X, T_K=T, fO2_GPa=fO2, gibbs0=G, dVdP=VP
         #     )
 
-        for (n, X), T, fO2, G, VP in zip(moles.iterrows(), T_K, fO2, gibbs0, dVdP):
-            Fe3Fe2.loc[n] = fsolve(
-                Fe3Fe2_func, x0=Fe3Fe2_init, args=(X, T, fO2, G, VP)
-            )[0]
+        for (n, X), T, f, G, VP in zip(moles.iterrows(), T_K, fO2, gibbs0, dVdP):
+            Fe3Fe2.loc[n] = fsolve(Fe3Fe2_func, x0=Fe3Fe2_init, args=(X, T, f, G, VP))[
+                0
+            ]
 
         return Fe3Fe2.squeeze()
 
@@ -647,7 +648,7 @@ class Oneill2006(Fe3Fe2_model):
         except TypeError:
             pass
         # force everything into an iterable
-        P_bar, T_K, fO2 = make_iterable(P_bar, T_K, fO2)
+        P_bar, T_K, fO2 = make_equal_length(P_bar, T_K, fO2)
 
         Fe3Fe2_func = (
             lambda Fe3Fe2_guess, moles, P, T, fO2: cls._calculate_Fe3Fe2(
@@ -663,8 +664,8 @@ class Oneill2006(Fe3Fe2_model):
 
         Fe3Fe2 = pd.Series(dtype=float)
 
-        for (n, X), P, T, fO2 in zip(moles.iterrows(), P_bar, T_K, fO2):
-            Fe3Fe2.loc[n] = fsolve(Fe3Fe2_func, x0=Fe3Fe2_init, args=(X, P, T, fO2))[0]
+        for (n, X), P, T, f in zip(moles.iterrows(), P_bar, T_K, fO2):
+            Fe3Fe2.loc[n] = fsolve(Fe3Fe2_func, x0=Fe3Fe2_init, args=(X, P, T, f))[0]
 
         return Fe3Fe2.squeeze()
 
@@ -813,7 +814,7 @@ class Armstrong2019(Fe3Fe2_model):
         except TypeError:
             pass
         # force everything into iterables
-        P_bar, T_K, fO2 = make_iterable(P_bar, T_K, fO2)
+        P_bar, T_K, fO2 = make_equal_length(P_bar, T_K, fO2)
 
         Fe3Fe2_func = (
             lambda Fe3Fe2_guess, moles, T, P, fO2: cls._calculate_Fe3Fe2(
@@ -829,8 +830,8 @@ class Armstrong2019(Fe3Fe2_model):
 
         Fe3Fe2 = pd.Series(dtype=float)
 
-        for (n, X), P, T, fO2 in zip(moles.iterrows(), P_bar, T_K, fO2):
-            Fe3Fe2.loc[n] = fsolve(Fe3Fe2_func, x0=Fe3Fe2_init, args=(X, T, P, fO2))[0]
+        for (n, X), P, T, f in zip(moles.iterrows(), P_bar, T_K, fO2):
+            Fe3Fe2.loc[n] = fsolve(Fe3Fe2_func, x0=Fe3Fe2_init, args=(X, T, P, f))[0]
 
         return Fe3Fe2.squeeze()
 
