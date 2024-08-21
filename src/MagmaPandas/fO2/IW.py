@@ -365,7 +365,7 @@ def _gamma_FeO1p5(X_FeO1p5, q00, q10):
 @np.vectorize(excluded=["full_output", "suppress_Fe_liquid"])
 def muO2_IW(T_K, P_bar, full_output=False, suppress_Fe_liquid=False):
     """
-    calculate chemical potential of oxygen at QFM and pressure P with equations of state
+    calculate chemical potential of oxygen at IW and pressure P with equations of state
     """
 
     q00 = mixing_parameters["q00"]

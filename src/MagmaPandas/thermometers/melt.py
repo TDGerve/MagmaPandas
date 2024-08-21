@@ -7,6 +7,7 @@ import warnings as w
 import elementMass as e
 import numpy as np
 import pandas as pd
+
 from MagmaPandas.MagmaFrames.protocols import Magma
 from MagmaPandas.parse_io import check_components
 from MagmaPandas.thermometers.data_parsing import (
@@ -308,13 +309,15 @@ def putirka2008_16(
 
 def sun2020(melt, P_bar, offset: float = 0.0, **kwargs):
     """
-    Equation 4 from:
+    Equation 6 from:
 
     Sun, C., Dasgupta, R. (2020) Thermobarometry of CO2-rich, silica-undersaturated melts constrains cratonic lithosphere thinning through time in areas of kimberlitic magmatism. Earth and Planetary Sience Letters. 550
 
     Calibrated at:
     ~ 2 - 10 GPa
     ~ 950 - 1600 degrees C
+
+    SEE: 49 degrees C
     """
 
     P_GPa = P_bar / 1e4
