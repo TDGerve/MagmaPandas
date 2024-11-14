@@ -2,6 +2,8 @@
 Sub-module with melt-only thermometers
 """
 
+import inspect
+import sys
 import warnings as w
 
 import elementMass as e
@@ -13,6 +15,7 @@ from MagmaPandas.parse_io import check_components
 from MagmaPandas.thermometers.data_parsing import (
     _anhydrous_composition,
     _check_calibration_range,
+    _check_temperature,
     _get_elements,
     _remove_elements,
     moles_per_oxygen,
@@ -32,29 +35,66 @@ calibration_range = {
 }
 
 errors = pd.Series(
-    {"putirka2008_14": 58, "putirka2008_15": 46, "putirka2008_16": 26, "sun2020": 49}
+    {
+        "putirka2008_13": 71,
+        "putirka2008_14": 58,
+        "putirka2008_15": 46,
+        "putirka2008_16": 26,
+        "sun2020": 49,
+        "shea2022": 13,  # on calibration dataset, not validated
+        "sugawara2000_3": 33,  # on calibration dataset
+        "sugawara2000_6a": 30,  # on calibration dataset
+    }
 )
 
 components = {
+    "putirka2008_13": ["MgO"],
     "putirka2008_14": ["MgO", "FeO", "Na2O", "K2O"],
     "putirka2008_15": ["MgO", "FeO", "Na2O", "K2O"],
     "putirka2008_16": ["SiO2", "Al2O3", "MgO"],
     "sun2020": ["MgO", "CaO", "K2O", "TiO2", "FeO", "CO2", "H2O"],
+    "shea2022": ["MgO"],
+    "sugawara2000_3": ["MgO"],
+    "sugawara2000_6a": ["MgO", "FeO", "CaO", "SiO2"],
 }
 
 
-def _check_temperature(T_K):
+def putirka2008_13(
+    melt: Magma, offset: float = 0.0, *args, **kwargs
+) -> float | pd.Series:
     """
-    Find negative or NaN temperatures
+    melt-only thermometer
+
+    Equation 13 from Putirka (2008)\ [15]_ calculates liquidus temperatures based on melt compositions.
+    Requires saturation in olivine.
+
+    SEE = 71 degrees
+
+    Parameters
+    ----------
+    melt : Magma
+        melt compositions in oxide wt. %
+
+    offset : float
+        offset value in standard deviations. Temperatures are calculated as ``temnperature + offset * thermometer error (SEE)``.
+
+    Returns
+    -------
+    temperatures : float, pandas Series
+        liquidus temperatures in Kelvin.
     """
-    try:
-        if (neg := any(T_K < 0)) or (nan := any(np.isnan(T_K))):
-            str_arr = np.array(["negative", "NaN"])[np.array([neg, nan])]
-            w.warn(f"{', '.join(str_arr)} temperatures found!")
-    except TypeError:
-        if (neg := (T_K < 0)) or (nan := (T_K != T_K)):
-            str_arr = np.array(["negative", "NaN"])[np.array([neg, nan])]
-            raise ValueError(f"{', '.join(str_arr)} temperature found!")
+
+    composition = check_components(
+        composition=melt, components=components["putirka2008_13"]
+    )
+
+    T_K = 26.3 * composition["MgO"] + 994.4 + 273.15
+
+    _check_temperature(T_K)
+
+    T_K = T_K + errors["putirka2008_13"] * offset
+
+    return pd.Series(T_K, name="T_K").squeeze()
 
 
 def putirka2008_14(
@@ -113,7 +153,7 @@ def putirka2008_14(
         composition = _anhydrous_composition(composition)
 
     # Calculate molar oxide fractions
-    mol_fractions = composition.moles
+    mol_fractions = composition.moles()
     # Melt Mg#
     Mg_no = mol_fractions["MgO"] / (
         mol_fractions["MgO"] + mol_fractions["FeO"]
@@ -143,7 +183,7 @@ def putirka2008_14(
 
 def putirka2008_15(
     melt: Magma,
-    P_bar: float | pd.Series = None,
+    P_bar: float | pd.Series,
     offset: float = 0.0,
     warn=True,
     **kwargs,
@@ -189,9 +229,6 @@ def putirka2008_15(
             melt=melt, calibration_range=calibration_range["putirka2008_15"]
         )
 
-    if P_bar is None:
-        P_bar = melt["P_bar"]
-
     elements = _get_elements(melt)
     composition = check_components(
         composition=melt, components=components["putirka2008_15"]
@@ -208,7 +245,7 @@ def putirka2008_15(
     P_GPa = P_bar / 1e4
 
     # Calculate molar oxide fractions
-    mol_fractions = composition.moles
+    mol_fractions = composition.moles()
     # Melt Mg#
     Mg_no = mol_fractions["MgO"] / (
         mol_fractions["MgO"] + mol_fractions["FeO"]
@@ -238,7 +275,7 @@ def putirka2008_15(
 
 
 def putirka2008_16(
-    melt: Magma, P_bar: float | pd.Series = None, offset: float = 0.0, **kwargs
+    melt: Magma, P_bar: float | pd.Series, offset: float = 0.0, **kwargs
 ) -> float | pd.Series:
     """
     melt-only thermometer
@@ -274,9 +311,6 @@ def putirka2008_16(
     # composition = parse_data(melt, oxides_needed)
     # import MagmaPandas as mp
 
-    if P_bar is None:
-        P_bar = melt["P_bar"]
-
     if isinstance(P_bar, pd.Series):
         if not melt.index.equals(P_bar.index):
             raise RuntimeError("Melt and P_bar indices don't match")
@@ -288,7 +322,7 @@ def putirka2008_16(
     P_GPa = P_bar / 1e4
 
     # Calculate molar oxide fractions
-    mol_fractions = composition.moles
+    mol_fractions = composition.moles()
 
     part_1 = (
         -583
@@ -307,7 +341,7 @@ def putirka2008_16(
     return pd.Series(T_K, name="T_K").squeeze()
 
 
-def sun2020(melt, P_bar, offset: float = 0.0, **kwargs):
+def sun2020(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs):
     """
     Equation 6 from:
 
@@ -318,12 +352,26 @@ def sun2020(melt, P_bar, offset: float = 0.0, **kwargs):
     ~ 950 - 1600 degrees C
 
     SEE: 49 degrees C
+
+    Parameters
+    ----------
+    melt : Magma
+        melt compositions in oxide wt. %
+    P_bar   :
+        pressures in bar
+    offset : float
+        offset value in standard deviations. Temperatures are calculated as ``temnperature + offset * thermometer error (SEE)``.
+
+    Returns
+    -------
+    temperatures : float, pandas Series
+        liquidus temperatures in Kelvin.
     """
 
     P_GPa = P_bar / 1e4
 
     composition = check_components(composition=melt, components=components["sun2020"])
-    moles = composition.moles
+    moles = composition.moles()
 
     composition_volatile_free = _remove_elements(
         composition=moles, drop=["H2O", "CO2", "F", "S", "Cl"]
@@ -352,3 +400,148 @@ def sun2020(melt, P_bar, offset: float = 0.0, **kwargs):
     T_K = T_K + errors["sun2020"] * offset
 
     return pd.Series(T_K, name="T_K").squeeze()
+
+
+def shea2022(melt, offset: float = 0.0, **kwargs):
+    """
+    Equation 1 from:
+
+    Shea, T., Matz, A. K., Mourey, A. J. (2022) Experimental study of Fe–Mg partitioning and zoning during rapid growth of olivine in Hawaiian tholeiites. Contributions to mineralogy and petrology. 177(12)
+
+    Calibrated at:
+    1 bar
+    1060 - 1500 degrees C
+
+    SEE: 13 degrees C (on calibration dataset, not validated)
+
+    Parameters
+    ----------
+    melt : Magma
+        melt compositions in oxide wt. %
+
+    offset : float
+        offset value in standard deviations. Temperatures are calculated as ``temnperature + offset * thermometer error (SEE)``.
+
+    Returns
+    -------
+    temperatures : float, pandas Series
+        liquidus temperatures in Kelvin.
+    """
+
+    composition = check_components(composition=melt, components=components["shea2022"])
+
+    T_K = 21.2 * composition["MgO"] + 1017 + 273.15
+
+    _check_temperature(T_K)
+
+    T_K = T_K + errors["shea2022"] * offset
+
+    return pd.Series(T_K, name="T_K").squeeze()
+
+
+def sugawara2000_3(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs):
+    """
+    Equation 3 with olivine-liquid parameters and corrected for H2O according to equation 7a
+
+    from:
+
+    Sugawara, T. (2000) Empirical relationships between temperature, pressure, and MgO content in olivine and pyroxene saturated liquid. Journal of geophysical research: solid earth. 105(B4)
+
+    Calibrated at:
+    <= 3.5 GPa
+    1266 - 1873 C
+
+    SEE: 33 degrees C
+
+    Parameters
+    ----------
+    melt : Magma
+        melt compositions in oxide wt. %
+    P_bar   :
+        pressures in bar
+    offset : float
+        offset value in standard deviations. Temperatures are calculated as ``temnperature + offset * thermometer error (SEE)``.
+
+    Returns
+    -------
+    temperatures : float, pandas Series
+        liquidus temperatures in Kelvin.
+    """
+
+    composition = check_components(
+        composition=melt, components=components["sugawara2000_3"]
+    )
+    moles_percent = composition.moles() * 100
+
+    A = 1293
+    B = 14.60
+    C = 5.5e-3
+    T_K = A + B * moles_percent["MgO"] + C * P_bar
+
+    if "H2O" in moles_percent.elements:
+        T_K = T_K - 5.403 * moles_percent["H2O"]
+
+    _check_temperature(T_K)
+
+    T_K = T_K + errors["sugawara2000_3"] * offset
+
+    return pd.Series(T_K, name="T_K").squeeze()
+
+
+def sugawara2000_6a(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs):
+    """
+    Equation 6a corrected for H2O according to equation 7a
+
+    from:
+
+    Sugawara, T. (2000) Empirical relationships between temperature, pressure, and MgO content in olivine and pyroxene saturated liquid. Journal of geophysical research: solid earth. 105(B4)
+
+    Calibrated at:
+    <= 3.5 GPa
+    1266 - 1873 C
+
+    SEE: 30 degrees C
+
+    Parameters
+    ----------
+    melt : Magma
+        melt compositions in oxide wt. %
+    P_bar   :
+        pressures in bar
+    offset : float
+        offset value in standard deviations. Temperatures are calculated as ``temnperature + offset * thermometer error (SEE)``.
+
+    Returns
+    -------
+    temperatures : float, pandas Series
+        liquidus temperatures in Kelvin.
+    """
+
+    composition = check_components(
+        composition=melt, components=components["sugawara2000_6a"]
+    )
+    moles_percent = composition.moles() * 100
+
+    T_K = (
+        1466
+        - 1.44 * moles_percent["SiO2"]
+        - 0.5 * moles_percent["FeO"]
+        + 12.32 * moles_percent["MgO"]
+        - 3.899 * moles_percent["CaO"]
+        + 4.3e-3 * P_bar
+    )
+
+    if "H2O" in moles_percent.elements:
+        T_K = T_K - 5.403 * moles_percent["H2O"]
+
+    _check_temperature(T_K)
+
+    T_K = T_K + errors["sugawara2000_6a"] * offset
+
+    return pd.Series(T_K, name="T_K").squeeze()
+
+
+_module = sys.modules[__name__]
+_funcs = inspect.getmembers(_module, inspect.isfunction)
+# collect all melt thermometers in a dictionary
+melt_thermometers = {f[0]: f[1] for f in _funcs if f[1].__module__ == _module.__name__}
