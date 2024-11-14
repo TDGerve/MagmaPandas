@@ -18,12 +18,24 @@ class Clinopyroxene(MagmaFrame):
         return self.mineral_formula(O=6)
 
     @property
+    def endmembers(self) -> pd.DataFrame:
+        """
+        endmember components
+        """
+
+        cpx_formula = self.formula
+
+        # TODO add code, check thermobar core.py calculate_clinopyroxene_components
+
+        pass
+
+    @property
     def mg_no(self) -> pd.Series:
         """
         Mg numbers
         """
         if self._units == Unit.WT_PERCENT:
-            moles = self.moles
+            moles = self.moles()
         else:
             moles = self
 

@@ -39,7 +39,7 @@ def observed_FeMg_Kd(
 
     forsterite = forsterite[melt.index]
 
-    melt_x_moles = melt.moles
+    melt_x_moles = melt.moles()
 
     Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
     dfO2 = kwargs.get("dfO2", configuration.dfO2)

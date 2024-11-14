@@ -160,7 +160,7 @@ class h2o(Solubility_model):
             oxide_wtPercents = oxide_wtPercents.drop(volatiles)
             oxide_wtPercents.recalculate(inplace=True)
 
-        mol_fractions = oxide_wtPercents.cations
+        mol_fractions = oxide_wtPercents.cations()
 
         P_MPa = P_bar / 10
 
@@ -259,7 +259,7 @@ class co2(Solubility_model):
         B = co2_parameters[model]["B"]
         C = co2_parameters[model]["C"]
 
-        mol_fractions = oxide_wtPercents.cations
+        mol_fractions = oxide_wtPercents.cations()
         pi_star = co2._pi_star(mol_fractions)
 
         return np.exp(A * np.log(fCO2) + B * pi_star + C) / 1e4

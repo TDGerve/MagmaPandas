@@ -376,7 +376,7 @@ class blundy(Kd_model):
         """
 
         axis = [0, 1][isinstance(melt_composition, pd.DataFrame)]
-        alkalis = melt_composition.wt_pc[["Na2O", "K2O"]].sum(axis=axis)
+        alkalis = melt_composition.wt_pc()[["Na2O", "K2O"]].sum(axis=axis)
 
         if isinstance(alkalis, (int, float)):
 
@@ -494,7 +494,7 @@ class putirka2016_8b(Kd_model):
         float, array-like
             mineral-melt partition coefficients
         """
-        wt_pc = melt_mol_fractions.wt_pc
+        wt_pc = melt_mol_fractions.wt_pc()
         wt_pc = check_components(wt_pc, cls.components)
         P_GPa = P_bar / 1e4
         axis = [0, 1][isinstance(wt_pc, pd.DataFrame)]
@@ -570,7 +570,7 @@ class putirka2016_8c(Kd_model):
         float, array-like
             mineral-melt partition coefficients
         """
-        wt_pc = melt_mol_fractions.wt_pc
+        wt_pc = melt_mol_fractions.wt_pc()
         wt_pc = check_components(wt_pc, cls.components)
         axis = [0, 1][isinstance(wt_pc, pd.DataFrame)]
 
@@ -654,7 +654,7 @@ class putirka2016_8d(Kd_model):
         float, array-like
             mineral-melt partition coefficients
         """
-        wt_pc = melt_mol_fractions.wt_pc
+        wt_pc = melt_mol_fractions.wt_pc()
         wt_pc = check_components(wt_pc, components=cls.components)
 
         P_GPa = P_bar / 1e4
@@ -749,7 +749,7 @@ class sun2020(Kd_model):
         )
         melt_volatile_free = _remove_elements(composition, drop=cls.volatiles)
         melt_per_oxygen = moles_per_oxygen(moles=melt_volatile_free)
-        melt_wtpc = composition.wt_pc
+        melt_wtpc = composition.wt_pc()
 
         Kd_Fe_total = np.exp(
             -1.65
@@ -787,6 +787,5 @@ class sun2020(Kd_model):
 
 
 _clsmembers = inspect.getmembers(sys.modules[__name__], inspect.isclass)
-
 # Collect all Kd_models in a dictionary.
 Kd_models = {cls[0]: cls[1] for cls in _clsmembers if _is_Kd_model(cls[1])}

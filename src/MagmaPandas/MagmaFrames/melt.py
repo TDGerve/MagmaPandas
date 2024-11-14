@@ -55,7 +55,7 @@ class Melt(MagmaFrame):
         """
         thermometer = melt_thermometers[configuration.melt_thermometer]
 
-        return thermometer(self.wt_pc, P_bar=P_bar, **kwargs)
+        return thermometer(self.wt_pc(), P_bar=P_bar, **kwargs)
 
     def density(
         self,
@@ -104,7 +104,7 @@ class Melt(MagmaFrame):
             summed tertrahedral cations per 1 mole cations
 
         """
-        cations = self.cations
+        cations = self.cations()
 
         tetrahedral_cations = {"Si", "Ti", "Al", "P"}
 
@@ -185,7 +185,7 @@ class Melt(MagmaFrame):
         if fO2_logshift is None:
             fO2_logshift = configuration.dfO2
 
-        mol_fractions = self.moles
+        mol_fractions = self.moles()
 
         Fe3Fe2 = calculate_Fe3Fe2(
             mol_fractions=mol_fractions,
@@ -230,7 +230,7 @@ class Melt(MagmaFrame):
         """
 
         Fe2Fe_total = 1 / (1 + Fe3Fe2)
-        melt_mol_fractions = self.moles
+        melt_mol_fractions = self.moles()
 
         if total_Fe == "FeO":
             Fe2 = melt_mol_fractions["FeO"] * Fe2Fe_total
@@ -245,7 +245,7 @@ class Melt(MagmaFrame):
 
         # Recalculate to wt. % (normalised)
 
-        melt = melt_mol_fractions.wt_pc if wtpc else melt_mol_fractions
+        melt = melt_mol_fractions.wt_pc() if wtpc else melt_mol_fractions
 
         if inplace:
             self["FeO"] = melt["FeO"]
@@ -292,7 +292,7 @@ class Melt(MagmaFrame):
         Kd_model = Kd_models[Kd_model_name]
 
         return Kd_model.calculate_Kd(
-            melt_mol_fractions=self.moles,
+            melt_mol_fractions=self.moles(),
             *args,
             **kwargs,
         )

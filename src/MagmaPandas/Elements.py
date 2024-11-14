@@ -1,3 +1,4 @@
+import re
 from typing import List, Optional
 
 import elementMass as e
@@ -9,7 +10,8 @@ from MagmaPandas.parse_io.validate import _check_argument
 
 class Oxide_compositions:
     def __init__(self):
-        self.oxide_names = np.array([], dtype=str)
+        self.names = np.array([], dtype=str)
+        self._oxide_names = np.array([], dtype=str)
         self._cation_names = np.array([], dtype=str)
         self._cation_amount = np.array([], dtype=int)
         self._oxygen_amount = np.array([], dtype=int)
@@ -33,11 +35,11 @@ class Oxide_compositions:
 
     def calculate_element_numbers(self, oxides):
         oxides_list = list(oxides)
-        # new_oxides = oxides[~np.in1d(oxides, self.oxide_names)]
+        # new_oxides = oxides[~np.in1d(oxides, self.names)]
         # if len(new_oxides) == 0:
         #     return
 
-        self.oxide_names = np.append(self.oxide_names, oxides_list)
+        self.names = np.append(self.names, oxides_list)
         self._cation_names = np.append(self._cation_names, e.cation_names(oxides_list))
         self._cation_amount = np.append(
             self._cation_amount, e.cation_numbers(oxides_list).astype(int).values
@@ -47,26 +49,36 @@ class Oxide_compositions:
         )
 
     def _process_names(self, oxides: List[str]) -> None:
-        oxides_new = set(oxides)
+        # cations = [c for c in oxides if "O" not in c]
+        # oxides = list(set(oxides).difference(set(cations)))
 
-        difference = list(oxides_new.difference(set(self.oxide_names)))
-        if len(difference) > 0:
-            self.calculate_element_numbers(difference)
+        self._process_oxides(oxides=oxides)
+
+        # difference = list(oxides_new.difference(set(self.names)))
+        # if len(difference) > 0:
+        #     self.calculate_element_numbers(difference)
 
         # idx = self._get_indeces(oxides)
         # [
-        #     int(np.where(self.oxide_names == o)[0])
-        #     for o in oxides[np.isin(oxides, self.oxide_names)]
+        #     int(np.where(self.names == o)[0])
+        #     for o in oxides[np.isin(oxides, self.names)]
         # ]
 
         # return idx
+
+    def _process_oxides(self, oxides: List[str]) -> None:
+        oxides_new = set(oxides)
+
+        difference = list(oxides_new.difference(set(self.names)))
+        if len(difference) > 0:
+            self.calculate_element_numbers(difference)
 
     @_check_argument("type", [None, "oxide", "cation"])
     def _get_indeces(self, names: List[str], type: Optional[str] = None) -> List[int]:
         if type is None:
             type = "oxide"
 
-        names_total = {"oxide": self.oxide_names, "cation": self._cation_names}[type]
+        names_total = {"oxide": self.names, "cation": self._cation_names}[type]
 
         names_arr = np.array(names)
 
@@ -96,9 +108,14 @@ class Element_weights:
             return
         for element in new_elements:
             try:
+
+                element_name = (
+                    re.sub(r"\d+", "", element) if "O" not in element else element
+                )  # strip numbers
+
                 # Calculate element/oxide weight
                 self.all_weights = np.append(
-                    self.all_weights, e.calculate_weight(element)
+                    self.all_weights, e.calculate_weight(element_name)
                 )
                 self.element_names = np.append(self.element_names, element)
             except (ValueError, KeyError):

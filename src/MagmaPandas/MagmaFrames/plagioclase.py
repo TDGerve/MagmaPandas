@@ -30,9 +30,25 @@ class Plagioclase(MagmaFrame):
         """
         Anorthite contents.
         """
-        cations = self.cations
+        cations = self.cations()
         return pd.Series(
             cations["Ca"] * 100 / (cations["Ca"] + cations["Na"]), name="An"
+        )
+
+    @property
+    def endmembers(self) -> pd.DataFrame:
+        """
+        endmember componenents
+        """
+
+        cations = self.cations()
+
+        anorthite = cations["Ca"] * 100 / (cations["Ca"] + cations["Na"] + cations["K"])
+        albite = cations["Na"] * 100 / (cations["Ca"] + cations["Na"] + cations["K"])
+        orthoclase = cations["K"] * 100 / (cations["Ca"] + cations["Na"] + cations["K"])
+
+        return pd.DataFrame(
+            {"anorthite": anorthite, "albite": albite, "orthoclase": orthoclase}
         )
 
     @property

@@ -25,13 +25,11 @@ class Magma(Protocol):
     @property
     def elements(self): ...
 
-    @property
     def moles(self): ...
 
     @property
     def wt_pc(self): ...
 
-    @property
     def cations(self): ...
 
     @property

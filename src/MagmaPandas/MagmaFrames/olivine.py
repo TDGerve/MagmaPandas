@@ -32,7 +32,7 @@ class Olivine(MagmaFrame):
         Forsterite contents
         """
         if self._units == Unit.WT_PERCENT:
-            moles = self.moles
+            moles = self.moles()
         else:
             moles = self
 

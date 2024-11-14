@@ -90,7 +90,7 @@ def calculate_density(
     densities : pandas Series
         densities in kg/m\ :sup:`3`
     """
-    mole_fractions = composition.moles[molar_volumes.index]
+    mole_fractions = composition.moles()[molar_volumes.index]
 
     oxide_masses = e.compound_weights(mole_fractions.columns)
 
@@ -112,7 +112,7 @@ def calculate_density(
 def _calculate_temperature(
     composition: Magma, density: pd.Series, P_bar: pd.Series
 ) -> pd.Series:
-    mole_fractions = composition.moles[molar_volumes.index]
+    mole_fractions = composition.moles()[molar_volumes.index]
 
     oxide_masses = e.compound_weights(mole_fractions.columns)
 

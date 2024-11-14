@@ -2,6 +2,9 @@
 Sub-module with olivine-melt thermometers
 """
 
+import inspect
+import sys
+
 import numpy as np
 import pandas as pd
 
@@ -88,9 +91,9 @@ def putirka2007_4(
         composition = _anhydrous_composition(composition)
 
     # Calculate molar oxide fractions
-    liquid_moles = composition.moles
-    liquid_cations = composition.cations
-    olivine_cations = olivine.cations
+    liquid_moles = composition.moles()
+    liquid_cations = composition.cations()
+    olivine_cations = olivine.cations()
 
     C_NM = liquid_cations[["Fe", "Mn", "Mg", "Ca", "Co", "Ni"]].sum(
         axis=1
@@ -113,3 +116,11 @@ def putirka2007_4(
     T_K = T_K + error * offset
 
     return pd.Series(T_K, name="T_K").squeeze()
+
+
+_module = sys.modules[__name__]
+_funcs = inspect.getmembers(_module, inspect.isfunction)
+# collect all ol-melt thermometers in a dictionary
+olmelt_thermometers = {
+    f[0]: f[1] for f in _funcs if f[1].__module__ == _module.__name__
+}

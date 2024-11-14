@@ -6,17 +6,16 @@ Module with the generic MagmaFrame class.
 """
 
 import re
-from typing import List
+from typing import Dict, List
 
 import elementMass as e
 import numpy as np
 import pandas as pd
-from typing_extensions import Self
-
 from MagmaPandas.Elements import element_weights, oxide_compositions
 from MagmaPandas.enums import Datatype, Unit
 from MagmaPandas.MagmaFrames.protocols import Magma
 from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
+from typing_extensions import Self
 
 
 class MagmaFrame(pd.DataFrame):
@@ -141,8 +140,7 @@ class MagmaFrame(pd.DataFrame):
         return list(self._weights.index).copy()
 
     # @_check_attribute("_units", ["wt. %", "ppm"])
-    @property
-    def moles(self) -> Self:
+    def moles(self, normalise=True) -> Self:
         """
         Data converted to mol fraction.
         """
@@ -151,14 +149,15 @@ class MagmaFrame(pd.DataFrame):
             return self.copy()
 
         if self._units == Unit.WT_PERCENT:
-            return self._convert_moles_wtPercent()
+            return self._convert_moles_wtPercent(normalise=normalise)
         elif self._units == Unit.PPM:
-            return self.convert_ppm_wtPercent()._convert_moles_wtPercent()
+            return self.convert_ppm_wtPercent()._convert_moles_wtPercent(
+                normalise=normalise
+            )
 
         return self.copy()
 
-    @property
-    def wt_pc(self) -> Self:
+    def wt_pc(self, normalise=True) -> Self:
         """
         Data converted to wt. %.
         """
@@ -167,7 +166,7 @@ class MagmaFrame(pd.DataFrame):
             return self.copy()
 
         if self._units == Unit.MOL_FRACTIONS:
-            return self._convert_moles_wtPercent()
+            return self._convert_moles_wtPercent(normalise=normalise)
         elif self._units == Unit.PPM:
             return self.convert_ppm_wtPercent()
 
@@ -189,31 +188,95 @@ class MagmaFrame(pd.DataFrame):
 
         return self.copy()
 
-    @property
-    def cations(self) -> Self:
+    def cations(self, normalise=True, norm_to=1, mol_fractions=True) -> Self:
         """
         Data converted to cation mol fraction
         """
         # Calculate oxide moles
-        if self._datatype == Datatype.CATION:
+        if (self._datatype == Datatype.CATION) & (
+            mol_fractions & (self._units == Unit.MOL_FRACTIONS)
+        ):
             return self.copy()
 
-        moles = self.moles[self.elements]
+        moles = self[self.elements].moles(normalise=False)
 
         # Calculate cation moles
-        cations = moles.mul(oxide_compositions.cation_amount(moles.elements))
+        cations_per_oxide = oxide_compositions.cation_amount(moles.elements)
+        cations = moles[moles.elements].mul(cations_per_oxide)
         # Rename columns to cations
         cations.columns = oxide_compositions.cation_names(moles.elements)
+
+        cations._datatype = Datatype.CATION
+        cations = cations.recalculate()
+
+        if not mol_fractions:
+            cations = cations[cations.elements].mul(cations.weights)
+            cations._units = Unit.WT_PERCENT
+            norm_to = 100
+
+        if not normalise:
+            cations["total"] = cations.sum(axis=1)
+            return cations
+
         # Normalise to 1
         total = cations.sum(axis=1)
-        cations = cations.div(total, axis=0)
-        cations["total"] = 1.0
+        cations = cations.div(total, axis=0) * norm_to
+        cations["total"] = norm_to
 
         # Set the right datatype and elements
         cations._datatype = Datatype.CATION
         cations.recalculate(inplace=True)
 
         return cations
+
+    def oxides(self, normalise=True, oxidation_state: Dict[str, int] = {}) -> Self:
+        """
+        Data converted to oxides
+        """
+
+        if (self._datatype == Datatype.OXIDE) & (not bool(oxidation_state)):
+            return self.copy()
+
+        units = self._units
+
+        cations = self[self.elements].cations(
+            normalise=False
+        )  # convert to cation mol fractions
+        cation_names = cations.elements
+        cation_element_names = [
+            re.sub(r"\d+", "", e) for e in cation_names
+        ]  # strip numbers/charges from the names
+
+        cation_names_new = [
+            (
+                i
+                if oxidation_state.get(j, None) is None
+                else f"{j}{int(oxidation_state[j])}"
+            )
+            for i, j in zip(cation_names, cation_element_names)
+        ]  # new names include oxidation state for elements with non-default values
+
+        oxide_names = e.get_oxide_names(cation_names_new)
+        cations_per_oxide = e.cation_numbers(oxide_names)
+
+        oxides = cations.rename(
+            columns={cation: oxide for cation, oxide in zip(cation_names, oxide_names)}
+        ).recalculate()  # rename to oxides
+
+        oxides = oxides.div(cations_per_oxide, axis=1)  # recalculate to oxides
+        oxides["total"] = oxides[oxides.elements].sum(axis=1)
+        oxides._datatype = Datatype.OXIDE
+
+        if units == Unit.MOL_FRACTIONS:
+            if not normalise:
+                return oxides
+            return oxides.normalise()
+
+        oxides_wt_pc = oxides.wt_pc(normalise=False)
+        # oxides_wt_pc["total"] = oxides_wt_pc[oxides_wt_pc.elements].sum(axis=1)
+        if not normalise:
+            return oxides_wt_pc
+        return oxides_wt_pc.normalise()
 
     @property
     def oxygen(self) -> pd.Series:
@@ -222,7 +285,7 @@ class MagmaFrame(pd.DataFrame):
         """
         # Calculate oxide moles
         if self._datatype != Datatype.CATION:
-            cations = self.cations
+            cations = self.cations()
             cations = cations[cations.elements]
         else:
             cations = self[self.elements].copy()
@@ -256,7 +319,7 @@ class MagmaFrame(pd.DataFrame):
         return converted
 
     @_check_attribute("_units", ["wt. %", "mol fraction"])
-    def _convert_moles_wtPercent(self) -> Self:
+    def _convert_moles_wtPercent(self, normalise=True) -> Self:
         """
         moles converted to wt. % and vice versa
         """
@@ -268,10 +331,16 @@ class MagmaFrame(pd.DataFrame):
         elif self._units == Unit.MOL_FRACTIONS:
             converted = converted.mul(converted.weights)
             units = Unit.WT_PERCENT
+
+        if not normalise:
+            converted["total"] = converted[converted.elements].sum(axis=1)
+            converted._units = units
+            return converted.recalculate()
+
         # Normalise
-        total = converted.sum(axis=1)
+        total = converted[converted.elements].sum(axis=1)
         converted = converted.div(total, axis=0)
-        converted["total"] = converted.sum(axis=1)
+        converted["total"] = converted[converted.elements].sum(axis=1)
         # Set the right units
 
         if self._units == Unit.MOL_FRACTIONS:
@@ -295,7 +364,7 @@ class MagmaFrame(pd.DataFrame):
         mineral formulas : MagmaFrame
         """
         # Calculate cation fractions
-        cations = self.cations
+        cations = self.cations()
         cations = cations[cations.elements]
         # Calculate oxygens per cation
         oxygen_numbers = e.oxygen_numbers(self.elements) / e.cation_numbers(

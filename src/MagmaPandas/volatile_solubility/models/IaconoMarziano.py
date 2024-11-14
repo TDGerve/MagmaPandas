@@ -260,7 +260,7 @@ class h2o(Solubility_model):
         coefficients = H2O_coefficients[IaconoMarziano_configuration.parameters]
         a, b, B, C = [coefficients[key] for key in ["a", "b", "B", "C"]]
 
-        mol_fractions = oxide_wtPercents.moles
+        mol_fractions = oxide_wtPercents.moles()
         NBO_O = NBO_O_calculate(mol_fractions)
 
         if IaconoMarziano_configuration.fugacity == "ideal":
@@ -347,7 +347,7 @@ class co2(Solubility_model):
 
         composition = oxide_wtPercents.copy()
         composition["H2O"] = h2o.calculate_solubility(composition, P_bar, T_K, x_fluid)
-        mol_fractions = composition.moles
+        mol_fractions = composition.moles()
         NBO_O = NBO_O_calculate(mol_fractions)
 
         if "Fe2O3" in mol_fractions.index:

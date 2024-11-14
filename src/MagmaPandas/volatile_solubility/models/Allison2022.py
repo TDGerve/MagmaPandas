@@ -402,7 +402,7 @@ class co2(Solubility_model):
             composition = composition.loc[:, elements]
         composition.recalculate(inplace=True)
 
-        cations = composition.cations
+        cations = composition.cations()
         # Rounding to 3 decimals because Allison did the same
         # Results will be different if you don't
         cations = cations.round(3)

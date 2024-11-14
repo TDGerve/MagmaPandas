@@ -1,4 +1,5 @@
-from typing import List
+import re
+from typing import Dict, List
 
 import elementMass as e
 import numpy as np
@@ -159,8 +160,7 @@ class MagmaSeries(pd.Series):
         """
         return list(self._weights.index)
 
-    @property
-    def moles(self) -> Self:
+    def moles(self, normalise=True) -> Self:
         """
         Data converted to mol fractions.
         """
@@ -168,14 +168,15 @@ class MagmaSeries(pd.Series):
             return self.copy()
 
         if self._units == Unit.WT_PERCENT:
-            return self._convert_moles_wtPercent()
+            return self._convert_moles_wtPercent(normalise=normalise)
         elif self._units == Unit.PPM:
-            return self.convert_ppm_wtPercent()._convert_moles_wtPercent()
+            return self.convert_ppm_wtPercent()._convert_moles_wtPercent(
+                normalise=normalise
+            )
 
         return self.copy()
 
-    @property
-    def wt_pc(self) -> Self:
+    def wt_pc(self, normalise=True) -> Self:
         """
         Data converted to wt. %.
         """
@@ -183,7 +184,7 @@ class MagmaSeries(pd.Series):
             return self.copy()
 
         if self._units == Unit.MOL_FRACTIONS:
-            return self._convert_moles_wtPercent()
+            return self._convert_moles_wtPercent(normalise=normalise)
         elif self._units == Unit.PPM:
             return self.convert_ppm_wtPercent()
 
@@ -202,35 +203,93 @@ class MagmaSeries(pd.Series):
 
         return self.copy()
 
-    @property
-    def cations(self) -> Self:
+    def cations(self, normalise=True, norm_to=1, mol_fractions=True) -> Self:
         """
         Data converted to cation mol fractions
         """
-        if self._datatype == Datatype.CATION:
-            return self
+        if (self._datatype == Datatype.CATION) & (
+            mol_fractions & (self._units == Unit.MOL_FRACTIONS)
+        ):
+            return self.copy()
 
-        moles = self.moles[self.elements]
+        moles = self.moles(normalise=False)[self.elements]
 
-        cations = moles.mul(
-            pd.Series(
-                oxide_compositions.cation_amount(moles.elements), index=moles.elements
-            )
-        )
+        cations_per_oxide = oxide_compositions.cation_amount(moles.elements)
+        cations = moles.mul(pd.Series(cations_per_oxide, index=moles.elements))
         # Rename index to cations
         cations.index = oxide_compositions.cation_names(cations.elements)
 
+        cations._datatype = Datatype.CATION
+        cations = cations.recalculate()
+
+        if not mol_fractions:
+            cations = cations[cations.elements].mul(cations.weights)
+            cations._units = Unit.WT_PERCENT
+            norm_to = 100
+
+        if not normalise:
+            cations["total"] = cations.sum(axis=1)
+            return cations.recalculate()
+
         # Normalise to 1
         total = cations.sum()
-        cations = cations.div(total)
-        cations["total"] = 1
+        cations = cations.div(total) * norm_to
+        cations["total"] = norm_to
         # Set the right datatype and elements
-        cations._datatype = Datatype.CATION
+
         cations.recalculate(inplace=True)
 
         return cations
 
-    def _convert_moles_wtPercent(self) -> Self:
+    def oxides(self, normalise=True, oxidation_state: Dict[str, int] = {}) -> Self:
+        """
+        Data converted to oxides
+        """
+
+        if (self._datatype == Datatype.OXIDE) & (not bool(oxidation_state)):
+            return self.copy()
+
+        units = self._units
+
+        cations = self[self.elements].cations(
+            normalise=False
+        )  # convert to cation mol fractions
+        cation_names = cations.elements
+        cation_element_names = [
+            re.sub(r"\d+", "", e) for e in cation_names
+        ]  # strip numbers/charges from the names
+
+        cation_names_new = [
+            (
+                i
+                if oxidation_state.get(j, None) is None
+                else f"{j}{int(oxidation_state[j])}"
+            )
+            for i, j in zip(cation_names, cation_element_names)
+        ]  # new names include oxidation state for elements with non-default values
+
+        oxide_names = e.get_oxide_names(cation_names_new)
+        cations_per_oxide = e.cation_numbers(oxide_names)
+
+        oxides = cations.rename(
+            index={cation: oxide for cation, oxide in zip(cation_names, oxide_names)}
+        ).recalculate()  # rename to oxides
+
+        oxides = oxides.div(cations_per_oxide)  # recalculate to oxides
+        oxides["total"] = oxides[oxides.elements].sum()
+        oxides._datatype = Datatype.OXIDE
+
+        if units == Unit.MOL_FRACTIONS:
+            if not normalise:
+                return oxides
+            return oxides.normalise()
+
+        oxides_wt_pc = oxides.wt_pc(normalise=False)  # recalculate to wt. %
+        if not normalise:
+            return oxides_wt_pc
+        return oxides_wt_pc.normalise()
+
+    def _convert_moles_wtPercent(self, normalise=True) -> Self:
         """
         moles converted to wt. % and vice versa
         """
@@ -242,6 +301,12 @@ class MagmaSeries(pd.Series):
         elif self._units == Unit.MOL_FRACTIONS:
             converted = converted.mul(converted.weights)
             units = Unit.WT_PERCENT
+
+        if not normalise:
+            converted["total"] = converted.sum()
+            converted._units = units
+            return converted
+
         # Normalise
         total = converted.sum()
         converted = converted.div(total)
@@ -283,7 +348,7 @@ class MagmaSeries(pd.Series):
         mineral formulas : MagmaSeries
         """
         # Calculate cation fractions
-        cations = self.cations
+        cations = self.cations()
         cations = cations[cations.elements]
         # Calculate oxygens per cation
         oxygen_numbers = e.oxygen_numbers(self.elements) / e.cation_numbers(
@@ -362,7 +427,7 @@ class MagmaSeries(pd.Series):
 
         thermometer = melt_thermometers[configuration.melt_thermometer]
 
-        return thermometer(melt=self.wt_pc, *args, **kwargs)
+        return thermometer(melt=self.wt_pc(), *args, **kwargs)
 
     @_check_argument("total_Fe", ["FeO", "Fe2O3"])
     def FeO_Fe2O3_calc(
@@ -390,7 +455,7 @@ class MagmaSeries(pd.Series):
         """
 
         Fe2Fe_total = 1 / (1 + Fe3Fe2)
-        melt_mol_fractions = self.moles
+        melt_mol_fractions = self.moles()
 
         if total_Fe == "FeO":
             Fe2 = melt_mol_fractions["FeO"] * Fe2Fe_total
@@ -404,7 +469,7 @@ class MagmaSeries(pd.Series):
         melt_mol_fractions.recalculate(inplace=True)
 
         # Recalculate to wt. % (normalised)
-        melt = melt_mol_fractions.wt_pc if wtpc else melt_mol_fractions
+        melt = melt_mol_fractions.wt_pc() if wtpc else melt_mol_fractions
 
         if inplace:
             self["FeO"] = melt["FeO"]

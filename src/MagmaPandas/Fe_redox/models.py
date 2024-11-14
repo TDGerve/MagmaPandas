@@ -270,7 +270,7 @@ class putirka2016_6c(Fe3Fe2_model):
         )
         axis = [0, 1][isinstance(moles, pd.DataFrame)]
 
-        NBO_T = cls._NBO_T(cations=moles.cations)
+        NBO_T = cls._NBO_T(cations=moles.cations())
 
         part_1 = cls.a + cls.b / T_K + cls.c * np.log(fO2)
         part_2 = cls.d * moles[["Na2O", "K2O"]].sum(axis=axis) + cls.e * moles["MgO"]
@@ -457,7 +457,7 @@ class Deng2020(Fe3Fe2_model):
         moles = check_components(
             composition=melt_mol_fractions, components=cls.components
         )
-        cations = moles.FeO_Fe2O3_calc(Fe3Fe2, wtpc=False, total_Fe=total_Fe).cations
+        cations = moles.FeO_Fe2O3_calc(Fe3Fe2, wtpc=False, total_Fe=total_Fe).cations()
         Fe_activities = cls._Fe_activities(cations, T_K)
 
         Fe3Fe2 = np.exp(-(gibbs0 + dVdP) / (R * T_K) - Fe_activities + np.log(fO2) / 4)
@@ -678,7 +678,7 @@ class Oneill2006(Fe3Fe2_model):
         moles = check_components(
             composition=melt_mol_fractions, components=cls.components
         )
-        cations = moles.FeO_Fe2O3_calc(Fe3Fe2, wtpc=False, total_Fe=total_Fe).cations
+        cations = moles.FeO_Fe2O3_calc(Fe3Fe2, wtpc=False, total_Fe=total_Fe).cations()
 
         part_1 = (
             -28144
@@ -727,7 +727,7 @@ class Oneill2018(Fe3Fe2_model):
         """
         cations = check_components(
             composition=melt_mol_fractions, components=cls.components
-        ).cations
+        ).cations()
         deltaQFM = cls._deltaQFM(fO2, T_K)
 
         return 10 ** (
@@ -870,7 +870,7 @@ class Armstrong2019(Fe3Fe2_model):
         moles = check_components(
             composition=melt_mol_fractions, components=cls.components
         )
-        cations = moles.FeO_Fe2O3_calc(Fe3Fe2, wtpc=False, total_Fe=total_Fe).cations
+        cations = moles.FeO_Fe2O3_calc(Fe3Fe2, wtpc=False, total_Fe=total_Fe).cations()
 
         gibbs0 = cls._Gibbs0(T_K=T_K)
         dVdP = cls._dVdP(P_bar=P_bar, T_K=T_K)
@@ -1092,7 +1092,7 @@ class Hirschmann2022(Fe3Fe2_model):
         moles = check_components(
             composition=melt_mol_fractions, components=cls.components
         )
-        cations = moles.cations
+        cations = moles.cations()
 
         compositional_term = cls._compositional_term(cations=cations)
         dVdP = cls._dVdP(T_K=T_K, P_bar=P_bar, method=dVdP_method)
@@ -1228,7 +1228,7 @@ class Sun2024(Fe3Fe2_model):
         moles = check_components(
             composition=melt_mol_fractions, components=cls.components
         )
-        cations = moles.cations
+        cations = moles.cations()
 
         omega = cls._Omega(T_K=T_K)
         phi = cls._Phi(cations=cations)
