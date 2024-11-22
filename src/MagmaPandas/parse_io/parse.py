@@ -70,8 +70,8 @@ def check_components(composition, components):
 def repeat_vars(var1, var2):
 
     var1_is_int, var2_is_int = (
-        True if isinstance(var, (int, float)) else False for var in (var1, var2)
-    )
+        True if np.issubdtype(type(var), np.number) else False for var in (var1, var2)
+    )  # check if var is a float or int (number)
     if bool(var1_is_int) & bool(var2_is_int):
         return make_iterable(var1, var2)
     # If only one variable, P or T, is a single value
