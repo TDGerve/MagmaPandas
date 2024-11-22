@@ -1,5 +1,5 @@
 """
-Module with models for calculating melt |fO2| at the QFM buffer.
+Module with models for calculating melt |fO2| at various buffers.
 """
 
 from MagmaPandas.configuration import configuration
