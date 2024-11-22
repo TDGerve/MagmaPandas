@@ -2,11 +2,10 @@ from importlib.resources import files
 
 import numpy as np
 import pandas as pd
-from scipy.constants import R
-from scipy.optimize import brentq
-
 from MagmaPandas.EOSs.vinet import Vinet_VdP
 from MagmaPandas.parse_io import make_iterable, repeat_vars
+from scipy.constants import R
+from scipy.optimize import brentq
 
 Fe_polymorphs = [
     "Fe_fcc",
@@ -414,7 +413,7 @@ def fO2_IW(logshift: float, T_K, P_bar, full_output=False, suppress_Fe_liquid=Fa
         oxygen fugacity
     """
     try:
-        logshift = float(logshift)
+        logshift = logshift
     except TypeError:
         pass
 
@@ -427,8 +426,12 @@ def fO2_IW(logshift: float, T_K, P_bar, full_output=False, suppress_Fe_liquid=Fa
     )
 
     fO2 = np.exp(mu_O2 / (R * T_K)) * offset
+    try:
+        fO2 = np.float32(fO2.item())
+    except ValueError:
+        fO2 = fO2.astype(np.float32)
 
-    idx = T_K.index if isinstance(T_K, pd.Series) else range(len(mu_O2))
+    idx = T_K.index if isinstance(T_K, (pd.Series)) else range(len(mu_O2))
     output = (
         (pd.DataFrame({"fO2": fO2, "Fe_phase": Fe_phase, "Fe(1-y)O": y}, index=idx))
         if full_output

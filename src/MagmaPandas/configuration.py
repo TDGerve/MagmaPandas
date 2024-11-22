@@ -195,9 +195,7 @@ class _meta_configuration(type):
 
         parameter_settings = ""
         for param, value in variables.items():
-            parameter_settings += (
-                f"{new_line}{param:.<{names_length}}{getattr(cls, value):.>{pad_right}}"
-            )
+            parameter_settings += f"{new_line}{param:.<{names_length}}{str(getattr(cls, value)):.>{pad_right}}"
 
         return message + parameter_settings + f"{new_line}{'':#^{pad_total}}{new_line}"
 

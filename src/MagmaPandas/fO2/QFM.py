@@ -228,7 +228,12 @@ def fO2_QFM(
 
     fO2 = np.exp(muO2 / (R * T_K)) * offset
 
-    if isinstance(fO2, pd.Series):
-        return fO2.squeeze()
+    try:
+        fO2 = np.float32(fO2.item())
+    except ValueError:
+        fO2 = fO2.as_type(np.float32)
+
+    # if isinstance(fO2, pd.Series):
+    #     return fO2.squeeze()
 
     return fO2
