@@ -1,10 +1,19 @@
 from importlib import resources
+from typing import Dict
 
+import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def TAS(ax, labels=False, fontsize="medium", **kwargs):
+def TAS(
+    ax: plt.axis,
+    labels=False,
+    fontsize="medium",
+    abbreviate=False,
+    textkwargs: Dict = {},
+    **kwargs,
+):
     """Returns a line plot element of classification of volcanic rocks
     in total-alkali vs silica plots
     """
@@ -14,31 +23,38 @@ def TAS(ax, labels=False, fontsize="medium", **kwargs):
         TAS = pd.read_csv(df)
 
     rock_labels = {
-        "Picro-basalt": ["Picro\nbasalt", [41.7, 1.5]],
-        "Basalt": ["Basalt", [47, 2.5]],
-        "Basaltic andesite": ["Basaltic\nandesite", [53, 2.5]],
-        "Andesite": ["Andesite", [58, 2.5]],
-        "Dacite": ["Dacite", [65.5, 4]],
-        "Trachy-basalt": ["Trachy-\nbasalt", [47.5, 5.5]],
-        "Basaltic trachy-andesite": ["Basaltic\ntrachy-\nandesite", [51.6, 6.5]],
-        "Trachy-andesite": ["Trachy-\nandesite", [56, 8]],
-        "Trachyte": ["Trachyte", [64, 11]],
-        "Tephrite": ["Tephrite", [43.5, 7]],
-        "Phono-tephrite": ["Phono-\ntephrite", [47, 9.0]],
-        "Tephri-phonolite": ["Tephri-\nphonolite", [51, 11]],
-        "Phonolite": ["Phonolite", [55, 15]],
-        "Foidite": ["Foidite", [45, 14]],
-        "Rhyolite": ["Rhyolite", [72, 8.5]],
+        "Picro-basalt": ["Picro\nbasalt", "Pi-Ba", [43, 1.5]],
+        "Basalt": ["Basalt", "Ba", [49, 2.5]],
+        "Basaltic andesite": ["Basaltic\nandesite", "Ba-An", [54.5, 2.5]],
+        "Andesite": ["Andesite", "An", [60, 2.5]],
+        "Dacite": ["Dacite", "Da", [68, 4]],
+        "Trachy-basalt": ["Trachy-\nbasalt", "Tr-Ba", [49, 5.5]],
+        "Basaltic trachy-andesite": [
+            "Basaltic\ntrachy-\nandesite",
+            "B\nTr-An",
+            [52.5, 6.5],
+        ],
+        "Trachy-andesite": ["Trachy-\nandesite", "TrAn", [58.5, 8]],
+        "Trachyte": ["Trachyte", "Tr", [64, 11]],
+        "Tephrite": ["Tephrite", "Te", [45, 7]],
+        "Phono-tephrite": ["Phono-\ntephrite", "Ph-Te", [49, 9.0]],
+        "Tephri-phonolite": ["Tephri-\nphonolite", "Te-Ph", [53, 11]],
+        "Phonolite": ["Phonolite", "Ph", [57, 15]],
+        "Foidite": ["Foidite", "Fo", [45, 14]],
+        "Rhyolite": ["Rhyolite", "Rh", [75, 8.5]],
     }
 
     if labels:
-        for _, rock in rock_labels.items():
+        for _, (fullname, abbreviation, coords) in rock_labels.items():
+            label = [fullname, abbreviation][abbreviate]
             ax.text(
-                *rock[1],
-                rock[0],
+                *coords,
+                label,
                 fontsize=fontsize,
                 fontfamily="monospace",
                 clip_on=True,
+                horizontalalignment="center",
+                **textkwargs,
             )
 
     for id in TAS.id.unique():
