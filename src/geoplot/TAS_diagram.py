@@ -2,12 +2,12 @@ from importlib import resources
 from typing import Dict
 
 import matplotlib.patheffects as pe
-import matplotlib.pyplot as plt
 import pandas as pd
+from matplotlib.axes import Axes
 
 
 def TAS(
-    ax: plt.axis,
+    ax: Axes,
     labels=False,
     fontsize="medium",
     abbreviate=False,
