@@ -103,7 +103,7 @@ class Melt(MagmaFrame):
 
         Returns
         -------
-        densities : pd.Series
+        viscosities : pd.Series
             viscosity in log10(Pa.s)
         """
 
