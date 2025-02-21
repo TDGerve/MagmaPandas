@@ -28,6 +28,7 @@ Kd_ol_FeMg_models = [
     "sun2020",
 ]
 fO2_buffers = ["QFM", "IW"]
+
 melt_thermometers = [
     "putirka2008_13",
     "putirka2008_14",
@@ -39,6 +40,7 @@ melt_thermometers = [
     "sugawara2000_6a",
 ]
 volatile_solubility_models = ["IaconoMarziano", "Allison2022", "Shiskina"]
+
 volatile_species_options = ["co2", "h2o", "mixed"]
 
 
@@ -50,6 +52,17 @@ _variables = {
     "Volatile solubility models": volatile_solubility_models,
     "Volatile species": volatile_species_options,
 }
+
+# _variables = {
+#     "fO2 buffers": fO2_buffers,
+#     "Melt Fe3+/Fe2+ models": list(Fe3Fe2_models.keys()),
+#     "Ol-melt Fe-Mg Kd models": list(Kd_olmelt_FeMg_models.keys),  # Kd_ol_FeMg_models,
+#     "Melt thermometers": list(thermometers_melt.keys()),  # melt_thermometers,
+#     "Volatile solubility models": list(
+#         volatile_solubility_models.keys()
+#     ),  # volatile_solubility_models,
+#     "Volatile species": volatile_species_options,
+# }
 
 _names_length = max([len(i) for i in _variables.keys()]) + 5
 _pad_right = max([len(", ".join(i)) for i in _variables.values()])
