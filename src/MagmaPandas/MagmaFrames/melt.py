@@ -73,7 +73,7 @@ class Melt(MagmaFrame):
         P_bar : float, pandas Series
             pressures in bar
         fO2_logshift : None, int
-            |fO2| buffer shift in log units of QFM. If set to None, the value set in the global configuration is used.
+            |fO2| buffer shift in log units. If set to None, the value set in the global configuration is used.
 
         Returns
         -------
@@ -150,7 +150,7 @@ class Melt(MagmaFrame):
         **kwargs,
     ) -> pd.Series:
         """
-        Calculate melt |Fe3Fe2| ratios at the QFM |fO2| buffer.
+        Calculate melt |Fe3Fe2| ratios at the set |fO2| buffer.
         Model choice is set in the global :py:class:`~MagmaPandas.configuration.configuration` class.
 
         Parameters
@@ -161,7 +161,7 @@ class Melt(MagmaFrame):
         Pbar    :   float, pd.Series-like
             Pressure in bars
         logshift    :   int, pd.Series-like
-            |fO2| buffer shift in log units of QFM.
+            |fO2| buffer shift in log units.
         inplace :   bool
 
         Returns

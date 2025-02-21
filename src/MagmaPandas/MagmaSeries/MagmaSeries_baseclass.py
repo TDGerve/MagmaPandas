@@ -412,8 +412,6 @@ class MagmaSeries(pd.Series):
         Calculate melt liquidus temperature.
         Thermometer models are selected in the global configuration.
 
-        #TODO add link to the config docs.
-
         Parameters
         ----------
         P_bar   : float, pandas Series
