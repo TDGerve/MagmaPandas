@@ -9,7 +9,6 @@ import warnings as w
 import elementMass as e
 import numpy as np
 import pandas as pd
-
 from MagmaPandas.MagmaFrames.protocols import Magma
 from MagmaPandas.parse_io import check_components
 from MagmaPandas.thermometers.data_parsing import (
@@ -49,8 +48,8 @@ errors = pd.Series(
 
 components = {
     "putirka2008_13": ["MgO"],
-    "putirka2008_14": ["MgO", "FeO", "Na2O", "K2O"],
-    "putirka2008_15": ["MgO", "FeO", "Na2O", "K2O"],
+    "putirka2008_14": ["MgO", "FeO", "Na2O", "K2O", "H2O"],
+    "putirka2008_15": ["MgO", "FeO", "Na2O", "K2O", "H2O"],
     "putirka2008_16": ["SiO2", "Al2O3", "MgO"],
     "sun2020": ["MgO", "CaO", "K2O", "TiO2", "FeO", "CO2", "H2O"],
     "shea2022": ["MgO"],
@@ -133,15 +132,16 @@ def putirka2008_14(
     temperatures : float, pandas Series
         liquidus temperatures in Kelvin.
     """
-    if warn:
-        _check_calibration_range(
-            melt=melt, calibration_range=calibration_range["putirka2008_14"]
-        )
 
     elements = _get_elements(melt)
     composition = check_components(
         composition=melt, components=components["putirka2008_14"]
     )
+
+    if warn:
+        _check_calibration_range(
+            melt=composition, calibration_range=calibration_range["putirka2008_14"]
+        )
     # oxides_needed = set(["MgO", "FeO", "Na2O", "K2O"])
 
     # composition = parse_data(melt, oxides_needed)
@@ -224,15 +224,16 @@ def putirka2008_15(
     temperatures : float, pandas Series
         liquidus temperatures in Kelvin.
     """
-    if warn:
-        _check_calibration_range(
-            melt=melt, calibration_range=calibration_range["putirka2008_15"]
-        )
 
     elements = _get_elements(melt)
     composition = check_components(
         composition=melt, components=components["putirka2008_15"]
     )
+
+    if warn:
+        _check_calibration_range(
+            melt=composition, calibration_range=calibration_range["putirka2008_15"]
+        )
     # oxides_needed = set(["MgO", "FeO", "Na2O", "K2O"])
     # composition = parse_data(melt, oxides_needed)
 
