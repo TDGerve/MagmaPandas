@@ -24,7 +24,7 @@ dependencies = [
     "statsmodels",
     "matplotlib",
     "scikit-learn",
-    "elementMass",
+    "elementMass >= 1.1.0",
     "typing_extensions"
 ]
 
