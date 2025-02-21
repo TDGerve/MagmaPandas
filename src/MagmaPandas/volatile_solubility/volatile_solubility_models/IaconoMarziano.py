@@ -10,7 +10,7 @@ from scipy.optimize import root, root_scalar
 
 from MagmaPandas.MagmaSeries.MagmaSeries_baseclass import MagmaSeries
 from MagmaPandas.parse_io.validate import _check_argument, _check_setter
-from MagmaPandas.volatile_solubility.models.solubility_baseclass import Solubility_model
+from MagmaPandas.volatile_solubility.solubility_baseclass import Solubility_model
 
 """
 Equations from:

@@ -18,7 +18,7 @@ class hollowayBlank:
     @_check_argument("species", [None, "H2O", "CO2"])
     def fugacity(T_K, P_bar, species):
         """
-        Calculates CO2 fugacity given temperature in Kelvin and pressure
+        Calculates CO2 or H2O fugacities at temperatures ``T_K`` and pressures ``P_bar``
         in bar
         """
         P0 = 4000
