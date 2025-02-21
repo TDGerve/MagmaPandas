@@ -1,9 +1,9 @@
 import pandas as pd
 
-from MagmaPandas import Fe_redox
 from MagmaPandas.configuration import configuration
+from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
 from MagmaPandas.fO2 import calculate_fO2
-from MagmaPandas.Kd.Ol_melt.models import Kd_models
+from MagmaPandas.Kd.Ol_melt.Kd_olmelt_FeMg_models import Kd_olmelt_FeMg_models_dict
 from MagmaPandas.MagmaFrames import MagmaFrame
 
 
@@ -41,7 +41,7 @@ def observed_FeMg_Kd(
 
     melt_x_moles = melt.moles()
 
-    Fe3Fe2_model = getattr(Fe_redox, configuration.Fe3Fe2_model)
+    Fe3Fe2_model = Fe3Fe2_models_dict[configuration.Fe3Fe2_model]
     dfO2 = kwargs.get("dfO2", configuration.dfO2)
 
     if T_K is None:
@@ -88,7 +88,7 @@ def calculate_FeMg_Kd(
     """
 
     Kd_model_name = kwargs.get("Kd_model", configuration.Kd_model)
-    Kd_model = Kd_models[Kd_model_name]
+    Kd_model = Kd_olmelt_FeMg_models_dict[Kd_model_name]
 
     return Kd_model.calculate_Kd(
         melt_mol_fractions=melt_mol_fractions, T_K=T_K, *args, **kwargs

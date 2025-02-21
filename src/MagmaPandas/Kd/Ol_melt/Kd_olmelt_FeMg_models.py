@@ -6,10 +6,14 @@ import numpy as np
 import pandas as pd
 from scipy.constants import R  # J*K-1*mol-1
 
-from MagmaPandas import Fe_redox, configuration
+from MagmaPandas import configuration
+from MagmaPandas.Fe_redox import Fe3Fe2_models
 from MagmaPandas.fO2 import calculate_fO2
 from MagmaPandas.Kd.Kd_baseclass import Kd_model
-from MagmaPandas.Kd.Ol_melt.iterative import iterate_Kd_scalar, iterate_Kd_vectorized
+from MagmaPandas.Kd.Ol_melt.Kd_olmelt_FeMg_iterate import (
+    iterate_Kd_scalar,
+    iterate_Kd_vectorized,
+)
 from MagmaPandas.parse_io import check_components
 from MagmaPandas.thermometers.data_parsing import _remove_elements, moles_per_oxygen
 
@@ -340,7 +344,7 @@ class blundy(Kd_model):
         dfO2 = kwargs.get("dfO2", configuration.dfO2)
 
         fO2 = calculate_fO2(T_K=T_K, P_bar=P_bar, dfO2=dfO2)
-        Fe3Fe2 = Fe_redox.borisov.calculate_Fe3Fe2(
+        Fe3Fe2 = Fe3Fe2_models.borisov.calculate_Fe3Fe2(
             melt_mol_fractions=melt_mol_fractions, T_K=T_K, fO2=fO2, P_bar=P_bar
         )
 
@@ -788,4 +792,6 @@ class sun2020(Kd_model):
 
 _clsmembers = inspect.getmembers(sys.modules[__name__], inspect.isclass)
 # Collect all Kd_models in a dictionary.
-Kd_models = {cls[0]: cls[1] for cls in _clsmembers if _is_Kd_model(cls[1])}
+Kd_olmelt_FeMg_models_dict = {
+    cls[0]: cls[1] for cls in _clsmembers if _is_Kd_model(cls[1])
+}
