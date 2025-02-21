@@ -222,7 +222,7 @@ class configuration(metaclass=_meta_configuration):
     dQFM    : int, float
         Log units shift of the QFM |fO2| buffer. Default value: 1
     Kd_model : str
-        Olivine-melt Fe-Mg partitioning model. Available models: 'toplis'\ [10]_ and 'blundy'\ [11]_. Default value: 'toplis'
+        Olivine-melt Fe-Mg partitioning model. Available models: 'toplis'\ [19]_ and 'blundy'\ [20]_. Default value: 'toplis'
     Fe3Fe2_model : str
         Melt |Fe3Fe2| model. Available models: 'borisov'\ [1]_ and 'kressCarmichael'\ [2]_. Default value: 'borisov'
     melt_thermometer : str

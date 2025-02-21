@@ -177,7 +177,7 @@ class kressCarmichael(Fe3Fe2_model):
 
 class jayasuriya(Fe3Fe2_model):
     """
-    Jayasuriya et al. (2004) equation 12.
+    Jayasuriya et al. (2004)\ [3]_ equation 12.
     """
 
     components = ["MgO", "CaO", "Na2O", "K2O", "Al2O3", "P2O5", "FeO"]
@@ -230,7 +230,7 @@ class jayasuriya(Fe3Fe2_model):
 
 class putirka2016_6b(Fe3Fe2_model):
     """
-    Putirka (2016) equation 6b.
+    Putirka (2016)\ [4]_ equation 6b.
     """
 
     components = ["Na2O", "K2O", "Al2O3", "SiO2", "CaO"]
@@ -277,7 +277,7 @@ class putirka2016_6b(Fe3Fe2_model):
 
 class putirka2016_6c(Fe3Fe2_model):
     """
-    Putirka (2016) equation 6c.
+    Putirka (2016)\ [4]_ equation 6c.
     """
 
     components = [
@@ -370,7 +370,7 @@ class putirka2016_6c(Fe3Fe2_model):
 
 class Deng2020(Fe3Fe2_model):
     """
-    Deng et al. (2020)
+    Deng et al. (2020)\ [5]_
     """
 
     components = [
@@ -663,6 +663,9 @@ class Deng2020(Fe3Fe2_model):
 
 
 class Oneill2006(Fe3Fe2_model):
+    """
+    O'neill et al. (2006)\ [6]_
+    """
 
     components = ["MgO", "CaO", "Na2O", "K2O", "Al2O3", "P2O5", "FeO"]
 
@@ -776,6 +779,9 @@ class Oneill2006(Fe3Fe2_model):
 
 
 class Oneill2018(Fe3Fe2_model):
+    """
+    O'Neill et al. (2018)\ [7]_
+    """
 
     components = ["CaO", "Na2O", "K2O", "P2O5"]
 
@@ -831,7 +837,9 @@ class Oneill2018(Fe3Fe2_model):
 
 class Armstrong2019(Fe3Fe2_model):
     """
-    Calibrated with one andesitic and one MORB compositions + data from O'neill et al. (2006) and Zhang et al. (2017)
+    Armstrong et al. (2019)\ [8]_
+
+    Calibrated with one andesitic and one MORB compositions + data from O'neill et al. (2006)\ [6]_ and Zhang et al. (2017)\ [9]_
     """
 
     components = ["MgO", "CaO", "Na2O", "K2O", "Al2O3"]
@@ -1057,6 +1065,8 @@ class Armstrong2019(Fe3Fe2_model):
 
 class Zhang2017(Fe3Fe2_model):
     """
+    Zhang et al. (2017)\ [9]_
+
     Only calibrated with an andesitic melt composition
     """
 
@@ -1138,7 +1148,7 @@ class Zhang2017(Fe3Fe2_model):
 
 class Hirschmann2022(Fe3Fe2_model):
     """
-    Not yet implemented
+    Hirschmann (2022)\ [10]_
     """
 
     components = ["SiO2", "TiO2", "MgO", "CaO", "Na2O", "K2O", "P2O5", "Al2O3"]
@@ -1252,7 +1262,7 @@ class Hirschmann2022(Fe3Fe2_model):
 
 class Sun2024(Fe3Fe2_model):
     """
-    Not yet implemented
+    Sun and Yao (2024)\ [11]_
     """
 
     components = ["FeO", "SiO2", "Al2O3", "TiO2", "CaO", "MgO", "Na2O", "K2O"]

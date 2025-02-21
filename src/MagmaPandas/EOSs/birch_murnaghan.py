@@ -7,7 +7,7 @@ def birch_murnaghan_4th_order(
     V: float | np.ndarray, params: Dict = None
 ) -> float | np.ndarray:
     """
-    Formulation from Katsura & Tange (2019)\ [20]_ (eq. 27). Needs parameters for:
+    Formulation from Katsura & Tange (2019)\ [26]_ (eq. 27). Needs parameters for:
 
     - pre-compression volume (V_0)
     - isothermal bulk modulus at standard temperature (K_0)

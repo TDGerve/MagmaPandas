@@ -115,7 +115,18 @@ def calculate_viscosity(
     melt_mol_fractions: Union[pd.DataFrame, pd.Series], T_K: Union[pd.Series, float]
 ) -> pd.Series:
     """
-    return log(viscosity) in log(Pa.s)
+    Calculate melt viscosity according to equation 1 of Giordano et al. (2008)\ [27]_.
+
+    Parameters
+    ----------
+    melt_mol_fractions
+        melt mol fractions
+    T_K
+        temperature in Kelvin
+
+    Returns
+    -------
+        viscosity in log10(Pa.s)
     """
 
     B = _calculate_B(melt_mol_fractions=melt_mol_fractions)

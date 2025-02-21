@@ -124,27 +124,12 @@ def Gibbs0(T_K: float | np.ndarray, params: pd.Series | pd.DataFrame):
     return Gibbs0_polynomial(T_K=T_K, **params)
 
 
-# def Gibbs(P_bar, T_K: float, phase: str):
-
-#     P_GPa = P_bar / 1e4
-#     temperature_range = "high" if T_K > 1811 else "low"
-#     gibbs0_params = gibbs0_parameters.loc[(phase, temperature_range)]
-#     if phase == "O2" & (T_K < 1000):
-#         gibbs0_params = O2_low_temperature
-#     eos_params = eos_parameters.loc[phase]
-
-#     gibbs0 = Gibbs0(T_K=T_K, params=gibbs0_params)
-#     VdP = Vinet_VdP(P_GPa=P_GPa, T_K=T_K, **eos_params)
-
-#     return gibbs0 + VdP
-
-
 def Gibbs_Fe_magnetic(T_K):
     """
     Adjust bcc-alpha for magnetic contribution.  Magnetic contribution for fcc
     is << 1 J at temperatures of interest and is ignored
 
-    from Hirschmann et al. (2021) matlab script
+    translated from Hirschmann et al. (2021) matlab script
     """
     Tc = 1043  # curie temperature
     P_factor = 0.4  # structure dependent parameter
@@ -170,6 +155,8 @@ def Gibbs_Fe_magnetic(T_K):
 def Gibbs_Fe_polymorphs(P_bar, T_K):
     """
     Calculate Gibbs free energy for Fe polymorphs
+
+    translated from Hirschmann et al. (2021) matlab script
     """
     # TODO there is a tiny difference in pressure adjusted G, check where this comes from.
 
@@ -194,6 +181,8 @@ def Gibbs_Fe_polymorphs(P_bar, T_K):
 def Gibbs_wustite_O2(P_bar, T_K):
     """
     Calculate gibbs free enery for FeO, FeO1.5 and O2
+
+    translated from Hirschmann et al. (2021) matlab script
     """
     P_GPa = P_bar / 1e4
     temperature_range = "high" if T_K > 1811 else "low"
@@ -221,6 +210,8 @@ def Gibbs_wustite_O2(P_bar, T_K):
 def Gibbs_IW(P_bar, T_K, Fe_phase=False, suppress_Fe_liquid=True):
     """
     Calculate Gibbs free enery for FeO, FeO1.5, O2 and Fe. For Fe, the polymorph with lowest Gibbs free energy is used.
+
+    translated from Hirschmann et al. (2021) matlab script
     """
 
     gibbs_total = Gibbs_wustite_O2(P_bar=P_bar, T_K=T_K)
@@ -247,6 +238,8 @@ def deltaGibbs_Fe_wustite(Gibbs: pd.Series):
     """
     Calculate delta Gibbs of the reaction 2 FeO1.5 +  Fe = 3 FeO
 
+    translated from Hirschmann et al. (2021) matlab script
+
     deltaG : float
         Change of Gibbs free energy of the reaction
     """
@@ -269,6 +262,8 @@ def calculate_XFeO1p5(T_K, deltaGibbs_Fe_wustite, q00, q10, maxiter=300):
     Calculate equilibrium mol fraction FeO1.5 in the reaction
 
     FeO1.5 + 1/2 Fe = 1.5 FeO
+
+    translated from Hirschmann et al. (2021) matlab script
     """
 
     func = lambda X_FeO1p5: _Fe_wustite_equilibrium(
@@ -315,6 +310,8 @@ def _Fe_wustite_equilibrium(T_K, X_FeO1p5, deltaGibbs_Fe_wustite, q00, q10):
     a_FeO = gamma * X_FeO = activity of FeO,
     X_FeO1.5 = mol fraction FeO1.5
     X_FeO = 1 - X_FeO1.5
+
+    translated from Hirschmann et al. (2021) matlab script
     """
 
     RT_LN_gammaFeO = _gamma_FeO(X_FeO1p5=X_FeO1p5, q00=q00, q10=q10)
@@ -335,6 +332,8 @@ def _gamma_FeO(X_FeO1p5, q00, q10):
 
     RT*LN(a_FeO) =      ((q00+2*q10*(1-X_FeO1.5))*X_FeO1.5**2)
 
+    translated from Hirschmann et al. (2021) matlab script
+
     Parameters
     ----------
     X_FeO1p5 :  float, array-like
@@ -351,6 +350,8 @@ def _gamma_FeO1p5(X_FeO1p5, q00, q10):
 
     RT*LN(a_FeO1.5) =   ((1-X_FeO1.5)**2*(q00+q10-2*q10*X_FeO1.5))
 
+    translated from Hirschmann et al. (2021) matlab script
+
     Parameters
     ----------
     X_FeO1p5 :  float, array-like
@@ -366,6 +367,8 @@ def _gamma_FeO1p5(X_FeO1p5, q00, q10):
 def muO2_IW(T_K, P_bar, full_output=False, suppress_Fe_liquid=False):
     """
     calculate chemical potential of oxygen at IW and pressure P with equations of state
+
+    translated from Hirschmann et al. (2021) matlab script
     """
 
     q00 = mixing_parameters["q00"]
@@ -401,11 +404,20 @@ def muO2_IW(T_K, P_bar, full_output=False, suppress_Fe_liquid=False):
 
 def fO2_IW(logshift: float, T_K, P_bar, full_output=False, suppress_Fe_liquid=False):
     """
-    Calculate oxygen fugacity at the Iron-Wustite buffer
+    Calculate oxygen fugacity at the Iron-Wustite buffer according to Hirschmann (2021)\ [18]_
 
     Parameters
     ----------
     logshift    : int, float
+        log units shift of fO2
+    T_K         : float, array-like
+        temperature in Kelvin
+    P_bar       : float, aray-like
+        pressure in bar
+    full_output : boolean
+        ouputs fO2 only if False. fO2, stable Fe phase and Fe(1-y)O if True
+    suppress_Fe_liquid  : boolean
+        ignore Fe liquid if True
 
 
     Returns

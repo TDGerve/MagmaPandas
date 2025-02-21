@@ -29,8 +29,8 @@ def putirka2007_4(
     """
     Olivine-liquid thermometer
 
-    Equation 4 from Putirka (2007)\ [16]_ calculates liquidus temperatures based on olivine-melt pairs.
-    Identical to equation 22 from Putirka (2008)\ [15]_.
+    Equation 4 from Putirka (2007)\ [29]_ calculates liquidus temperatures based on olivine-melt pairs.
+    Identical to equation 22 from Putirka (2008)\ [28]_.
 
     SEE = hydrous: 29, anhydrous: 45, total: 43
 

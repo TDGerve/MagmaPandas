@@ -64,7 +64,7 @@ def putirka2008_13(
     """
     melt-only thermometer
 
-    Equation 13 from Putirka (2008)\ [15]_ calculates liquidus temperatures based on melt compositions.
+    Equation 13 from Putirka (2008)\ [28]_ calculates liquidus temperatures based on melt compositions.
     Requires saturation in olivine.
 
     SEE = 71 degrees
@@ -102,7 +102,7 @@ def putirka2008_14(
     """
     melt-only thermometer
 
-    Equation 14 from Putirka (2008)\ [15]_ calculates liquidus temperatures based on melt compositions.
+    Equation 14 from Putirka (2008)\ [28]_ calculates liquidus temperatures based on melt compositions.
     Requires saturation in olivine.
 
     SEE = 58 degrees
@@ -191,7 +191,7 @@ def putirka2008_15(
     """
     melt-only thermometer
 
-    Equation 15 from Putirka (2008)\ [15]_ calculates liquidus temperatures based on melt compositions.
+    Equation 15 from Putirka (2008)\ [28]_ calculates liquidus temperatures based on melt compositions.
     Requires saturation in olivine.
 
     SEE = 46 degrees
@@ -281,7 +281,7 @@ def putirka2008_16(
     """
     melt-only thermometer
 
-    Equation 16 from Putirka (2008)\ [15]_ calculates liquiqdus temperatures based on melt compositions.
+    Equation 16 from Putirka (2008)\ [28]_ calculates liquiqdus temperatures based on melt compositions.
     Requires equilibrium with olivine + plagioclase + clinopyroxene and saturation with additional phases drastically increases the standard error of estimate.
 
     SEE = 26 degrees (saturation in olivine + plagioclase + clinopyroxene)
@@ -346,7 +346,7 @@ def sun2020(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs):
     """
     Equation 6 from:
 
-    Sun, C., Dasgupta, R. (2020) Thermobarometry of CO2-rich, silica-undersaturated melts constrains cratonic lithosphere thinning through time in areas of kimberlitic magmatism. Earth and Planetary Sience Letters. 550
+    Sun and Dasgupta (2020)\ [22]_
 
     Calibrated at:
     ~ 2 - 10 GPa
@@ -405,9 +405,7 @@ def sun2020(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs):
 
 def shea2022(melt, offset: float = 0.0, **kwargs):
     """
-    Equation 1 from:
-
-    Shea, T., Matz, A. K., Mourey, A. J. (2022) Experimental study of Fe–Mg partitioning and zoning during rapid growth of olivine in Hawaiian tholeiites. Contributions to mineralogy and petrology. 177(12)
+    Equation 1 from Shea et al. (2022)\ [30]_
 
     Calibrated at:
     1 bar
@@ -442,11 +440,7 @@ def shea2022(melt, offset: float = 0.0, **kwargs):
 
 def sugawara2000_3(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs):
     """
-    Equation 3 with olivine-liquid parameters and corrected for H2O according to equation 7a
-
-    from:
-
-    Sugawara, T. (2000) Empirical relationships between temperature, pressure, and MgO content in olivine and pyroxene saturated liquid. Journal of geophysical research: solid earth. 105(B4)
+    Equation 3 with olivine-liquid parameters and corrected for H2O according to equation 7a from Sugawara (2000)\ [31]_
 
     Calibrated at:
     <= 3.5 GPa
@@ -491,12 +485,7 @@ def sugawara2000_3(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs
 
 def sugawara2000_6a(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs):
     """
-    Equation 6a corrected for H2O according to equation 7a
-
-    from:
-
-    Sugawara, T. (2000) Empirical relationships between temperature, pressure, and MgO content in olivine and pyroxene saturated liquid. Journal of geophysical research: solid earth. 105(B4)
-
+    Equation 6a corrected for H2O according to equation 7a from Sugawara (2000)\ [31]_
     Calibrated at:
     <= 3.5 GPa
     1266 - 1873 C

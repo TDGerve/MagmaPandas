@@ -4,7 +4,7 @@ import pandas as pd
 from MagmaPandas.MagmaFrames.protocols import Magma
 
 """
-based on Iacovino and Till (2019)
+based on Iacovino and Till (2019)\ [23]_
 """
 
 T_reference = pd.Series(
@@ -72,9 +72,9 @@ def calculate_density(
     composition: Magma, T_K: float | pd.Series, P_bar: float | pd.Series
 ) -> pd.Series:
     """
-    Calculate silicate liquid densities according to the model from Iacovino and Till (2019)\ [3]_
+    Calculate silicate liquid densities according to the model from Iacovino and Till (2019)\ [23]_
 
-    The model uses thermodynamic data from Lange and Carmichael (1987)\ [12]_, Lange (1997)\ [13]_, Kress and Carmichael (1991)\ [2]_ and Ochs III and Lange (1999)\ [14]_
+    The model uses thermodynamic data from Lange and Carmichael (1987)\ [24]_, Lange (1997)\ [25]_, Kress and Carmichael (1991)\ [2]_ and Ochs III and Lange (1999)\ [26]_
 
     Parameters
     ----------

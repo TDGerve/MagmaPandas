@@ -1,5 +1,5 @@
 """
-|CO2|-|H2O| solubility models from Allison et al. (2022)\ [17]_
+|CO2|-|H2O| solubility models from Allison et al. (2022)\ [32]_
 """
 
 from typing import List, Tuple

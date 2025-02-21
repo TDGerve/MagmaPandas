@@ -190,7 +190,7 @@ def fO2_QFM(
     """
     Calculate |fO2| at the QFM buffer.
 
-    1 bar components is calculated according to O'Neill (1987)\ [5]_ and pressure contributions according to Holland and Powell (2011)\ [6]_, with Landau theory from Holland and Powell (1990, 1998)\ [7]_:sup:`,`\ [8]_ and thermal Tait equations of state parameters from Holland and Powell (2011)\ [6]_, updated by Jennings and Holland (2015)\ [9]_.
+    1 bar components is calculated according to O'Neill (1987)\ [13]_ and pressure contributions according to Holland and Powell (2011)\ [14]_, with Landau theory from Holland and Powell (1990, 1998)\ [15]_:sup:`,`\ [16]_ and thermal Tait equations of state parameters from Holland and Powell (2011)\ [14]_, updated by Jennings and Holland (2015)\ [17]_.
 
     Parameters
     ----------

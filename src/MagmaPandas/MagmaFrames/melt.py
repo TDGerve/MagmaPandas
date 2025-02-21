@@ -64,7 +64,7 @@ class Melt(MagmaFrame):
         fO2_logshift: None | int = None,
     ) -> pd.Series:
         """
-        Calculate silicate melts densities with the Iacovino and Till (2019)\ [3]_ model
+        Calculate silicate melts densities with the Iacovino and Till (2019)\ [23]_ model
 
         Parameters
         ----------
@@ -94,7 +94,7 @@ class Melt(MagmaFrame):
 
     def tetrahedral_cations(self) -> pd.Series:
         """
-        Calculate tetrahedral cations based on Mysen (1983)\ [4]_
+        Calculate tetrahedral cations based on Mysen (1983)\ [12]_
 
         Si, Ti, Al and P are assumed to be in tetrahedral coordination and Fe\ :sup:`3+` is not taken into account
 
@@ -115,7 +115,7 @@ class Melt(MagmaFrame):
     def NBO(self):
         """
         Non-bridging oxygen in the melt
-        Formulation according to Mysen (1983)\ [4]_
+        Formulation according to Mysen (1983)\ [12]_
 
         Returns
         -------
@@ -131,7 +131,7 @@ class Melt(MagmaFrame):
     def NBO_T(self):
         """
         NBO/T
-        The ratio of non-bridging oxygen and tetrahedral cations according to Mysen (1983)\ [4]_
+        The ratio of non-bridging oxygen and tetrahedral cations according to Mysen (1983)\ [12]_
 
         Returns
         -------

@@ -30,7 +30,7 @@ def _is_Kd_model(cls):
 
 class toplis(Kd_model):
     """
-    Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 10 from Toplis (2005)\ [10]_.
+    Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 10 from Toplis (2005)\ [19]_.
     """
 
     error = 0.02
@@ -255,7 +255,7 @@ class toplis(Kd_model):
 
 class blundy(Kd_model):
     """
-    Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 8 from Blundy (2020)\ [11]_.
+    Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 8 from Blundy (2020)\ [20]_.
     """
 
     errors = pd.Series({6: 0.019, 9: 0.04, 100: 0.063})
@@ -411,6 +411,9 @@ class blundy(Kd_model):
 
 
 class putirka2016_8a(Kd_model):
+    """
+    Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 8a from Putirka (2016)\ [21]_.
+    """
 
     Kd_error = 4.4e-2
 
@@ -467,6 +470,8 @@ class putirka2016_8a(Kd_model):
 
 class putirka2016_8b(Kd_model):
     """
+    Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 8b from Putirka (2016)\ [21]_.
+
     For P > 1 GPa
     """
 
@@ -547,6 +552,8 @@ class putirka2016_8b(Kd_model):
 
 class putirka2016_8c(Kd_model):
     """
+    Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 8c from Putirka (2016)\ [21]_.
+
     for P < 1 GPa
     """
 
@@ -621,6 +628,8 @@ class putirka2016_8c(Kd_model):
 
 class putirka2016_8d(Kd_model):
     """
+    Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 8d from Putirka (2016)\ [21]_.
+
     For liquid compositions with <45 wt.% SiO2 and > 8 wt.% Na2O + K2O
     """
 
@@ -715,7 +724,7 @@ class putirka2016_8d(Kd_model):
 
 class sun2020(Kd_model):
     """
-    Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 7 from Sun & Dasgupta (2020)\ [10]_.
+    Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 7 from Sun & Dasgupta (2020)\ [22]_.
 
     Sun, C., Dasgupta, R. (2020) Thermobarometry of CO2-rich, silica-undersaturated melts constrains cratonic lithosphere thinning through time in areas of kimberlitic magmatism. Earth and Planetary Sience Letters. 550
     """
