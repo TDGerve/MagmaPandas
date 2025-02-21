@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MagmaPandas"
-version = "2.0.6"
+version = "2.1.0"
 authors = [{ name = "Thomas van Gerve" }]
 description = "Pandas based tool set for geochemical processing and modelling."
 readme = "README.rst"
@@ -36,4 +36,5 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "geoplot.data" = ["*.csv"]
-"MagmaPandas.fO2.data" = [".*csv"]
+"MagmaPandas.fO2.data" = ["*.csv"]
+"MagmaPandas.Fe_redox.data" = ["*.csv", "*.rtf"]
