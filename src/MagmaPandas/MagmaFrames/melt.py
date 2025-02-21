@@ -13,7 +13,7 @@ from MagmaPandas.Fe_redox.Fe3Fe2_calculate import calculate_Fe3Fe2
 from MagmaPandas.Kd.Ol_melt.Kd_olmelt_FeMg_models import Kd_olmelt_FeMg_models_dict
 from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
 from MagmaPandas.parse_io.validate import _check_argument, _match_index
-from MagmaPandas.rheology import calculate_density
+from MagmaPandas.rheology import calculate_density, calculate_viscosity
 from MagmaPandas.thermometers import melt_thermometers
 
 
@@ -91,6 +91,23 @@ class Melt(MagmaFrame):
         melt = self.FeO_Fe2O3_calc(Fe3Fe2)
 
         return calculate_density(melt, T_K=T_K, P_bar=P_bar)
+
+    def viscosity(self, T_K):
+        """
+        Calculate melts viscosity with the Giordano et al. (2008)\ [27]_ model
+
+        Parameters
+        ----------
+        T_K : float, pandas Series
+            temperatures in Kelvin
+
+        Returns
+        -------
+        densities : pd.Series
+            viscosity in log10(Pa.s)
+        """
+
+        return calculate_viscosity(melt_mol_fractions=self.moles(), T_K=T_K)
 
     def tetrahedral_cations(self) -> pd.Series:
         """
