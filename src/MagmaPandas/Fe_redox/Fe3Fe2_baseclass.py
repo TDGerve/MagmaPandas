@@ -1,14 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
-from MagmaPandas.Fe_redox.Fe3Fe2_errors import (
-    error_params_1bar,
-    error_params_high_pressure,
-)
-from MagmaPandas.model_errors import _error_func
 from scipy import interpolate
+
+# from MagmaPandas.Fe_redox.Fe3Fe2_errors import (
+#     error_params_1bar,
+#     error_params_high_pressure,
+# )
+from MagmaPandas.tools.model_errors import _error_func
 
 # Fe3+/Fe2+ limits of the moving standard deviation in a 30 point window of the validation dataset (provided at ./data/Fe3Fe2_validation_data.csv).
 validation_limits_1bar = (0.0351966873706004, 5.948890681577911)
@@ -91,7 +92,13 @@ class Fe3Fe2_model(ABC):
 
     @classmethod
     def get_error(
-        cls, Fe3Fe2, pressure: Optional[pd.Series] = None, *args, **kwargs
+        cls,
+        Fe3Fe2,
+        error_params_1bar: Dict,
+        error_params_high_pressure: Dict,
+        pressure: Optional[pd.Series] = None,
+        *args,
+        **kwargs,
     ) -> float | np.ndarray:
         """
         Returns one standard deviation error on |Fe3Fe2| ratios, calculated from a compiled validation dataset.
@@ -110,11 +117,13 @@ class Fe3Fe2_model(ABC):
         """
 
         name = cls.__name__
+        # TODO change error_params_1bar to a method argument to reduce dependencies
         error_1bar = _Fe3Fe2_error_func(*error_params_1bar[name], Fe3Fe2=Fe3Fe2)
 
         if pressure is None:
             return error_1bar
 
+        # TODO change error_params_high_pressure to a method argument to reduce dependencies
         error_high_pressure = _Fe3Fe2_spline(
             Fe3Fe2=Fe3Fe2, parameters=error_params_high_pressure[name]
         )

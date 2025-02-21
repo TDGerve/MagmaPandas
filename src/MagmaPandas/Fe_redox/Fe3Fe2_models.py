@@ -1,5 +1,6 @@
 import inspect
 import sys
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -7,7 +8,11 @@ from scipy.constants import Avogadro, R
 from scipy.optimize import fsolve
 
 from MagmaPandas.EOSs.birch_murnaghan import birch_murnaghan_4th_order
-from MagmaPandas.Fe_redox.Fe_redox_baseclass import Fe3Fe2_model
+from MagmaPandas.Fe_redox.Fe3Fe2_baseclass import Fe3Fe2_model
+from MagmaPandas.Fe_redox.Fe3Fe2_errors import (
+    error_params_1bar,
+    error_params_high_pressure,
+)
 from MagmaPandas.parse_io import check_components, make_equal_length, make_iterable
 
 
@@ -76,6 +81,16 @@ class borisov(Fe3Fe2_model):
         )
 
         return 10 ** (part1 + part2 + part3)
+
+    @classmethod
+    def get_error(cls, Fe3Fe2, pressure: Optional[pd.Series] = None, *args, **kwargs):
+
+        return super().get_error(
+            Fe3Fe2=Fe3Fe2,
+            error_params_1bar=error_params_1bar,
+            error_params_high_pressure=error_params_high_pressure,
+            pressure=pressure,
+        )
 
 
 class kressCarmichael(Fe3Fe2_model):
@@ -149,6 +164,16 @@ class kressCarmichael(Fe3Fe2_model):
 
         return 2 * np.exp(part1 + part2 + part3)
 
+    @classmethod
+    def get_error(cls, Fe3Fe2, pressure: Optional[pd.Series] = None, *args, **kwargs):
+
+        return super().get_error(
+            Fe3Fe2=Fe3Fe2,
+            error_params_1bar=error_params_1bar,
+            error_params_high_pressure=error_params_high_pressure,
+            pressure=pressure,
+        )
+
 
 class jayasuriya(Fe3Fe2_model):
     """
@@ -192,6 +217,16 @@ class jayasuriya(Fe3Fe2_model):
 
         return 2 * np.exp(cls.a * np.log(fO2) + 12420 / T_K - cls.c + sumComponents)
 
+    @classmethod
+    def get_error(cls, Fe3Fe2, pressure: Optional[pd.Series] = None, *args, **kwargs):
+
+        return super().get_error(
+            Fe3Fe2=Fe3Fe2,
+            error_params_1bar=error_params_1bar,
+            error_params_high_pressure=error_params_high_pressure,
+            pressure=pressure,
+        )
+
 
 class putirka2016_6b(Fe3Fe2_model):
     """
@@ -228,6 +263,16 @@ class putirka2016_6b(Fe3Fe2_model):
         )
 
         return 2 * np.exp(part1 + part2 + part3)
+
+    @classmethod
+    def get_error(cls, Fe3Fe2, pressure: Optional[pd.Series] = None, *args, **kwargs):
+
+        return super().get_error(
+            Fe3Fe2=Fe3Fe2,
+            error_params_1bar=error_params_1bar,
+            error_params_high_pressure=error_params_high_pressure,
+            pressure=pressure,
+        )
 
 
 class putirka2016_6c(Fe3Fe2_model):
@@ -311,6 +356,16 @@ class putirka2016_6c(Fe3Fe2_model):
         )
         NBO = 2 * O - 4 * tetrahedral
         return NBO / tetrahedral
+
+    @classmethod
+    def get_error(cls, Fe3Fe2, pressure: Optional[pd.Series] = None, *args, **kwargs):
+
+        return super().get_error(
+            Fe3Fe2=Fe3Fe2,
+            error_params_1bar=error_params_1bar,
+            error_params_high_pressure=error_params_high_pressure,
+            pressure=pressure,
+        )
 
 
 class Deng2020(Fe3Fe2_model):
@@ -596,6 +651,16 @@ class Deng2020(Fe3Fe2_model):
 
         return LN_aFe3_aFe2
 
+    @classmethod
+    def get_error(cls, Fe3Fe2, pressure: Optional[pd.Series] = None, *args, **kwargs):
+
+        return super().get_error(
+            Fe3Fe2=Fe3Fe2,
+            error_params_1bar=error_params_1bar,
+            error_params_high_pressure=error_params_high_pressure,
+            pressure=pressure,
+        )
+
 
 class Oneill2006(Fe3Fe2_model):
 
@@ -699,6 +764,16 @@ class Oneill2006(Fe3Fe2_model):
 
         return 10 ** ((np.log10(fO2) - part_1 - part_2) / 4)
 
+    @classmethod
+    def get_error(cls, Fe3Fe2, pressure: Optional[pd.Series] = None, *args, **kwargs):
+
+        return super().get_error(
+            Fe3Fe2=Fe3Fe2,
+            error_params_1bar=error_params_1bar,
+            error_params_high_pressure=error_params_high_pressure,
+            pressure=pressure,
+        )
+
 
 class Oneill2018(Fe3Fe2_model):
 
@@ -742,6 +817,16 @@ class Oneill2018(Fe3Fe2_model):
     @staticmethod
     def _deltaQFM(fO2, T_K):
         return np.log10(fO2) - (8.58 - 25050 / T_K)
+
+    @classmethod
+    def get_error(cls, Fe3Fe2, pressure: Optional[pd.Series] = None, *args, **kwargs):
+
+        return super().get_error(
+            Fe3Fe2=Fe3Fe2,
+            error_params_1bar=error_params_1bar,
+            error_params_high_pressure=error_params_high_pressure,
+            pressure=pressure,
+        )
 
 
 class Armstrong2019(Fe3Fe2_model):
@@ -959,6 +1044,16 @@ class Armstrong2019(Fe3Fe2_model):
 
         return LN_aFe3_aFe2
 
+    @classmethod
+    def get_error(cls, Fe3Fe2, pressure: Optional[pd.Series] = None, *args, **kwargs):
+
+        return super().get_error(
+            Fe3Fe2=Fe3Fe2,
+            error_params_1bar=error_params_1bar,
+            error_params_high_pressure=error_params_high_pressure,
+            pressure=pressure,
+        )
+
 
 class Zhang2017(Fe3Fe2_model):
     """
@@ -1029,6 +1124,16 @@ class Zhang2017(Fe3Fe2_model):
         LN_Fe3Fe2 = part_1 + part_2 + part_3 * part_4
 
         return np.exp(LN_Fe3Fe2)
+
+    @classmethod
+    def get_error(cls, Fe3Fe2, pressure: Optional[pd.Series] = None, *args, **kwargs):
+
+        return super().get_error(
+            Fe3Fe2=Fe3Fe2,
+            error_params_1bar=error_params_1bar,
+            error_params_high_pressure=error_params_high_pressure,
+            pressure=pressure,
+        )
 
 
 class Hirschmann2022(Fe3Fe2_model):
@@ -1133,6 +1238,16 @@ class Hirschmann2022(Fe3Fe2_model):
         )
 
         return part_1 + part_2
+
+    @classmethod
+    def get_error(cls, Fe3Fe2, pressure: Optional[pd.Series] = None, *args, **kwargs):
+
+        return super().get_error(
+            Fe3Fe2=Fe3Fe2,
+            error_params_1bar=error_params_1bar,
+            error_params_high_pressure=error_params_high_pressure,
+            pressure=pressure,
+        )
 
 
 class Sun2024(Fe3Fe2_model):
@@ -1239,7 +1354,17 @@ class Sun2024(Fe3Fe2_model):
             / (4 + cls.params["a0"] * cations["Fe"] ** 0.5)
         )
 
+    @classmethod
+    def get_error(cls, Fe3Fe2, pressure: Optional[pd.Series] = None, *args, **kwargs):
+
+        return super().get_error(
+            Fe3Fe2=Fe3Fe2,
+            error_params_1bar=error_params_1bar,
+            error_params_high_pressure=error_params_high_pressure,
+            pressure=pressure,
+        )
+
 
 _clsmembers = inspect.getmembers(sys.modules[__name__], inspect.isclass)
 # Collect all Fe3Fe2_models in a dictionary.
-Fe3Fe2_models = {cls[0]: cls[1] for cls in _clsmembers if _is_Fe3Fe2_model(cls[1])}
+Fe3Fe2_models_dict = {cls[0]: cls[1] for cls in _clsmembers if _is_Fe3Fe2_model(cls[1])}
