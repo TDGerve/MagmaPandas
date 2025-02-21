@@ -4,11 +4,11 @@ Sub-module with melt-only thermometers
 
 import inspect
 import sys
-import warnings as w
 
 import elementMass as e
 import numpy as np
 import pandas as pd
+
 from MagmaPandas.MagmaFrames.protocols import Magma
 from MagmaPandas.parse_io import check_components
 from MagmaPandas.thermometers.data_parsing import (

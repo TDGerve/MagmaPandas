@@ -1,6 +1,7 @@
 from typing import Callable
 
 import pandas as pd
+
 from MagmaPandas.parse_io import convert_to_series, match_indeces
 
 

@@ -1,4 +1,3 @@
-import itertools as it
 import warnings as w
 from typing import List, Union
 
@@ -22,7 +21,6 @@ def make_iterable(*args):
 
 
 def make_equal_length(*args):
-    total = len(args)
     args_iterable = make_iterable(*args)
     lengths = [len(a) for a in args_iterable]
     max_length = max(lengths)

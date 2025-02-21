@@ -2,10 +2,11 @@ from importlib.resources import files
 
 import numpy as np
 import pandas as pd
-from MagmaPandas.EOSs.vinet import Vinet_VdP
-from MagmaPandas.parse_io import make_iterable, repeat_vars
 from scipy.constants import R
 from scipy.optimize import brentq
+
+from MagmaPandas.EOSs.vinet import Vinet_VdP
+from MagmaPandas.parse_io import make_iterable, repeat_vars
 
 Fe_polymorphs = [
     "Fe_fcc",
