@@ -31,7 +31,7 @@ class colors:
             "xkcd:forest",
             "xkcd:orange",
             "xkcd:white",
-            "xkcd:black",
+            "xkcd:blue green",
             "xkcd:pale cyan",
             "xkcd:easter purple",
             "xkcd:navy",
