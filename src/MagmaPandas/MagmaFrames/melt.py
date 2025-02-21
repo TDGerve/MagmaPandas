@@ -9,11 +9,11 @@ from typing_extensions import Self
 from MagmaPandas import volatile_solubility as vs
 from MagmaPandas.configuration import configuration
 from MagmaPandas.enums import Datatype, Unit
-from MagmaPandas.Fe_redox import calculate_Fe3Fe2
-from MagmaPandas.Kd.Ol_melt.models import Kd_models
-from MagmaPandas.liquid_density import calculate_density
+from MagmaPandas.Fe_redox.Fe3Fe2_calculate import calculate_Fe3Fe2
+from MagmaPandas.Kd.Ol_melt.Kd_olmelt_FeMg_models import Kd_olmelt_FeMg_models_dict
 from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
 from MagmaPandas.parse_io.validate import _check_argument, _match_index
+from MagmaPandas.rheology import calculate_density
 from MagmaPandas.thermometers import melt_thermometers
 
 
@@ -255,7 +255,7 @@ class Melt(MagmaFrame):
         else:
             return melt
 
-    def Kd_olivine_FeMg(
+    def Kd_olivine_FeMg_eq(
         self,
         *args,
         **kwargs,
@@ -289,7 +289,7 @@ class Melt(MagmaFrame):
             Fe-Mg partitioning coefficients
         """
         Kd_model_name = kwargs.get("Kd_model", configuration.Kd_model)
-        Kd_model = Kd_models[Kd_model_name]
+        Kd_model = Kd_olmelt_FeMg_models_dict[Kd_model_name]
 
         return Kd_model.calculate_Kd(
             melt_mol_fractions=self.moles(),
@@ -337,16 +337,19 @@ class Melt(MagmaFrame):
 
         # Run calculations in a pool across multiple cpu cores
         # Progress bar from alive_bar
-        with Pool() as pool, alive_bar(
-            total,
-            spinner=None,
-            length=25,
-            manual=True,
-            theme="smooth",
-            force_tty=True,
-            title="Saturation pressure...",
-            title_length=25,
-        ) as bar:
+        with (
+            Pool() as pool,
+            alive_bar(
+                total,
+                spinner=None,
+                length=25,
+                manual=True,
+                theme="smooth",
+                force_tty=True,
+                title="Saturation pressure...",
+                title_length=25,
+            ) as bar,
+        ):
             results = pool.imap_unordered(self._saturation_multicore, samples)
             pool.close()
 

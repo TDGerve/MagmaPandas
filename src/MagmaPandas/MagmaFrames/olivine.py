@@ -1,8 +1,13 @@
 import pandas as pd
 from typing_extensions import Self
 
+from MagmaPandas.configuration import configuration
 from MagmaPandas.enums import Unit
+from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
+from MagmaPandas.Kd.Ol_melt import Kd_olmelt_FeMg_models_dict
 from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
+from MagmaPandas.MagmaFrames.melt import Melt
+from MagmaPandas.MagmaSeries import MagmaSeries
 
 
 class Olivine(MagmaFrame):
@@ -52,3 +57,40 @@ class Olivine(MagmaFrame):
         Mineral formulas normalised to 4 O p.f.u.
         """
         return self.mineral_formula(O=4)
+
+    def calculate_FeMg_Kd(
+        self, melt_wtpc: Melt | MagmaSeries, T_K, P_bar=1, **kwargs
+    ) -> pd.Series:
+        """
+        Calculate Fe-Mg exchange coefficients (Kd) based on measured olivine and melt compositions as (Fe2+/Mg)olivine / (Fe2+/Mg)liquid
+        """
+
+        if (not self.index.equals(melt_wtpc.index)) & (
+            melt_wtpc.isinstance(pd.DataFrame)
+        ):
+            raise AttributeError("olivine and melt indeces do not match")
+
+        dfO2 = kwargs.get("dfO2", configuration.dfO2)
+        Fe3Fe2_model_name = kwargs.get("Fe3Fe2_model", configuration.Fe3Fe2_model)
+        Fe3Fe2_model = Fe3Fe2_models_dict[Fe3Fe2_model_name]
+
+        melt_mol_fractions = melt_wtpc.moles()
+        olivine_mol_fractions = self.moles()
+
+        Fe3Fe2 = Fe3Fe2_model.calculate_Fe3Fe2(
+            mol_fractions=melt_mol_fractions,
+            T_K=T_K,
+            P_bar=P_bar,
+            dfO2=dfO2,
+            **kwargs,
+        )
+
+        Fe_melt_total = 1 + Fe3Fe2
+        Fe2_FeTotal_melt = 1 / Fe_melt_total
+        Fe2_melt = melt_mol_fractions["Fe"] * Fe2_FeTotal_melt
+
+        Kd = (olivine_mol_fractions["Fe"] / olivine_mol_fractions["Mg"]) / (
+            Fe2_melt / melt_mol_fractions["Mg"]
+        )
+
+        return Kd
