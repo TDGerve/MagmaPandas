@@ -1,3 +1,4 @@
+import functools
 import itertools
 from multiprocessing import Pool
 
@@ -5,13 +6,15 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 
-import MagmaPandas.volatile_solubility as vs
-from MagmaPandas.MagmaSeries import MagmaSeries
+from MagmaPandas.magma_protocol import Magma
+from MagmaPandas.volatile_solubility import volatile_solubility_models
 
 
 def CO2H2O_isobar_data(
-    oxide_wtPercents: MagmaSeries,
+    oxide_wtPercents: Magma,
     temperature: float,
+    model: str,
+    species="mixed",
     isobars=None,
     isopleths=None,
     interpolate=True,
@@ -63,9 +66,13 @@ def CO2H2O_isobar_data(
         )
     ]
 
+    multicore_function = functools.partial(
+        _solubility_multicore, model=model, species=species
+    )
+
     with Pool() as pool:
 
-        results_isobars = pool.imap_unordered(_solubility_multicore, samples_isobars)
+        results_isobars = pool.imap_unordered(multicore_function, samples_isobars)
 
         for (xfl, P_bar), volatiles in results_isobars:
             isobar_data.loc[xfl, P_bar] = volatiles
@@ -83,11 +90,14 @@ def CO2H2O_isobar_data(
     return isobar_data, isopleth_data
 
 
-def _solubility_multicore(sample):
+def _solubility_multicore(sample, model: str, species="mixed"):
 
     oxide_wtPercents, P_bar, temperature, xfl, species = sample
 
-    volatiles = vs.calculate_solubility(
+    model_cls = getattr(volatile_solubility_models, model)
+    solubility_model = getattr(model_cls, species)
+
+    volatiles = solubility_model.calculate_solubility(
         oxide_wtPercents, P_bar=P_bar, T_K=temperature, x_fluid=xfl, species=species
     )
 

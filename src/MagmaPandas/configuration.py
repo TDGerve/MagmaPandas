@@ -2,47 +2,20 @@
 Global configuration of MagmaPandas settings.
 """
 
+from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
+from MagmaPandas.Kd.Ol_melt.FeMg.Kd_models import Kd_olmelt_FeMg_models_dict
 from MagmaPandas.parse_io.validate import _check_setter
+from MagmaPandas.thermometers.melt import melt_thermometers_dict
+from MagmaPandas.volatile_solubility.volatile_solubility_models import (
+    volatile_solubility_models_dict,
+)
 
-Fe3Fe2_models = [
-    "borisov",
-    "kressCarmichael",
-    "jayasuriya",
-    "putirka2016_6b",
-    "putirka2016_6c",
-    "Deng2020",
-    "Oneill2006",
-    "Oneill2018",
-    "Armstrong2019",
-    "Zhang2017",
-    "Hirschmann2022",
-    "Sun2024",
-]
-Kd_ol_FeMg_models = [
-    "toplis",
-    "blundy",
-    "putirka2016_8a",
-    "putirka2016_8b",
-    "putirka2016_8c",
-    "putirka2016_8d",
-    "sun2020",
-]
+Fe3Fe2_models = list(Fe3Fe2_models_dict.keys())
+Kd_ol_FeMg_models = list(Kd_olmelt_FeMg_models_dict.keys())
 fO2_buffers = ["QFM", "IW"]
-
-melt_thermometers = [
-    "putirka2008_13",
-    "putirka2008_14",
-    "putirka2008_15",
-    "putirka2008_16",
-    "sun2020",
-    "shea2022",
-    "sugawara2000_3",
-    "sugawara2000_6a",
-]
-volatile_solubility_models = ["IaconoMarziano", "Allison2022", "Shiskina"]
-
+melt_thermometers = list(melt_thermometers_dict.keys())
+volatile_solubility_models = list(volatile_solubility_models_dict.keys())
 volatile_species_options = ["co2", "h2o", "mixed"]
-
 
 _variables = {
     "fO2 buffers": fO2_buffers,

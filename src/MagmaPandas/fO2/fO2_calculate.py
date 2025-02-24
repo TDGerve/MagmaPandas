@@ -5,10 +5,7 @@ Module with models for calculating melt |fO2| at various buffers.
 import numpy as np
 
 from MagmaPandas.configuration import configuration
-from MagmaPandas.fO2.IW import fO2_IW
-from MagmaPandas.fO2.QFM import fO2_QFM
-
-from . import NNO, RuRuO2
+from MagmaPandas.fO2 import IW, QFM
 
 
 def calculate_fO2(T_K, P_bar, **kwargs):
@@ -16,9 +13,9 @@ def calculate_fO2(T_K, P_bar, **kwargs):
     fO2_buffer = kwargs.get("fO2_buffer", configuration.fO2buffer)
     dfO2 = kwargs.get("dfO2", configuration.dfO2)
 
-    fO2_model = globals()[f"fO2_{fO2_buffer}"]
+    fO2_model = globals()[fO2_buffer]
 
-    fO2 = fO2_model(logshift=dfO2, T_K=T_K, P_bar=P_bar)
+    fO2 = fO2_model.calculate_fO2(logshift=dfO2, T_K=T_K, P_bar=P_bar)
 
     try:
         fO2 = fO2.astype(np.float32)
