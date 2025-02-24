@@ -9,16 +9,15 @@ import elementMass as e
 import numpy as np
 import pandas as pd
 
-from MagmaPandas.MagmaFrames.protocols import Magma
+from MagmaPandas.magma_protocol import Magma
 from MagmaPandas.parse_io import check_components
 from MagmaPandas.thermometers.data_parsing import (
     _anhydrous_composition,
     _check_calibration_range,
     _check_temperature,
     _get_elements,
-    _remove_elements,
-    moles_per_oxygen,
 )
+from MagmaPandas.tools.modify_compositions import _remove_elements, moles_per_oxygen
 
 calibration_range = {
     "putirka2008_14": [
@@ -534,4 +533,6 @@ def sugawara2000_6a(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwarg
 _module = sys.modules[__name__]
 _funcs = inspect.getmembers(_module, inspect.isfunction)
 # collect all melt thermometers in a dictionary
-melt_thermometers = {f[0]: f[1] for f in _funcs if f[1].__module__ == _module.__name__}
+melt_thermometers_dict = {
+    f[0]: f[1] for f in _funcs if f[1].__module__ == _module.__name__
+}

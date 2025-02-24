@@ -8,7 +8,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-from MagmaPandas.MagmaFrames.protocols import Magma
+from MagmaPandas.magma_protocol import Magma
 from MagmaPandas.parse_io import check_components
 from MagmaPandas.thermometers.data_parsing import _anhydrous_composition, _get_elements
 

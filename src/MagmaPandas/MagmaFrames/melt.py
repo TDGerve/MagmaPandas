@@ -6,15 +6,17 @@ import pandas as pd
 from alive_progress import alive_bar
 from typing_extensions import Self
 
-from MagmaPandas import volatile_solubility as vs
 from MagmaPandas.configuration import configuration
-from MagmaPandas.enums import Datatype, Unit
 from MagmaPandas.Fe_redox.Fe3Fe2_calculate import calculate_Fe3Fe2
-from MagmaPandas.Kd.Ol_melt.Kd_olmelt_FeMg_models import Kd_olmelt_FeMg_models_dict
+from MagmaPandas.Kd.Ol_melt.FeMg.Kd_models import Kd_olmelt_FeMg_models_dict
 from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
 from MagmaPandas.parse_io.validate import _check_argument, _match_index
 from MagmaPandas.rheology import calculate_density, calculate_viscosity
-from MagmaPandas.thermometers import melt_thermometers
+from MagmaPandas.thermometers.melt import melt_thermometers_dict
+from MagmaPandas.volatile_solubility.calculate_volatiles import (
+    calculate_saturation,
+    get_solubility_model,
+)
 
 
 class Melt(MagmaFrame):
@@ -53,7 +55,7 @@ class Melt(MagmaFrame):
         temperatures : pd.Series
             Liquidus temperatures in Kelvin
         """
-        thermometer = melt_thermometers[configuration.melt_thermometer]
+        thermometer = melt_thermometers_dict[configuration.melt_thermometer]
 
         return thermometer(self.wt_pc(), P_bar=P_bar, **kwargs)
 
@@ -398,9 +400,9 @@ class Melt(MagmaFrame):
         """
 
         name, temperature, model, kwargs = sample
-        solubility_model = vs.get_solubility_model(*model)
+        solubility_model = get_solubility_model(*model)
         try:
-            result = vs.calculate_saturation(
+            result = calculate_saturation(
                 self.loc[name],
                 T_K=temperature,
                 solubility_model=solubility_model,

@@ -10,7 +10,7 @@ from scipy.constants import R
 from scipy.optimize import root, root_scalar
 
 from MagmaPandas.EOSs.CO2_H2O import hollowayBlank
-from MagmaPandas.MagmaSeries.MagmaSeries_baseclass import MagmaSeries
+from MagmaPandas.magma_protocol import Magma
 from MagmaPandas.parse_io.validate import _check_argument, _check_setter
 from MagmaPandas.volatile_solubility.solubility_baseclass import Solubility_model
 
@@ -139,9 +139,7 @@ fugacity_model = hollowayBlank.fugacity
 
 class h2o(Solubility_model):
     @staticmethod
-    def calculate_saturation(
-        oxide_wtPercents: MagmaSeries, T_K: float, **kwargs
-    ) -> float:
+    def calculate_saturation(oxide_wtPercents: Magma, T_K: float, **kwargs) -> float:
         """
         Calculate melt |H2O| saturation pressure according to equation 8.
 
@@ -216,7 +214,7 @@ class h2o(Solubility_model):
 class co2(Solubility_model):
     @staticmethod
     def calculate_saturation(
-        oxide_wtPercents: MagmaSeries,
+        oxide_wtPercents: Magma,
         T_K: float,
         **kwargs,
     ) -> float:
@@ -278,7 +276,7 @@ class co2(Solubility_model):
 
     @staticmethod
     def calculate_solubility(
-        oxide_wtPercents: MagmaSeries,
+        oxide_wtPercents: Magma,
         P_bar: float,
         T_K: float,
         x_fluid: float = 0.0,
@@ -414,7 +412,7 @@ class mixed(Solubility_model):
     @staticmethod
     @_check_argument("output", [None, "PXfl", "P", "Xfl"])
     def calculate_saturation(
-        oxide_wtPercents: MagmaSeries,
+        oxide_wtPercents: Magma,
         T_K: float | np.ndarray,
         output: str = "P",
         **kwargs,
@@ -471,7 +469,7 @@ class mixed(Solubility_model):
     @staticmethod
     @_check_argument("output", [None, "both", "CO2", "H2O"])
     def calculate_solubility(
-        oxide_wtPercents: MagmaSeries,
+        oxide_wtPercents: Magma,
         P_bar: float,
         T_K: float,
         x_fluid: float,
@@ -512,7 +510,7 @@ class mixed(Solubility_model):
         return return_dict[output]
 
     @staticmethod
-    def _saturation_rootFunction(P_x_fluid: List, oxide_wtPercents: MagmaSeries, T_K):
+    def _saturation_rootFunction(P_x_fluid: List, oxide_wtPercents: Magma, T_K):
         P_bar, x_fluid = P_x_fluid
         # Keep x_fluid and P_bar within bounds
         x_fluid = np.clip(x_fluid, 0.0, 1.0)

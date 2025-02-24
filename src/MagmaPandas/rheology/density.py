@@ -1,7 +1,7 @@
 import elementMass as e
 import pandas as pd
 
-from MagmaPandas.MagmaFrames.protocols import Magma
+from MagmaPandas.magma_protocol import Magma
 
 """
 based on Iacovino and Till (2019)\ [23]_

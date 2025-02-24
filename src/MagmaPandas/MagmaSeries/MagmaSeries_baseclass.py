@@ -10,7 +10,7 @@ from MagmaPandas.configuration import configuration
 from MagmaPandas.Elements import element_weights, oxide_compositions
 from MagmaPandas.enums import Datatype, Unit
 from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
-from MagmaPandas.thermometers import melt_thermometers
+from MagmaPandas.thermometers.melt import melt_thermometers_dict
 
 
 def _MagmaSeries_expanddim(data=None, *args, **kwargs):
@@ -423,7 +423,7 @@ class MagmaSeries(pd.Series):
             Liquidus temperature in Kelvin
         """
 
-        thermometer = melt_thermometers[configuration.melt_thermometer]
+        thermometer = melt_thermometers_dict[configuration.melt_thermometer]
 
         return thermometer(melt=self.wt_pc(), *args, **kwargs)
 

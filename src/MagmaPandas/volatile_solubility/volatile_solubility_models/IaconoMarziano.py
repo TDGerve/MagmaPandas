@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import root, root_scalar
 
-from MagmaPandas.MagmaSeries.MagmaSeries_baseclass import MagmaSeries
+from MagmaPandas.magma_protocol import Magma
 from MagmaPandas.parse_io.validate import _check_argument, _check_setter
 from MagmaPandas.volatile_solubility.solubility_baseclass import Solubility_model
 
@@ -160,7 +160,7 @@ CO2_coefficients = {
 class h2o(Solubility_model):
     @staticmethod
     def calculate_solubility(
-        oxide_wtPercents: MagmaSeries,
+        oxide_wtPercents: Magma,
         P_bar: float,
         T_K: float,
         x_fluid: float = 1.0,
@@ -209,9 +209,7 @@ class h2o(Solubility_model):
             ).root
 
     @staticmethod
-    def calculate_saturation(
-        oxide_wtPercents: MagmaSeries, T_K: float, **kwargs
-    ) -> float:
+    def calculate_saturation(oxide_wtPercents: Magma, T_K: float, **kwargs) -> float:
         """
         Calculate melt |H2O| saturation pressure according to equation 13.
 
@@ -252,7 +250,7 @@ class h2o(Solubility_model):
         return P_saturation
 
     @staticmethod
-    def _solubility(oxide_wtPercents: MagmaSeries, x_fluid, P_bar, T_K):
+    def _solubility(oxide_wtPercents: Magma, x_fluid, P_bar, T_K):
         """
         Equation 13 from Iacono-Marziano et al. (2012)
         """
@@ -271,9 +269,7 @@ class h2o(Solubility_model):
         return H2O
 
     @staticmethod
-    def _solubility_rootFunction(
-        H2O, oxide_wtPercents: MagmaSeries, x_fluid, P_bar, T_K
-    ):
+    def _solubility_rootFunction(H2O, oxide_wtPercents: Magma, x_fluid, P_bar, T_K):
         """
         Compare input and output dissolved H2O
         """
@@ -284,7 +280,7 @@ class h2o(Solubility_model):
         return H2O - h2o._solubility(composition, x_fluid, P_bar, T_K)
 
     @staticmethod
-    def _saturation_rootFunction(P_bar, oxide_wtPercents: MagmaSeries, T_K, kwargs):
+    def _saturation_rootFunction(P_bar, oxide_wtPercents: Magma, T_K, kwargs):
         """ """
         composition = oxide_wtPercents.copy()
         #
@@ -300,7 +296,7 @@ class h2o(Solubility_model):
 class co2(Solubility_model):
     @staticmethod
     def calculate_solubility(
-        oxide_wtPercents: MagmaSeries,
+        oxide_wtPercents: Magma,
         P_bar: float | np.ndarray,
         T_K: float | np.ndarray,
         x_fluid: float = 0.0,
@@ -379,7 +375,7 @@ class co2(Solubility_model):
 
     @staticmethod
     def calculate_saturation(
-        oxide_wtPercents: MagmaSeries,
+        oxide_wtPercents: Magma,
         T_K: float,
         **kwargs,
     ) -> float:
@@ -422,7 +418,7 @@ class co2(Solubility_model):
         return P_saturation
 
     @staticmethod
-    def _saturation_rootFunction(P_bar, oxide_wtPercents: MagmaSeries, T_K, kwargs):
+    def _saturation_rootFunction(P_bar, oxide_wtPercents: Magma, T_K, kwargs):
         """
         Compare calculated and sample CO2
         """
@@ -439,7 +435,7 @@ class mixed(Solubility_model):
     @staticmethod
     @_check_argument("output", [None, "PXfl", "P", "Xfl"])
     def calculate_saturation(
-        oxide_wtPercents: MagmaSeries, T_K: float, output: str = "P", **kwargs
+        oxide_wtPercents: Magma, T_K: float, output: str = "P", **kwargs
     ) -> float | Tuple[float, float]:
         """
         Calculate volatile saturation pressure for systems with mixed |CO2|-|H2O| fluids.
@@ -492,7 +488,7 @@ class mixed(Solubility_model):
     @staticmethod
     @_check_argument("output", [None, "both", "CO2", "H2O"])
     def calculate_solubility(
-        oxide_wtPercents: MagmaSeries,
+        oxide_wtPercents: Magma,
         P_bar: float,
         T_K: float,
         x_fluid: float,
@@ -534,7 +530,7 @@ class mixed(Solubility_model):
         return return_dict[output]
 
     @staticmethod
-    def _saturation_rootFunction(P_x_fluid, oxide_wtPercents: MagmaSeries, T_K):
+    def _saturation_rootFunction(P_x_fluid, oxide_wtPercents: Magma, T_K):
         """
         compare calculated with sample concentrations
         """
