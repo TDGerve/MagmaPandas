@@ -13,7 +13,7 @@ from MagmaPandas.Fe_redox.Fe3Fe2_errors import (
     error_params_1bar,
     error_params_high_pressure,
 )
-from MagmaPandas.parse_io import check_components, make_equal_length, make_iterable
+from MagmaPandas.parse_io import check_components, make_equal_length
 
 
 def _is_Fe3Fe2_model(cls):

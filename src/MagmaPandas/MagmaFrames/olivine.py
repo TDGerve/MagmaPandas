@@ -4,7 +4,6 @@ from typing_extensions import Self
 from MagmaPandas.configuration import configuration
 from MagmaPandas.enums import Unit
 from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
-from MagmaPandas.Kd.Ol_melt import Kd_olmelt_FeMg_models_dict
 from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
 from MagmaPandas.MagmaFrames.melt import Melt
 from MagmaPandas.MagmaSeries import MagmaSeries

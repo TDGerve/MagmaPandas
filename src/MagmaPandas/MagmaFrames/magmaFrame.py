@@ -11,11 +11,11 @@ from typing import Dict, List
 import elementMass as e
 import numpy as np
 import pandas as pd
+from typing_extensions import Self
+
 from MagmaPandas.Elements import element_weights, oxide_compositions
 from MagmaPandas.enums import Datatype, Unit
-from MagmaPandas.MagmaFrames.protocols import Magma
 from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
-from typing_extensions import Self
 
 
 class MagmaFrame(pd.DataFrame):

@@ -1,6 +1,6 @@
-from MagmaPandas import fO2 as f
 from MagmaPandas.configuration import configuration
 from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
+from MagmaPandas.fO2 import fO2_calculate as f
 
 
 def calculate_Fe3Fe2(mol_fractions, T_K, P_bar, fO2=None, **kwargs):

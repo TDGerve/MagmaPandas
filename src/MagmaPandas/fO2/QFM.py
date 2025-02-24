@@ -10,7 +10,7 @@ from MagmaPandas.EOSs.tools import landau_P_dependent, phase_transition
 from MagmaPandas.parse_io import repeat_vars
 
 
-def VdP_QFM(T_K, P_bar):
+def _VdP_QFM(T_K, P_bar):
     """
     Solve Tait equations of state for VdP of quartz, magnetite and fayalite
     at temperature, T_K and P_bar, ignoring phase transitions.
@@ -30,7 +30,7 @@ def VdP_QFM(T_K, P_bar):
     return VdP_qtz, VdP_mt, VdP_fay
 
 
-def VdP_QFM_phaseTransitions(T_K, P_bar):
+def _VdP_QFM_phaseTransitions(T_K, P_bar):
     """
     Solve Tait equations of state for VdP for quartz, magnetite and fayalite
     at temperature, T_K and P_bar, taking into account phase transitions
@@ -99,7 +99,7 @@ def VdP_QFM_phaseTransitions(T_K, P_bar):
     return VdP_SiO2, VdP_mt, VdP_Fe2SiO4
 
 
-def muO2_QFM_P(T_K, P_bar):
+def _muO2_QFM_P(T_K, P_bar):
     """
     calculate chemical potential of oxygen at QFM and pressure P with equations of state
     """
@@ -109,7 +109,7 @@ def muO2_QFM_P(T_K, P_bar):
 
     # If P and T are both single values
     if P_bar_is_int and T_K_is_int:
-        VdP_quartz, VdP_magnetite, VdP_fayalite = VdP_QFM_phaseTransitions(T_K, P_bar)
+        VdP_quartz, VdP_magnetite, VdP_fayalite = _VdP_QFM_phaseTransitions(T_K, P_bar)
         muO2 = 1e3 * (3 * VdP_quartz + 2 * VdP_magnetite - 3 * VdP_fayalite)
         return muO2
 
@@ -119,7 +119,7 @@ def muO2_QFM_P(T_K, P_bar):
     muO2 = np.array([])
 
     for temperature, pressure in zip(T_K, P_bar):
-        VdP_quartz, VdP_magnetite, VdP_fayalite = VdP_QFM_phaseTransitions(
+        VdP_quartz, VdP_magnetite, VdP_fayalite = _VdP_QFM_phaseTransitions(
             temperature, pressure
         )
         # kiloJoule to Joule
@@ -130,7 +130,7 @@ def muO2_QFM_P(T_K, P_bar):
     return muO2
 
 
-def muO2_QFM_1bar(T_K, warning=False):
+def _muO2_QFM_1bar(T_K, warning=False):
     """
     calculate chemical potential of oxygen at QFM a 1 bar. Equation from O'Neill 1987
 
@@ -162,7 +162,7 @@ def muO2_QFM_1bar(T_K, warning=False):
     return muO2
 
 
-def fO2_QFM_1bar(T_K, logshift=0):
+def _fO2_QFM_1bar(T_K, logshift=0):
     """
     calculate fO2 at QFM + logshift a 1 bar. Equation from O'Neill 1987
 
@@ -177,14 +177,14 @@ def fO2_QFM_1bar(T_K, logshift=0):
     -------
     fO2
     """
-    mu_O2 = muO2_QFM_1bar(T_K)
+    mu_O2 = _muO2_QFM_1bar(T_K)
 
     offset = 10**logshift
 
     return np.exp(mu_O2 / (R * T_K)) * offset
 
 
-def fO2_QFM(
+def calculate_fO2(
     logshift: int | float, T_K: float | np.ndarray, P_bar: float | np.ndarray
 ) -> float | np.ndarray:
     """
@@ -215,12 +215,12 @@ def fO2_QFM(
 
     # Chemical potential of oxygen
     # 1 bar contribution from O'Neill
-    muO2_1bar_Oneill = muO2_QFM_1bar(T_K)
+    muO2_1bar_Oneill = _muO2_QFM_1bar(T_K)
     # Pressue contribution from equations of state
-    muO2_pressure_eos = muO2_QFM_P(T_K, P_bar)
+    muO2_pressure_eos = _muO2_QFM_P(T_K, P_bar)
     # Remove any 1 bar contribution from the equation of state formulation,
     # since the O'Neill emperical formulation is used for this
-    VdP_quartz, VdP_magnetite, VdP_fayalite = VdP_QFM(T_K, 1)
+    VdP_quartz, VdP_magnetite, VdP_fayalite = _VdP_QFM(T_K, 1)
     muO2_1bar_eos = 1e3 * (3 * VdP_quartz + 2 * VdP_magnetite - 3 * VdP_fayalite)
     muO2_pressure = muO2_pressure_eos - muO2_1bar_eos
     # Total chemical potential

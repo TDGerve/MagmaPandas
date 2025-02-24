@@ -8,7 +8,7 @@ from scipy.optimize import brentq
 from MagmaPandas.EOSs.vinet import Vinet_VdP
 from MagmaPandas.parse_io import make_iterable, repeat_vars
 
-Fe_polymorphs = [
+_Fe_polymorphs = [
     "Fe_fcc",
     "Fe_bcc-alpha",
     "Fe_HCP",
@@ -24,10 +24,10 @@ Values from Hidayat et al. 2015 for FeO and FeO1.5 and Dinsdale (1991) for O2
 _IW_G0_params_file = (
     files("MagmaPandas.fO2.data").joinpath("IW_G0_params.csv").open("r")
 )
-gibbs0_parameters = pd.read_csv(_IW_G0_params_file, index_col=["phase", "temperature"])
+_gibbs0_parameters = pd.read_csv(_IW_G0_params_file, index_col=["phase", "temperature"])
 
 # Below 1000 Kelvin for O2:
-O2_low_temperature = pd.Series(
+_O2_low_temperature = pd.Series(
     {
         "a": -6961.7445,  # constant
         "b": -51.0057,  # bT_K
@@ -66,7 +66,7 @@ kappa
     dimensionless Anderson-Grüneisen parameter. Set to 1.4 following Komabayashi (2014) and Wood (1993)
 """
 # TODO Move these parameters to EOSs.parameters? Make the parameter names uniform, e.g. Kprime_0 vs dKdP
-eos_parameters = pd.DataFrame(
+_eos_parameters = pd.DataFrame(
     {
         "V_0": [12.256, 16.372, 6.82, 7.092, 6.753, 7.092, 6.88],  # cm3/mol
         "K_0": [149, 149, 163.4, 163.4, 163.4, 163.4, 148],  # GPa
@@ -95,10 +95,10 @@ RT ln gamma(X2) =((1-X2)**2*(q00+q10-2*q10*X2))     eq. S5b
 
 XFeO=X1; XFeO1.5=X2
 """
-mixing_parameters = pd.Series({"q00": -5.94e4, "q10": 4.27e4})
+_mixing_parameters = pd.Series({"q00": -5.94e4, "q10": 4.27e4})
 
 
-def Gibbs0_polynomial(T_K: float | np.ndarray, a, b, c, d, e, f, g, h, i, **kwargs):
+def _Gibbs0_polynomial(T_K: float | np.ndarray, a, b, c, d, e, f, g, h, i, **kwargs):
 
     return (
         a
@@ -113,18 +113,18 @@ def Gibbs0_polynomial(T_K: float | np.ndarray, a, b, c, d, e, f, g, h, i, **kwar
     )
 
 
-def Gibbs0(T_K: float | np.ndarray, params: pd.Series | pd.DataFrame):
+def _Gibbs0(T_K: float | np.ndarray, params: pd.Series | pd.DataFrame):
     """
     calculate Gibbs free energy at 1 bar
     """
     if isinstance(params, pd.DataFrame):
-        func = lambda params: Gibbs0_polynomial(T_K=T_K, **params)
+        func = lambda params: _Gibbs0_polynomial(T_K=T_K, **params)
         return params.apply(func, axis=1)
 
-    return Gibbs0_polynomial(T_K=T_K, **params)
+    return _Gibbs0_polynomial(T_K=T_K, **params)
 
 
-def Gibbs_Fe_magnetic(T_K):
+def _Gibbs_Fe_magnetic(T_K):
     """
     Adjust bcc-alpha for magnetic contribution.  Magnetic contribution for fcc
     is << 1 J at temperatures of interest and is ignored
@@ -152,7 +152,7 @@ def Gibbs_Fe_magnetic(T_K):
     return gibbs_magnetic * (R * T_K * np.log(beta + 1))
 
 
-def Gibbs_Fe_polymorphs(P_bar, T_K):
+def _Gibbs_Fe_polymorphs(P_bar, T_K):
     """
     Calculate Gibbs free energy for Fe polymorphs
 
@@ -162,23 +162,23 @@ def Gibbs_Fe_polymorphs(P_bar, T_K):
 
     P_GPa = P_bar / 1e4
     temperature_range = "high" if T_K > 1811 else "low"
-    gibbs0_params = gibbs0_parameters.loc[(Fe_polymorphs, temperature_range), :]
-    gibbs0 = pd.Series(index=Fe_polymorphs)
-    gibbs_pressure = pd.Series(index=Fe_polymorphs)
+    gibbs0_params = _gibbs0_parameters.loc[(_Fe_polymorphs, temperature_range), :]
+    gibbs0 = pd.Series(index=_Fe_polymorphs)
+    gibbs_pressure = pd.Series(index=_Fe_polymorphs)
 
     for ((name, _), G0), (_, eos_params) in zip(
-        gibbs0_params.iterrows(), eos_parameters.loc[Fe_polymorphs, :].iterrows()
+        gibbs0_params.iterrows(), _eos_parameters.loc[_Fe_polymorphs, :].iterrows()
     ):
-        gibbs0.loc[name] = Gibbs0(T_K=T_K, params=G0)
+        gibbs0.loc[name] = _Gibbs0(T_K=T_K, params=G0)
         gibbs_pressure.loc[name] = Vinet_VdP(P_GPa=P_GPa, T_K=T_K, **eos_params)
 
     gibbs_total = gibbs0.add(gibbs_pressure)
-    gibbs_total["Fe_bcc-alpha"] += Gibbs_Fe_magnetic(T_K=T_K)
+    gibbs_total["Fe_bcc-alpha"] += _Gibbs_Fe_magnetic(T_K=T_K)
 
     return gibbs_total
 
 
-def Gibbs_wustite_O2(P_bar, T_K):
+def _Gibbs_wustite_O2(P_bar, T_K):
     """
     Calculate gibbs free enery for FeO, FeO1.5 and O2
 
@@ -190,16 +190,16 @@ def Gibbs_wustite_O2(P_bar, T_K):
     gibbs0 = pd.Series(index=["FeO", "FeO1.5", "O2"])
     gibbs_pressure = pd.Series(0.0, index=["FeO", "FeO1.5"])
 
-    gibbs0_params = gibbs0_parameters.loc[(gibbs0.index, temperature_range), :].copy()
+    gibbs0_params = _gibbs0_parameters.loc[(gibbs0.index, temperature_range), :].copy()
     gibbs0_params.loc["O2"] = (
-        O2_low_temperature.values
+        _O2_low_temperature.values
         if (T_K < 1000)
         else gibbs0_params.loc[("O2", temperature_range), :].values
     )
 
     for (name, _), G0 in gibbs0_params.iterrows():
-        gibbs0.loc[name] = Gibbs0(T_K=T_K, params=G0)
-    for name, eos_params in eos_parameters.loc[gibbs_pressure.index, :].iterrows():
+        gibbs0.loc[name] = _Gibbs0(T_K=T_K, params=G0)
+    for name, eos_params in _eos_parameters.loc[gibbs_pressure.index, :].iterrows():
         gibbs_pressure.loc[name] = Vinet_VdP(P_GPa=P_GPa, T_K=T_K, **eos_params)
 
     gibbs_total = gibbs0.add(gibbs_pressure, fill_value=0.0)
@@ -207,16 +207,16 @@ def Gibbs_wustite_O2(P_bar, T_K):
     return gibbs_total
 
 
-def Gibbs_IW(P_bar, T_K, Fe_phase=False, suppress_Fe_liquid=True):
+def _Gibbs_IW(P_bar, T_K, Fe_phase=False, suppress_Fe_liquid=True):
     """
     Calculate Gibbs free enery for FeO, FeO1.5, O2 and Fe. For Fe, the polymorph with lowest Gibbs free energy is used.
 
     translated from Hirschmann et al. (2021) matlab script
     """
 
-    gibbs_total = Gibbs_wustite_O2(P_bar=P_bar, T_K=T_K)
+    gibbs_total = _Gibbs_wustite_O2(P_bar=P_bar, T_K=T_K)
 
-    gibbs_Fe_all = Gibbs_Fe_polymorphs(P_bar=P_bar, T_K=T_K)
+    gibbs_Fe_all = _Gibbs_Fe_polymorphs(P_bar=P_bar, T_K=T_K)
     addendum = ""
     if suppress_Fe_liquid:
         addendum = (
@@ -234,7 +234,7 @@ def Gibbs_IW(P_bar, T_K, Fe_phase=False, suppress_Fe_liquid=True):
     return output
 
 
-def deltaGibbs_Fe_wustite(Gibbs: pd.Series):
+def _deltaGibbs_Fe_wustite(Gibbs: pd.Series):
     """
     Calculate delta Gibbs of the reaction 2 FeO1.5 +  Fe = 3 FeO
 
@@ -247,7 +247,7 @@ def deltaGibbs_Fe_wustite(Gibbs: pd.Series):
     return (3 * Gibbs["FeO"]) - (2 * Gibbs["FeO1.5"]) - Gibbs["Fe"]
 
 
-def deltaGibbs_FeOFeO1p5(Gibbs: pd.Series):
+def _deltaGibbs_FeOFeO1p5(Gibbs: pd.Series):
     """
     Change in Gibbs free energy of the reaction
 
@@ -257,7 +257,7 @@ def deltaGibbs_FeOFeO1p5(Gibbs: pd.Series):
     return Gibbs["FeO1.5"] - Gibbs["FeO"] - (Gibbs["O2"] / 4)
 
 
-def calculate_XFeO1p5(T_K, deltaGibbs_Fe_wustite, q00, q10, maxiter=300):
+def _calculate_XFeO1p5(T_K, deltaGibbs_Fe_wustite, q00, q10, maxiter=300):
     """
     Calculate equilibrium mol fraction FeO1.5 in the reaction
 
@@ -364,23 +364,23 @@ def _gamma_FeO1p5(X_FeO1p5, q00, q10):
 
 
 @np.vectorize(excluded=["full_output", "suppress_Fe_liquid"])
-def muO2_IW(T_K, P_bar, full_output=False, suppress_Fe_liquid=False):
+def _muO2_IW(T_K, P_bar, full_output=False, suppress_Fe_liquid=False):
     """
     calculate chemical potential of oxygen at IW and pressure P with equations of state
 
     translated from Hirschmann et al. (2021) matlab script
     """
 
-    q00 = mixing_parameters["q00"]
-    q10 = mixing_parameters["q10"]
+    q00 = _mixing_parameters["q00"]
+    q10 = _mixing_parameters["q10"]
 
-    Gibbs, Fe_phase = Gibbs_IW(
+    Gibbs, Fe_phase = _Gibbs_IW(
         P_bar=P_bar, T_K=T_K, Fe_phase=True, suppress_Fe_liquid=suppress_Fe_liquid
     )
-    deltaG_FeO_FeO1p5 = deltaGibbs_FeOFeO1p5(Gibbs=Gibbs)
-    deltaG_Fe_wustite = deltaGibbs_Fe_wustite(Gibbs=Gibbs)
+    deltaG_FeO_FeO1p5 = _deltaGibbs_FeOFeO1p5(Gibbs=Gibbs)
+    deltaG_Fe_wustite = _deltaGibbs_Fe_wustite(Gibbs=Gibbs)
 
-    X_FeO1p5 = calculate_XFeO1p5(
+    X_FeO1p5 = _calculate_XFeO1p5(
         T_K=T_K,
         deltaGibbs_Fe_wustite=deltaG_Fe_wustite,
         q00=q00,
@@ -402,7 +402,9 @@ def muO2_IW(T_K, P_bar, full_output=False, suppress_Fe_liquid=False):
     return output
 
 
-def fO2_IW(logshift: float, T_K, P_bar, full_output=False, suppress_Fe_liquid=False):
+def calculate_fO2(
+    logshift: float, T_K, P_bar, full_output=False, suppress_Fe_liquid=False
+):
     """
     Calculate oxygen fugacity at the Iron-Wustite buffer according to Hirschmann (2021)\ [18]_
 
@@ -434,7 +436,7 @@ def fO2_IW(logshift: float, T_K, P_bar, full_output=False, suppress_Fe_liquid=Fa
 
     T_K, P_bar = repeat_vars(T_K, P_bar)
 
-    mu_O2, Fe_phase, y = muO2_IW(
+    mu_O2, Fe_phase, y = _muO2_IW(
         T_K=T_K, P_bar=P_bar, full_output=True, suppress_Fe_liquid=suppress_Fe_liquid
     )
 
