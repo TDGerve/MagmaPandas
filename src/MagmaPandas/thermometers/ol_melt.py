@@ -10,7 +10,7 @@ import pandas as pd
 
 from MagmaPandas.magma_protocol import Magma
 from MagmaPandas.parse_io import check_components
-from MagmaPandas.thermometers.data_parsing import _anhydrous_composition, _get_elements
+from MagmaPandas.tools.modify_compositions import _anhydrous_composition, _get_elements
 
 errors = pd.Series({"putirka2007_4_dry": 45, "putirka2007_4_wet": 29})
 

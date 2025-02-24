@@ -11,13 +11,14 @@ import pandas as pd
 
 from MagmaPandas.magma_protocol import Magma
 from MagmaPandas.parse_io import check_components
-from MagmaPandas.thermometers.data_parsing import (
+from MagmaPandas.thermometers.validate_temperatures import _check_temperature
+from MagmaPandas.tools.calibration_range import _check_calibration_range
+from MagmaPandas.tools.modify_compositions import (
     _anhydrous_composition,
-    _check_calibration_range,
-    _check_temperature,
     _get_elements,
+    _remove_elements,
+    moles_per_oxygen,
 )
-from MagmaPandas.tools.modify_compositions import _remove_elements, moles_per_oxygen
 
 calibration_range = {
     "putirka2008_14": [
