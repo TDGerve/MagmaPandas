@@ -9,9 +9,9 @@ v2.1.0
 The following has been added:
 
 - Magnetite and ilmenite subclasses for MagmaFrames.
-- melt Fe3Fe2 models
-- olivine-melt Fe-Mg Kd models
-- melt-only thermometers
+- more melt Fe3Fe2 models
+- more olivine-melt Fe-Mg Kd models
+- more melt-only thermometers
 - Iron-Wüstite fO2 buffer
 - a melt viscosity model
 
