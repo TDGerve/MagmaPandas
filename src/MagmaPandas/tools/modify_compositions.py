@@ -5,6 +5,17 @@ import elementMass as e
 import pandas as pd
 
 
+def _get_elements(composition):
+
+    import MagmaPandas as mp
+
+    if isinstance(composition, mp.MagmaFrame):
+        return composition.columns
+
+    if isinstance(composition, mp.MagmaSeries):
+        return composition.index
+
+
 def _remove_elements(composition, drop: List[str]):
 
     composition_new = composition.copy()
@@ -52,3 +63,15 @@ def moles_per_oxygen(moles):
     )
 
     return composition_new.rename(names_new, axis=axis)
+
+
+def _anhydrous_composition(composition):
+
+    composition_H2O = composition.copy()
+
+    try:
+        composition_H2O = composition_H2O.drop("H2O")
+    except KeyError:
+        composition_H2O = composition_H2O.drop(columns=["H2O"])
+
+    return composition_H2O.recalculate().normalise()
