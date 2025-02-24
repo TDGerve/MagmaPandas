@@ -6,16 +6,14 @@ import numpy as np
 import pandas as pd
 from scipy.constants import R  # J*K-1*mol-1
 
-from MagmaPandas import configuration
 from MagmaPandas.Fe_redox import Fe3Fe2_models
-from MagmaPandas.fO2 import calculate_fO2
 from MagmaPandas.Kd.Kd_baseclass import Kd_model
-from MagmaPandas.Kd.Ol_melt.Kd_olmelt_FeMg_iterate import (
+from MagmaPandas.Kd.Ol_melt.FeMg.Kd_iterate import (
     iterate_Kd_scalar,
     iterate_Kd_vectorized,
 )
 from MagmaPandas.parse_io import check_components
-from MagmaPandas.thermometers.data_parsing import _remove_elements, moles_per_oxygen
+from MagmaPandas.tools.modify_compositions import _remove_elements, moles_per_oxygen
 
 
 def _is_Kd_model(cls):
@@ -310,6 +308,7 @@ class blundy(Kd_model):
         melt_mol_fractions: pd.Series | pd.DataFrame,
         T_K: float | pd.Series,
         P_bar: float | pd.Series,
+        fO2: float | int,
         forsterite_initial: float | pd.Series = 0.85,
         *args,
         **kwargs,
@@ -341,9 +340,6 @@ class blundy(Kd_model):
         elif isinstance(melt_mol_fractions, pd.DataFrame):
             Kd_func = iterate_Kd_vectorized
 
-        dfO2 = kwargs.get("dfO2", configuration.dfO2)
-
-        fO2 = calculate_fO2(T_K=T_K, P_bar=P_bar, dfO2=dfO2)
         Fe3Fe2 = Fe3Fe2_models.borisov.calculate_Fe3Fe2(
             melt_mol_fractions=melt_mol_fractions, T_K=T_K, fO2=fO2, P_bar=P_bar
         )

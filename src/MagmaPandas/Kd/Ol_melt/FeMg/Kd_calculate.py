@@ -1,14 +1,16 @@
 import pandas as pd
 
-from MagmaPandas.configuration import configuration
 from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
-from MagmaPandas.fO2 import calculate_fO2
-from MagmaPandas.Kd.Ol_melt.Kd_olmelt_FeMg_models import Kd_olmelt_FeMg_models_dict
-from MagmaPandas.MagmaFrames import MagmaFrame
+from MagmaPandas.fO2.fO2_calculate import calculate_fO2
+from MagmaPandas.Kd.Ol_melt.FeMg.Kd_models import Kd_olmelt_FeMg_models_dict
+from MagmaPandas.magma_protocol import Magma
+
+# configuration needs to be imported last to avoid circular imports
+from MagmaPandas.configuration import configuration  # isort: skip
 
 
 def observed_FeMg_Kd(
-    melt: MagmaFrame,
+    melt: Magma,
     forsterite: pd.Series,
     P_bar,
     T_K: None | float | pd.Series = None,
@@ -89,6 +91,11 @@ def calculate_FeMg_Kd(
 
     Kd_model_name = kwargs.get("Kd_model", configuration.Kd_model)
     Kd_model = Kd_olmelt_FeMg_models_dict[Kd_model_name]
+
+    if Kd_model_name == "blundy":
+        dfO2 = kwargs.get("dfO2", configuration.dfO2)
+        P_bar = kwargs["P_bar"]
+        kwargs["fO2"] = calculate_fO2(T_K=T_K, P_bar=P_bar, dfO2=dfO2)
 
     return Kd_model.calculate_Kd(
         melt_mol_fractions=melt_mol_fractions, T_K=T_K, *args, **kwargs

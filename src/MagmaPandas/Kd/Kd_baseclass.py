@@ -31,6 +31,15 @@ class Kd_model(ABC):
     def _calculate_Kd_(
         cls, melt_mol_fractions, T_K, P_bar, offset_parameters=0.0, *args, **kwargs
     ):
+        """
+        Calculate equilibrium Kd's and offset their values by offset_parameters * model error
+
+
+        Parameters
+        ----------
+        offset_parameters
+            offset values in standard deviations
+        """
 
         Kd = cls.calculate_Kd(
             melt_mol_fractions=melt_mol_fractions, T_K=T_K, P_bar=P_bar, *args, **kwargs
