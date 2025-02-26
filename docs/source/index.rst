@@ -37,7 +37,7 @@ MagmaPandas can be installed with pip by running:
 
 .. code-block:: bash
 
-    pip install git+https://github.com/TDGerve/MagmaPandas.git
+    pip install magmapandas
 
 in a terminal.
 If you want to install from a specific git branch or release, use:
