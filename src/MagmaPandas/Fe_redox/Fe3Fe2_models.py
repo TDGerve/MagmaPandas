@@ -4,9 +4,6 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from scipy.constants import Avogadro, R
-from scipy.optimize import fsolve
-
 from MagmaPandas.EOSs.birch_murnaghan import birch_murnaghan_4th_order
 from MagmaPandas.Fe_redox.Fe3Fe2_baseclass import Fe3Fe2_model
 from MagmaPandas.Fe_redox.Fe3Fe2_errors import (
@@ -14,6 +11,8 @@ from MagmaPandas.Fe_redox.Fe3Fe2_errors import (
     error_params_high_pressure,
 )
 from MagmaPandas.parse_io import check_components, make_equal_length
+from scipy.constants import Avogadro, R
+from scipy.optimize import fsolve
 
 
 def _is_Fe3Fe2_model(cls):
@@ -429,7 +428,7 @@ class Deng2020(Fe3Fe2_model):
         columns=list(zip(*[["12.5molpc"] * 2 + ["25molpc"] * 2, ["Fe2", "Fe3"] * 2])),
         index=["a", "b", "c"],
     )
-    formula_units = {"12.5molpc": 2, "25molpc": 4}
+    formula_units = {"12.5molpc": 2.0, "25molpc": 4.0}
     T_K_ref = 3000
     A3_to_cm3 = 1e-24
 
@@ -576,7 +575,11 @@ class Deng2020(Fe3Fe2_model):
             - P_GPa
         )
 
-        V_sol = fsolve(func, x0=v_init)
+        V_sol = fsolve(func, x0=v_init)[0]
+
+        V_sol / cls.formula_units[
+            melt_Fe
+        ]  # do not delete this line; for some reason that results in divide by 0 warnings from numpy. Don't ask me why :(
 
         return V_sol
 
@@ -599,6 +602,7 @@ class Deng2020(Fe3Fe2_model):
             * Avogadro
             * cls.A3_to_cm3
         )  # cm3/mol
+
         Fe3_volume = (
             cls._calculate_volume(T_K, P_bar, "Fe3", melt_Fe)
             / cls.formula_units[melt_Fe]
