@@ -83,7 +83,7 @@ class Oxide_compositions:
         names_arr = np.array(names)
 
         return [
-            int(np.where(names_total == name)[0])
+            int(np.where(names_total == name)[0][0])
             for name in names_arr[np.isin(names_arr, names_total)]
         ]
 
@@ -135,8 +135,8 @@ class Element_weights:
             self.calculate_weights(difference)
 
         idx = [
-            int(np.where(self.element_names == e)[0])
-            for e in elements[np.isin(elements, self.element_names)]
+            int(np.where(self.element_names == el)[0][0])
+            for el in elements[np.isin(elements, self.element_names)]
         ]
 
         return idx

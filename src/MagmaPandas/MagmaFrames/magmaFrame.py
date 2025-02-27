@@ -364,6 +364,8 @@ class MagmaFrame(pd.DataFrame):
         mineral formulas : MagmaFrame
         """
         # Calculate cation fractions
+        O = float(O)
+
         cations = self.cations()
         cations = cations[cations.elements]
         # Calculate oxygens per cation
@@ -389,7 +391,7 @@ class MagmaFrame(pd.DataFrame):
 
         if df._total:
             totals = df.loc[:, df.elements].sum(axis=1)
-            df.loc[:, "total"] = totals.values
+            df.loc[:, "total"] = totals.astype(df["total"].dtype).values
 
         if not inplace:
             return df
@@ -408,11 +410,11 @@ class MagmaFrame(pd.DataFrame):
         normalised data : MagmaFrame
         """
         if to is not None:
-            norm = to
+            norm = float(to)
         elif self._units == Unit.WT_PERCENT:
-            norm = 100
+            norm = 100.0
         else:
-            norm = 1
+            norm = 1.0
 
         # self = self.recalculate()
         normalised = self[self.elements].copy()
@@ -443,7 +445,7 @@ class MagmaFrame(pd.DataFrame):
         """
 
         random_sample = np.random.normal(self[self.elements], errors)
-        random_sample[random_sample < 0] = 0
+        random_sample[random_sample < 0] = 0.0
 
         df = self.copy()
         df[df.elements] = random_sample
