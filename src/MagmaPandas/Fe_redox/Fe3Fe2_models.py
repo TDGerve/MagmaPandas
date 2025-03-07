@@ -4,6 +4,9 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+from scipy.constants import Avogadro, R
+from scipy.optimize import fsolve
+
 from MagmaPandas.EOSs.birch_murnaghan import birch_murnaghan_4th_order
 from MagmaPandas.Fe_redox.Fe3Fe2_baseclass import Fe3Fe2_model
 from MagmaPandas.Fe_redox.Fe3Fe2_errors import (
@@ -11,8 +14,6 @@ from MagmaPandas.Fe_redox.Fe3Fe2_errors import (
     error_params_high_pressure,
 )
 from MagmaPandas.parse_io import check_components, make_equal_length
-from scipy.constants import Avogadro, R
-from scipy.optimize import fsolve
 
 
 def _is_Fe3Fe2_model(cls):
@@ -903,15 +904,15 @@ class Armstrong2019(Fe3Fe2_model):
             if isinstance(melt_mol_fractions, pd.Series)
             else melt_mol_fractions.copy()
         )  # force to DataFrame
+        # force everything into iterables
+        P_bar, T_K, fO2 = make_equal_length(P_bar, T_K, fO2)
 
         try:
             # extend the moles dataframe is multiple P,T, fO2 conditions are given for a single composition.
-            if len(moles) != (l := len(T_K)):
+            if len(moles) != (l := max([len(param) for param in (T_K, P_bar, fO2)])):
                 moles = moles.loc[moles.index.repeat(l)].reset_index(drop=True)
         except TypeError:
             pass
-        # force everything into iterables
-        P_bar, T_K, fO2 = make_equal_length(P_bar, T_K, fO2)
 
         Fe3Fe2_func = (
             lambda Fe3Fe2_guess, moles, T, P, fO2: cls._calculate_Fe3Fe2(
