@@ -2,6 +2,7 @@ import elementMass as e
 import pandas as pd
 
 from MagmaPandas.magma_protocol import Magma
+from MagmaPandas.parse_io import check_components
 
 """
 based on Iacovino and Till (2019)\ [23]_
@@ -54,22 +55,22 @@ dVdT = pd.Series(
 
 dVdP = pd.Series(
     {
-        "SiO2": -0.000189,
-        "TiO2": -0.000231,
-        "Al2O3": -0.000226,
-        "Fe2O3": -0.000253,
-        "FeO": -0.000045,
-        "MgO": 0.000027,
-        "CaO": 0.000034,
-        "Na2O": -0.00024,
-        "K2O": -0.000675,
-        "H2O": -0.00032,
+        "SiO2": -1.89e-4,
+        "TiO2": -2.31e-4,
+        "Al2O3": -2.26e-4,
+        "Fe2O3": -2.5e-4,
+        "FeO": -4.5e-5,
+        "MgO": 2.7e-5,
+        "CaO": 3.4e-5,
+        "Na2O": -2.4e-4,
+        "K2O": -6.75e-4,
+        "H2O": -3.2e-4,
     }
 )
 
 
 def calculate_density(
-    composition: Magma, T_K: float | pd.Series, P_bar: float | pd.Series
+    melt_wt_percent: Magma, T_K: float | pd.Series, P_bar: float | pd.Series
 ) -> pd.Series:
     """
     Calculate silicate liquid densities according to the model from Iacovino and Till (2019)\ [23]_
@@ -90,51 +91,58 @@ def calculate_density(
     densities : pandas Series
         densities in kg/m\ :sup:`3`
     """
-    mole_fractions = composition.moles()[molar_volumes.index]
+    axis = [0, 1][isinstance(melt_wt_percent, pd.DataFrame)]
 
-    oxide_masses = e.compound_weights(mole_fractions.columns)
+    mol_fractions = check_components(melt_wt_percent, molar_volumes.index).moles()[
+        molar_volumes.index
+    ]
+
+    oxide_masses = e.compound_weights(mol_fractions.columns)
 
     # equation 1 numerator
-    mass_1_mole = mole_fractions.mul(oxide_masses, axis=1).sum(axis=1)
+    mass_1_mol = mol_fractions.mul(oxide_masses, axis=1).sum(axis=axis)
 
-    T_contribution = _calculate_T_contribution(T_K, index=mole_fractions.index)
-    P_contribution = _calculate_P_contribution(P_bar, index=mole_fractions.index)
+    T_contribution = _calculate_T_contribution(T_K, index=mol_fractions.index)
+    P_contribution = _calculate_P_contribution(P_bar, index=mol_fractions.index)
 
     V_liquid = (T_contribution + P_contribution).add(
         molar_volumes, axis=1
-    ) * mole_fractions
+    ) * mol_fractions
 
-    density = mass_1_mole / V_liquid.sum(axis=1) * 1e3  # kg.m-3
+    density = mass_1_mol / V_liquid.sum(axis=axis) * 1e3  # kg.m-3
 
     return density
 
 
 def _calculate_temperature(
-    composition: Magma, density: pd.Series, P_bar: pd.Series
+    melt_wt_percent: Magma, density: pd.Series, P_bar: pd.Series
 ) -> pd.Series:
-    mole_fractions = composition.moles()[molar_volumes.index]
 
-    oxide_masses = e.compound_weights(mole_fractions.columns)
+    mol_fractions = check_components(
+        melt_wt_percent, components=molar_volumes.index
+    ).moles()[molar_volumes.index]
+
+    oxide_masses = e.compound_weights(mol_fractions.columns)
 
     # eauation 1 numerator
-    mass_1_mole = mole_fractions.mul(oxide_masses, axis=1).sum(axis=1)
+    mass_1_mole = mol_fractions.mul(oxide_masses, axis=1).sum(axis=1)
 
-    P_contribution = _calculate_P_contribution(P_bar, index=mole_fractions.index)
+    P_contribution = _calculate_P_contribution(P_bar, index=mol_fractions.index)
 
     V_liquid = mass_1_mole * 1e3 / density
 
-    V_P_contribution = (P_contribution * mole_fractions).sum(axis=1)
-    V_reference = mole_fractions.mul(molar_volumes, axis=1).sum(axis=1)
+    V_P_contribution = (P_contribution * mol_fractions).sum(axis=1)
+    V_reference = mol_fractions.mul(molar_volumes, axis=1).sum(axis=1)
     temperature_contribution = V_liquid - V_P_contribution - V_reference
 
-    T_contribution_1500K = mole_fractions.mul(
+    T_contribution_1500K = mol_fractions.mul(
         _calculate_T_contribution(
-            pd.Series(1500, index=mole_fractions.index), mole_fractions.index
+            pd.Series(1500, index=mol_fractions.index), mol_fractions.index
         ),
         axis=1,
     ).sum(axis=1)
     V_missing = temperature_contribution - T_contribution_1500K
-    V_per_degree = mole_fractions.mul(dVdT, axis=1).sum(axis=1)
+    V_per_degree = mol_fractions.mul(dVdT, axis=1).sum(axis=1)
 
     return 1500 + (V_missing / V_per_degree)
 
