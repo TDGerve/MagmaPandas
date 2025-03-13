@@ -21,7 +21,7 @@ def fO2_NNO(logshift, T_K, P_bar):
     part_1 = (
         8.699 + 1.642e-2 * P_GPa - 3e-4 * P_GPa**2 + 2.7e-6 * P_GPa**3 - 1e-8 * P_GPa**4
     )
-    part_2 = (-24205 + 444.73 * P_GPa - 5.929e-1 * P_GPa**2 + 1.53e-3 * P_GPa) / T_K
+    part_2 = (-24205 + 444.73 * P_GPa - 5.929e-1 * P_GPa**2 + 1.53e-3 * P_GPa**3) / T_K
 
     log10fO2 = part_1 + part_2
 
