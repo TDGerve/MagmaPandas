@@ -997,7 +997,7 @@ class Armstrong2019(Fe3Fe2_model):
         Supplementary Materials equation S10
         """
         params = cls.eos_parameters.loc[phase]
-        P_GPa = P_bar * 1e5 / 1e9
+        P_GPa = P_bar / 1e4
         Kprime_prime_0 = (
             -params["Kprime_0"] / params["K_0"]
         )  # Supplementary Materials ref. 32
@@ -1008,8 +1008,8 @@ class Armstrong2019(Fe3Fe2_model):
         a = (1 + params["Kprime_0"]) / (
             1 + params["Kprime_0"] + params["K_0"] * Kprime_prime_0
         )
-        b = params["Kprime_0"] / params["K_0"] - Kprime_prime_0 / (
-            1 + params["Kprime_0"]
+        b = params["Kprime_0"] / params["K_0"] - (
+            Kprime_prime_0 / (1 + params["Kprime_0"])
         )
         c = (1 + params["Kprime_0"] + params["K_0"] * Kprime_prime_0) / (
             params["Kprime_0"] ** 2
@@ -1048,11 +1048,8 @@ class Armstrong2019(Fe3Fe2_model):
 
         sum_margules = melt_cation_fractions.mul(cls.margules).sum(axis=axis)
 
-        LN_aFe3_aFe2 = (
-            sum_margules / T_K
-            + (melt_cation_fractions["Fe"] - melt_cation_fractions["Fe3"])
-            * cls.Fe_margules
-            / T_K
+        LN_aFe3_aFe2 = sum_margules / T_K + cls.Fe_margules * (
+            (melt_cation_fractions["Fe"] - melt_cation_fractions["Fe3"]) / T_K
         )
 
         return LN_aFe3_aFe2
