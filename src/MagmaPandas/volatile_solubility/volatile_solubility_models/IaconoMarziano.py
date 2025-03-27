@@ -201,12 +201,14 @@ class h2o(Solubility_model):
             return h2o._solubility(composition, x_fluid, P_bar, T_K)
         else:
             # Find equilibrium H2O content
-            return root_scalar(
-                h2o._solubility_rootFunction,
-                args=(composition, x_fluid, P_bar, T_K),
-                x0=1.0,
-                x1=2.0,
-            ).root
+            return np.float32(
+                root_scalar(
+                    h2o._solubility_rootFunction,
+                    args=(composition, x_fluid, P_bar, T_K),
+                    x0=1.0,
+                    x1=2.0,
+                ).root
+            )
 
     @staticmethod
     def calculate_saturation(oxide_wtPercents: Magma, T_K: float, **kwargs) -> float:
@@ -275,7 +277,7 @@ class h2o(Solubility_model):
         """
         # Copy so pandas doesn't raise SettingWithCopyWarning
         composition = oxide_wtPercents.copy()
-        composition["H2O"] = H2O
+        composition["H2O"] = np.float32(H2O)
 
         return H2O - h2o._solubility(composition, x_fluid, P_bar, T_K)
 
@@ -523,7 +525,7 @@ class mixed(Solubility_model):
 
         composition = oxide_wtPercents.copy()
         H2O = h2o.calculate_solubility(composition, P_bar, T_K, x_fluid)
-        composition["H2O"] = H2O
+        composition["H2O"] = np.float32(H2O)
         CO2 = co2.calculate_solubility(composition, P_bar, T_K, x_fluid)
 
         return_dict = {"both": (H2O, CO2), "H2O": H2O, "CO2": CO2}

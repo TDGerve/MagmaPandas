@@ -385,7 +385,7 @@ class mixed(Solubility_model):
 
         composition = oxide_wtPercents.copy()
         H2O = h2o.calculate_solubility(composition, P_bar, x_fluid)
-        composition["H2O"] = H2O
+        composition["H2O"] = np.float32(H2O)
         CO2 = co2.calculate_solubility(composition, P_bar, x_fluid)
 
         return_dict = {"both": (H2O, CO2), "H2O": H2O, "CO2": CO2}
