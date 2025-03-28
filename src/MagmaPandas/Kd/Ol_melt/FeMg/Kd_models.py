@@ -795,6 +795,128 @@ class sun2020(Kd_model):
         return offset_parameters * error
 
 
+class saper(Kd_model):
+    """
+    Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 10 from Saper et al. (2022)\ []_.
+
+    Calibrated for low fO2 conditions (IW +-0.5), with close to 0 Fe3+
+    """
+
+    error = 0.0141  # average absolute deviation
+
+    @classmethod
+    @np.errstate(invalid="raise")
+    def _calculate_Kd(
+        cls,
+        melt_mol_fractions: pd.DataFrame,
+        forsterite: float | pd.Series,
+        T_K: float | pd.Series,
+        *args,
+        **kwargs,
+    ) -> float | pd.Series:
+        """
+        Calculate Kds for given melt compositions and fixed forsterite content.
+
+        Parameters
+        ----------
+        melt_mol_fractions : pandas Dataframe
+            melt compositions in oxide mol fractions
+        forsterite : float, array-like
+            olivine forsterite contents.
+        T_K : float, array-like
+            temperatures in Kelvin
+
+        Returns
+        -------
+        Kds : array-like
+            Fe-Mg partition coefficients
+        """
+        axis = [0, 1][isinstance(melt_mol_fractions, pd.DataFrame)]
+
+        cations = melt_mol_fractions.cations()
+
+        Gibbs_term = (-6766 - 7.34 * T_K) / (R * T_K)
+        melt_interaction_term = (
+            1.0445 * cations["Si"]
+            - 1.3125 * cations["Ti"]
+            - 3.0550 * cations["Si"] * cations[["Na", "K"]].sum(axis=axis)
+        )
+        olivine_interaction_term = 3040 * (1 - 2 * forsterite) / (R * T_K)
+
+        lnKd = Gibbs_term + melt_interaction_term + olivine_interaction_term
+
+        return np.exp(lnKd)
+
+    @classmethod
+    def calculate_Kd(
+        cls,
+        melt_mol_fractions: pd.Series | pd.DataFrame,
+        Fe3Fe2: float | pd.Series,
+        T_K: float | pd.Series,
+        forsterite_initial: float | pd.Series = 0.85,
+        *args,
+        **kwargs,
+    ) -> float | pd.Series:
+        """
+        Calculate Kds for given melt compositions and equilibriutm forsterite content.
+
+        Parameters
+        ----------
+        melt_mol_fractions : pandas Dataframe
+            melt compositions in oxide mol fractions
+        forsterite_initial : float, array-like
+            initial olivine forsterite contents. Forsterite values are iteratively adjusted until equilibrium with the melt is reached.
+        Fe3Fe2 : float, array-like
+            melt Fe3+/Fe2+ ratios
+        T_K : float, array-like
+            temperatures in Kelvin
+        P_bar: float, array-like
+            pressures in bar
+
+        Returns
+        -------
+        Kds : array-like
+            Fe-Mg partition coefficients
+        """
+
+        if isinstance(melt_mol_fractions, pd.Series):
+            Kd_func = iterate_Kd_scalar
+        elif isinstance(melt_mol_fractions, pd.DataFrame):
+            Kd_func = iterate_Kd_vectorized
+
+        return Kd_func(
+            melt_mol_fractions=melt_mol_fractions,
+            forsterite_initial=forsterite_initial,
+            Fe3Fe2=Fe3Fe2,
+            T_K=T_K,
+            Kd_model=cls._calculate_Kd,
+            *args,
+            **kwargs,
+        )
+
+    @classmethod
+    def get_error(cls) -> float:
+        """
+        Calculate one standard deviation errors on Kds
+
+        Returns
+        -------
+        error:  float
+            one standard deviation error
+        """
+
+        return cls.error
+
+    @classmethod
+    def get_offset_parameters(cls, n=1):
+        return np.random.normal(loc=0, scale=1, size=n)
+
+    @classmethod
+    def get_offset(cls, offset_parameters, *args, **kwargs):
+        error = cls.get_error()
+        return offset_parameters * error
+
+
 _clsmembers = inspect.getmembers(sys.modules[__name__], inspect.isclass)
 # Collect all Kd_models in a dictionary.
 Kd_olmelt_FeMg_models_dict = {
