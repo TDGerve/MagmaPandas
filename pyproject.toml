@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MagmaPandas"
-version = "2.1.3"
+version = "2.2.3"
 authors = [{ name = "Thomas van Gerve" }]
 description = "Pandas based tool set for geochemical processing and modelling."
 readme = "README.rst"
