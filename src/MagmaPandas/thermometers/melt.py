@@ -39,6 +39,7 @@ errors = pd.Series(
         "putirka2008_14": 58,
         "putirka2008_15": 46,
         "putirka2008_16": 26,
+        "putirka2008_22": 32,  # from Wieser et al. (2025) Treatise of Geochemistry
         "sun2020": 49,
         "shea2022": 13,  # on calibration dataset, not validated
         "sugawara2000_3": 33,  # on calibration dataset
@@ -51,11 +52,20 @@ components = {
     "putirka2008_14": ["MgO", "FeO", "Na2O", "K2O", "H2O"],
     "putirka2008_15": ["MgO", "FeO", "Na2O", "K2O", "H2O"],
     "putirka2008_16": ["SiO2", "Al2O3", "MgO"],
+    "putirka2008_22": ["SiO2", "FeO", "MnO", "MgO", "CaO", "CoO", "NiO", "H2O"],
     "sun2020": ["MgO", "CaO", "K2O", "TiO2", "FeO", "CO2", "H2O"],
     "shea2022": ["MgO"],
     "sugawara2000_3": ["MgO"],
     "sugawara2000_6a": ["MgO", "FeO", "CaO", "SiO2"],
 }
+
+_Beattie_constants = pd.DataFrame(
+    {
+        "A": [1.0, 0.259, 0.299, 0.786, 3.346],
+        "B": [0.0, -4.9e-2, 2.7e-2, -0.385, -3.665],
+    },
+    index=["Mg", "Mn", "Fe", "Co", "Ni"],
+)
 
 
 def putirka2008_13(
@@ -146,11 +156,8 @@ def putirka2008_14(
 
     # composition = parse_data(melt, oxides_needed)
 
-    if "H2O" not in elements:
-        H2O = 0.0
-    else:
-        H2O = composition["H2O"].copy()
-        composition = _anhydrous_composition(composition)
+    H2O = composition["H2O"].copy()
+    composition = _anhydrous_composition(composition)
 
     # Calculate molar oxide fractions
     mol_fractions = composition.moles()
@@ -237,11 +244,8 @@ def putirka2008_15(
     # oxides_needed = set(["MgO", "FeO", "Na2O", "K2O"])
     # composition = parse_data(melt, oxides_needed)
 
-    if "H2O" not in elements:
-        H2O = 0.0
-    else:
-        H2O = composition["H2O"].copy()
-        composition = _anhydrous_composition(composition)
+    H2O = composition["H2O"].copy()
+    composition = _anhydrous_composition(composition)
 
     P_GPa = P_bar / 1e4
 
@@ -338,6 +342,85 @@ def putirka2008_16(
     _check_temperature(T_K)
 
     T_K = T_K + errors["putirka2008_16"] * offset
+
+    return pd.Series(T_K, name="T_K").squeeze()
+
+
+def putirka2008_22(
+    melt: Magma,
+    P_bar: float | pd.Series,
+    offset: float = 0.0,
+    **kwargs,
+) -> float | pd.Series:
+    """
+    melt-only thermometer
+
+    Equation 22 from Putirka (2008)\ [28]_, combined with equation 12 from Beattie (1993) calculates liquidus temperatures based on melt compositions. #TODO add reference link
+
+
+    Parameters
+    ----------
+    melt : Magma
+        melt compositions in oxide wt. %
+
+    P_bar : float, pandas Series
+        pressures in bar.
+
+    offset : float
+        offset value in standard deviations. Temperatures are calculated as ``temnperature + offset * thermometer error (SEE)``.
+
+    Returns
+    -------
+    temperatures : float, pandas Series
+        liquidus temperatures in Kelvin.
+    """
+
+    axis = [0, 1][isinstance(melt, pd.DataFrame)]
+
+    composition = check_components(
+        composition=melt, components=components["putirka2008_22"]
+    )
+    H2O = composition["H2O"].copy()
+    composition = _anhydrous_composition(composition)
+
+    # if warn:
+    #     _check_calibration_range(
+    #         melt=composition, calibration_range=calibration_range["putirka2008_22"]
+    # )
+
+    P_GPa = P_bar / 1e4
+
+    cations = composition.cations()
+    lnD_Mg = np.log(
+        (
+            0.666
+            - cations[_Beattie_constants.index]
+            .mul(_Beattie_constants.loc[:, "B"], axis=axis)
+            .sum(axis=axis)
+        )
+        / cations[_Beattie_constants.index]
+        .mul(_Beattie_constants.loc[:, "A"], axis=axis)
+        .sum(axis=axis)
+    )  # equation 12 from Beattie (1993)
+
+    C_NM = (cations[["Fe", "Mn", "Mg", "Ca", "Co", "Ni"]]).sum(axis=axis)
+    NF = 7 / 2 * np.log(1 - cations["Al"]) + 7 * np.log(
+        1 - cations["Ti"]
+    )  # Table 1 from Putirka (2008)
+
+    T_K = (15294.6 + 1318.8 * P_GPa + 2.4834 * P_GPa**2) / (
+        8.048
+        + 2.8352 * lnD_Mg
+        + 2.097 * np.log(1.5 * C_NM)
+        + 2.575 * np.log(3 * cations["Si"])
+        - 1.41 * NF
+        + 0.222 * H2O
+        + 0.5 * P_GPa
+    ) + 273.15  # equation 22 from Putirka (2008)
+
+    _check_temperature(T_K)
+
+    T_K = T_K + errors["putirka2008_22"] * offset
 
     return pd.Series(T_K, name="T_K").squeeze()
 
