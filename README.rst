@@ -1,5 +1,5 @@
-.. image:: https://zenodo.org/badge/15308375.svg
-  :target: https://doi.org/10.5281/zenodo.15308375
+.. image:: https://zenodo.org/badge/496640400.svg
+  :target: https://zenodo.org/badge/latestdoi/496640400
 ===========
 MagmaPandas
 ===========
