@@ -2,8 +2,8 @@ sphinx_rtd_theme
 myst-parser
 nbsphinx
 sphinx-design
-pandas
-numpy
+pandas<=2.1.4
+numpy<=1.26.4
 scipy
 typing-extensions
 alive_progress
@@ -11,4 +11,4 @@ matplotlib
 matplotlib-label-lines
 statsmodels
 scikit-learn
-elementMass
+elementMass>= 1.1.0
