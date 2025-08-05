@@ -1,5 +1,6 @@
 .. image:: https://zenodo.org/badge/496640400.svg
   :target: https://zenodo.org/badge/latestdoi/496640400
+
 ===========
 MagmaPandas
 ===========
@@ -13,7 +14,7 @@ with methods for common calculations, including those for:
    * melt thermometry,
    * melt Fe speciation,
    * oxygen fugacity,
-   * melt volatile (CO :sub:`2`-H :sub:`2`O) saturation pressure
+   * melt volatile (CO\ :sub:`2`\-H\ :sub:`2`\O) saturation pressure
    * mineral-melt element partition coefficients,
 
 
