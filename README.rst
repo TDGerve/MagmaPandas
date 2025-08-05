@@ -13,7 +13,7 @@ with methods for common calculations, including those for:
    * melt thermometry,
    * melt Fe speciation,
    * oxygen fugacity,
-   * melt volatile (CO\ :sub:`2`\-H\ :sub:`2`\O) saturation pressure
+   * melt volatile (CO :sub:`2`-H :sub:`2`O) saturation pressure
    * mineral-melt element partition coefficients,
 
 
@@ -45,6 +45,6 @@ If you want to install from a specific git branch or release, use:
 
     pip install git+https://github.com/TDGerve/MagmaPandas.git@tag
 
-where *tag* should be repleaced by the release tag or branch name (e.g. *v1.0.0* or *development*)
+where *tag* should be replaced by the release tag or branch name (e.g. *v1.0.0* or *development*)
 
 
