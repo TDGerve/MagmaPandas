@@ -20,7 +20,7 @@ def calculate_Fe3Fe2(mol_fractions, T_K, P_bar, fO2=None, **kwargs):
     logshift  :  int, pd.Series-like
         log units shift of QFM buffer
     model     :  string
-        'kressCarmichael' or 'borisov'
+        Fe3Fe2 model from :py:meth:`~MagmaPandas.configuration.configuration.available_models`.
 
     Returns
     -------

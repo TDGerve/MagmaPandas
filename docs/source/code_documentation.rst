@@ -54,18 +54,18 @@ melt |Fe3Fe2|
 .. automodule:: MagmaPandas.fO2
     :members: 
 
-        .. autofunction:: fO2_QFM
-        .. autofunction:: fO2_IW
+        .. autofunction:: MagmaPandas.fO2.QFM.calculate_fO2
+        .. autofunction:: MagmaPandas.fO2.IW.calculate_fO2
 
 Olivine-melt Fe-Mg Kd
 #####################
 .. automodule:: MagmaPandas.Kd.Ol_melt
     :members: 
         
-        .. autofunction:: calculate_FeMg_Kd
-        .. autofunction:: observed_FeMg_Kd
+        .. autofunction:: MagmaPandas.Kd.Ol_melt.FeMg.Kd_calculate.calculate_FeMg_Kd
+        .. autofunction:: MagmaPandas.Kd.Ol_melt.FeMg.Kd_calculate.observed_FeMg_Kd
 
-    .. automodule:: MagmaPandas.Kd.Ol_melt.Kd_olmelt_FeMg_models
+    .. automodule:: MagmaPandas.Kd.Ol_melt.FeMg.Kd_models
         :members:
 
 Silicate liquid density

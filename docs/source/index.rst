@@ -10,7 +10,6 @@ MagmaPandas quickstart
 
    about
    getting_started
-   notebooks/Fe3Fe2_errors
    examples
    extending
    code_documentation
