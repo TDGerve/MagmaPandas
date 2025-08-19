@@ -131,6 +131,8 @@ def read_olivine(
     index_col: List[str] = None,
     total_col: str = None,
     keep_columns: List[str] = None,
+    units="wt. %",
+    datatype="oxide",
     **kwargs,
 ) -> Olivine:
     """
@@ -142,11 +144,11 @@ def read_olivine(
         filepath=filepath,
         *args,
         phase="Olivine",
+        units=units,
+        datatype=datatype,
         index_col=index_col,
         total_col=total_col,
         keep_columns=keep_columns,
-        units="wt. %",
-        datatype="oxide",
         **kwargs,
     )
 
@@ -157,6 +159,8 @@ def read_plagioclase(
     index_col: List[str] = None,
     total_col: str = None,
     keep_columns: List[str] = None,
+    units="wt. %",
+    datatype="oxide",
     **kwargs,
 ) -> Plagioclase:
     """
@@ -171,7 +175,7 @@ def read_plagioclase(
         index_col=index_col,
         total_col=total_col,
         keep_columns=keep_columns,
-        units="wt. %",
-        datatype="oxide",
+        units=units,
+        datatype=datatype,
         **kwargs,
     )
