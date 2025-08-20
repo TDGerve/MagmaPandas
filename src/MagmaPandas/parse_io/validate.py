@@ -49,6 +49,9 @@ def _check_setter(allowed_values):
         @wraps(func)  # comment
         def wrapper(*args):
             var = args[1]
+            if isinstance(var, (list, tuple)):
+                # tuples or list are used when setting fixed values for Kd or Fe3Fe2
+                var = var[0]
             if isinstance(var, (float, int)):
                 min, max = allowed_values
                 if not (min < var < max):

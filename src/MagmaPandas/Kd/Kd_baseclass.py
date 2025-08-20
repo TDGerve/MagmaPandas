@@ -69,7 +69,7 @@ class Kd_model(ABC):
         except TypeError:
             return Kd
 
-    @abstractmethod
+    @classmethod
     def get_error(cls, *args, **kwargs):
         """
         Return one standard deviation errors on partition coefficients.
@@ -79,19 +79,19 @@ class Kd_model(ABC):
         float, array-like
             partition coefficient errors
         """
-        pass
+        return cls.error
 
-    @abstractmethod
-    def get_offset_parameters(cls, n: int, *args, **kwargs):
+    @staticmethod
+    def get_offset_parameters(n: int, *args, **kwargs):
         """
         Randomly sample a standard normal distribution *n* times.
 
         n   : int
             sample amount.
         """
-        pass
+        return np.random.normal(loc=0, scale=1, size=n)
 
-    @abstractmethod
+    @classmethod
     def get_offset(cls, offset_parameters, *args, **kwargs):
         """
         Calculate random samples of partition coefficient errors
@@ -101,4 +101,5 @@ class Kd_model(ABC):
         offset_parameters : float, array-like
             random samples of a standard normal distribution.
         """
-        pass
+        error = cls.get_error()
+        return offset_parameters * error

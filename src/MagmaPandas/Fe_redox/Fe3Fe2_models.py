@@ -26,7 +26,50 @@ def _is_Fe3Fe2_model(cls):
         return False
 
 
-class borisov(Fe3Fe2_model):
+class fixed(Fe3Fe2_model):
+    """
+    Get fixed |Fe3Fe2| ratios.
+    """
+
+    value = None
+    error = None
+
+    @classmethod
+    def _get_values(cls):
+
+        from MagmaPandas.configuration import configuration
+
+        cls.value = configuration._Fe3Fe2_value
+        cls.error = configuration._Fe3Fe2_error
+
+        if any(i is None for i in (cls.value, cls.error)):
+            raise ValueError(
+                "Fe3Fe2 value and/or error not found. Please set them in the configuration"
+            )
+
+    @classmethod
+    def calculate_Fe3Fe2(cls, *args, **kwargs):
+        """
+        Get fixed |Fe3Fe2| ratios.
+
+        Returns
+        -------
+        float, array-like
+            melt |Fe3Fe2| ratio
+        """
+        cls._get_values()
+
+        return cls.value
+
+    @classmethod
+    def get_error(cls, *args, **kwargs):
+
+        cls._get_values()
+
+        return cls.error
+
+
+class borisov2018(Fe3Fe2_model):
     """
     Calculate melt |Fe3Fe2| ratios according to equation 4 from Borisov et al. (2018)\ [1]_.
     """
@@ -93,7 +136,7 @@ class borisov(Fe3Fe2_model):
         )
 
 
-class kressCarmichael(Fe3Fe2_model):
+class kress_carmichael1991(Fe3Fe2_model):
     """
     Calculate melt |Fe3Fe2| ratios according to equation 7 from Kress and Carmichael (1991)\ [2]_.
     """
@@ -175,7 +218,7 @@ class kressCarmichael(Fe3Fe2_model):
         )
 
 
-class jayasuriya(Fe3Fe2_model):
+class jayasuriya2004(Fe3Fe2_model):
     """
     Jayasuriya et al. (2004)\ [3]_ equation 12.
     """
@@ -368,7 +411,7 @@ class putirka2016_6c(Fe3Fe2_model):
         )
 
 
-class Deng2020(Fe3Fe2_model):
+class deng2020(Fe3Fe2_model):
     """
     Deng et al. (2020)\ [5]_
     """
@@ -667,7 +710,7 @@ class Deng2020(Fe3Fe2_model):
         )
 
 
-class Oneill2006(Fe3Fe2_model):
+class oneill2006(Fe3Fe2_model):
     """
     O'neill et al. (2006)\ [6]_
     """
@@ -783,7 +826,7 @@ class Oneill2006(Fe3Fe2_model):
         )
 
 
-class Oneill2018(Fe3Fe2_model):
+class oneill2018(Fe3Fe2_model):
     """
     O'Neill et al. (2018)\ [7]_
     """
@@ -840,7 +883,7 @@ class Oneill2018(Fe3Fe2_model):
         )
 
 
-class Armstrong2019(Fe3Fe2_model):
+class armstrong2019(Fe3Fe2_model):
     """
     Armstrong et al. (2019)\ [8]_
 
@@ -1065,7 +1108,7 @@ class Armstrong2019(Fe3Fe2_model):
         )
 
 
-class Zhang2017(Fe3Fe2_model):
+class zhang2017(Fe3Fe2_model):
     """
     Zhang et al. (2017)\ [9]_
 
@@ -1148,7 +1191,7 @@ class Zhang2017(Fe3Fe2_model):
         )
 
 
-class Hirschmann2022(Fe3Fe2_model):
+class hirschmann2022(Fe3Fe2_model):
     """
     Hirschmann (2022)\ [10]_
     """
@@ -1183,7 +1226,7 @@ class Hirschmann2022(Fe3Fe2_model):
         T_K,
         P_bar,
         fO2,
-        dVdP_method="Armstrong2019",
+        dVdP_method="armstrong2019",
         *args,
         **kwargs,
     ):
@@ -1262,7 +1305,7 @@ class Hirschmann2022(Fe3Fe2_model):
         )
 
 
-class Sun2024(Fe3Fe2_model):
+class sun2024(Fe3Fe2_model):
     """
     Sun and Yao (2024)\ [11]_
     """
@@ -1300,7 +1343,7 @@ class Sun2024(Fe3Fe2_model):
         """
         Calculate dV according to Deng (2020)
         """
-        return Deng2020._dVdP(T_K=T_K, P_bar=P_bar, melt_Fe="12.5molpc", **kwargs) / (
+        return deng2020._dVdP(T_K=T_K, P_bar=P_bar, melt_Fe="12.5molpc", **kwargs) / (
             R * T_K
         )
 

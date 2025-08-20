@@ -2,6 +2,8 @@
 Global configuration of MagmaPandas settings.
 """
 
+from typing import Tuple, Union
+
 from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
 from MagmaPandas.Kd.Ol_melt.FeMg.Kd_models import Kd_olmelt_FeMg_models_dict
 from MagmaPandas.parse_io.validate import _check_setter
@@ -87,11 +89,15 @@ class _meta_configuration(type):
     def __init__(cls, *args, **kwargs):
         cls._fO2buffer = "QFM"
         cls._dfO2 = 1
-        cls._Kd_model = "toplis"
-        cls._Fe3Fe2_model = "Sun2024"
+        cls._Kd_model = "toplis2005"
+        cls._Fe3Fe2_model = "sun2024"
         cls._melt_thermometer = "putirka2008_15"
-        cls._volatile_solubility = "IaconoMarziano"
+        cls._volatile_solubility = "iaconomarziano2012"
         cls._volatile_species = "mixed"
+        cls._Fe3Fe2_value = None
+        cls._Fe3Fe2_error = None
+        cls._Kd_value = None
+        cls._Kd_error = None
 
     @property
     def fO2buffer(cls):
@@ -116,8 +122,25 @@ class _meta_configuration(type):
 
     @Kd_model.setter
     @_check_setter(Kd_ol_FeMg_models)
-    def Kd_model(cls, model: str):
+    def Kd_model(
+        cls,
+        model: Union[str, Tuple[str, Union[float, int], Union[float, int]]],
+    ):
+        if not isinstance(model, (tuple, list)):
+            if model != "fixed":
+                cls._Kd_model = model
+                return
+            raise ValueError(
+                "Please provide Kd value and error as positive floats or ints in a tuple or list, as ('fixed', value, error) e.g. ('fixed', 0.3, 0.05)"
+            )
+        model, value, error = model
         cls._Kd_model = model
+        if any(not isinstance(i, (float, int)) or i <= 0 for i in (value, error)):
+            raise ValueError(
+                "Please provide Kd value and error as positive floats or ints"
+            )
+        cls._Kd_value = value
+        cls._Kd_error = error
 
     @property
     def Fe3Fe2_model(cls):
@@ -125,8 +148,25 @@ class _meta_configuration(type):
 
     @Fe3Fe2_model.setter
     @_check_setter(Fe3Fe2_models)
-    def Fe3Fe2_model(cls, model: str):
+    def Fe3Fe2_model(
+        cls,
+        model: Union[str, Tuple[str, Union[float, int], Union[float, int]]],
+    ):
+        if not isinstance(model, (tuple, list)):
+            if model != "fixed":
+                cls._Fe3Fe2_model = model
+                return
+            raise ValueError(
+                "Please provide Fe3Fe2 value and error as positive floats or ints in a tuple or list, as ('fixed', value, error) e.g. ('fixed', 0.3, 0.05)"
+            )
+        model, value, error = model
         cls._Fe3Fe2_model = model
+        if any(not isinstance(i, (float, int)) or i <= 0 for i in (value, error)):
+            raise ValueError(
+                "Please provide Fe3Fe2 value and error as positive floats or ints"
+            )
+        cls._Fe3Fe2_value = value
+        cls._Fe3Fe2_error = error
 
     @property
     def melt_thermometer(cls):
@@ -158,17 +198,25 @@ class _meta_configuration(type):
     def __str__(cls):
 
         variables = {
-            "fO2 buffer": "_fO2buffer",
-            "\u0394fO2": "_dfO2",
-            "Melt Fe3+/Fe2+": "_Fe3Fe2_model",
-            "Kd Fe-Mg ol-melt": "_Kd_model",
-            "Melt thermometer": "_melt_thermometer",
-            "Volatile solubility model": "_volatile_solubility",
-            "Volatile species": "_volatile_species",
+            "fO2 buffer": cls._fO2buffer,
+            "\u0394fO2": cls._dfO2,
+            "Melt Fe3+/Fe2+": (
+                cls._Fe3Fe2_model
+                if cls._Fe3Fe2_model != "fixed"
+                else f"{cls._Fe3Fe2_model} {cls._Fe3Fe2_value:.2f}\u00b1{cls._Fe3Fe2_error:.2f}"
+            ),
+            "Kd Fe-Mg ol-melt": (
+                cls._Kd_model
+                if cls._Kd_model != "fixed"
+                else f"{cls._Kd_model} {cls._Kd_value:.2f}\u00b1{cls._Kd_error:.2f}"
+            ),
+            "Melt thermometer": cls._melt_thermometer,
+            "Volatile solubility model": cls._volatile_solubility,
+            "Volatile species": cls._volatile_species,
         }
 
         names_length = max([len(i) for i in variables.keys()]) + 5
-        pad_right = 15
+        pad_right = max([max([len(j) for j in i]) for i in _variables.values()])
         pad_total = names_length + pad_right
         new_line = "\n"
 
@@ -181,7 +229,9 @@ class _meta_configuration(type):
 
         parameter_settings = ""
         for param, value in variables.items():
-            parameter_settings += f"{new_line}{param:.<{names_length}}{str(getattr(cls, value)):.>{pad_right}}"
+            parameter_settings += (
+                f"{new_line}{param:.<{names_length}}{value:.>{pad_right}}"
+            )
 
         return message + parameter_settings + f"{new_line}{'':#^{pad_total}}{new_line}"
 
@@ -220,8 +270,8 @@ class configuration(metaclass=_meta_configuration):
         """
         cls._fO2buffer = "QFM"
         cls._dfO2 = 1
-        cls._Kd_model = "toplis"
-        cls._Fe3Fe2_model = "Sun2024"
+        cls._Kd_model = "toplis2005"
+        cls._Fe3Fe2_model = "sun2024"
         cls._melt_thermometer = "putirka2008_15"
-        cls._volatile_solubility = "IaconoMarziano"
+        cls._volatile_solubility = "iaconomarziano2012"
         cls._volatile_species = "mixed"

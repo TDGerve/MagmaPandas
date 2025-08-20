@@ -26,7 +26,43 @@ def _is_Kd_model(cls):
         return False
 
 
-class toplis(Kd_model):
+class fixed(Kd_model):
+    """
+    Get fixed Kd ratios.
+    """
+
+    value = None
+    error = None
+
+    @classmethod
+    def _get_values(cls):
+
+        from MagmaPandas.configuration import configuration
+
+        cls.value = configuration._Kd_value
+        cls.error = configuration._Kd_error
+
+        if any(i is None for i in (cls.value, cls.error)):
+            raise ValueError(
+                "Kd value and/or error not found. Please set them in the configuration"
+            )
+
+    @classmethod
+    def calculate_Kd(cls, *args, **kwargs):
+        """
+        Get fixed Kd ratios.
+
+        Returns
+        -------
+        float, array-like
+            melt Kd ratio
+        """
+        cls._get_values()
+
+        return cls.value
+
+
+class toplis2005(Kd_model):
     """
     Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 10 from Toplis (2005)\ [19]_.
     """
@@ -228,30 +264,8 @@ class toplis(Kd_model):
             **kwargs,
         )
 
-    @classmethod
-    def get_error(cls) -> float:
-        """
-        Calculate one standard deviation errors on Kds
 
-        Returns
-        -------
-        error:  float
-            one standard deviation error
-        """
-
-        return cls.error
-
-    @classmethod
-    def get_offset_parameters(cls, n=1):
-        return np.random.normal(loc=0, scale=1, size=n)
-
-    @classmethod
-    def get_offset(cls, offset_parameters, *args, **kwargs):
-        error = cls.get_error()
-        return offset_parameters * error
-
-
-class blundy(Kd_model):
+class blundy2020(Kd_model):
     """
     Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 8 from Blundy (2020)\ [20]_.
     """
@@ -340,7 +354,7 @@ class blundy(Kd_model):
         elif isinstance(melt_mol_fractions, pd.DataFrame):
             Kd_func = iterate_Kd_vectorized
 
-        Fe3Fe2 = Fe3Fe2_models.borisov.calculate_Fe3Fe2(
+        Fe3Fe2 = Fe3Fe2_models.borisov2018.calculate_Fe3Fe2(
             melt_mol_fractions=melt_mol_fractions, T_K=T_K, fO2=fO2, P_bar=P_bar
         )
 
@@ -395,10 +409,6 @@ class blundy(Kd_model):
         return errors
 
     @classmethod
-    def get_offset_parameters(cls, n=1):
-        return np.random.normal(loc=0, scale=1, size=n)
-
-    @classmethod
     def get_offset(cls, melt_composition, offset_parameters, *args, **kwargs):
 
         error = cls.get_error(melt_composition=melt_composition)
@@ -411,7 +421,7 @@ class putirka2016_8a(Kd_model):
     Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 8a from Putirka (2016)\ [21]_.
     """
 
-    Kd_error = 4.4e-2
+    error = 4.4e-2
 
     @staticmethod
     def calculate_Kd(melt_mol_fractions, *args, **kwargs) -> float:
@@ -428,40 +438,6 @@ class putirka2016_8a(Kd_model):
             return 0.33
         elif isinstance(melt_mol_fractions, pd.DataFrame):
             return pd.Series(0.33, index=melt_mol_fractions.index)
-
-    @classmethod
-    def get_error(cls, *args, **kwargs) -> float:
-        """
-        Return one standard deviation errors on partition coefficients.
-
-        Returns
-        -------
-        float, array-like
-            partition coefficient errors
-        """
-        return cls.Kd_error
-
-    @staticmethod
-    def get_offset_parameters(n: int, *args, **kwargs) -> float | np.ndarray:
-        """
-        Randomly sample a standard normal distribution *n* times.
-
-        n   : int
-            sample amount.
-        """
-        return np.random.normal(loc=0, scale=1, size=n)
-
-    @classmethod
-    def get_offset(cls, offset_parameters, *args, **kwargs) -> float | np.ndarray:
-        """
-        Calculate random samples of partition coefficient errors
-
-        Parameters
-        ----------
-        offset_parameters : float, array-like
-            random samples of a standard normal distribution.
-        """
-        return cls.get_error() * offset_parameters
 
 
 class putirka2016_8b(Kd_model):
@@ -511,40 +487,6 @@ class putirka2016_8b(Kd_model):
             + cls.d * (wt_pc[["Na2O", "K2O"]].sum(axis=axis) ** 2)
         )
 
-    @classmethod
-    def get_error(cls, *args, **kwargs) -> float:
-        """
-        Return one standard deviation errors on partition coefficients.
-
-        Returns
-        -------
-        float, array-like
-            partition coefficient errors
-        """
-        return cls.Kd_error
-
-    @staticmethod
-    def get_offset_parameters(n: int, *args, **kwargs) -> float | np.ndarray:
-        """
-        Randomly sample a standard normal distribution *n* times.
-
-        n   : int
-            sample amount.
-        """
-        return np.random.normal(loc=0, scale=1, size=n)
-
-    @classmethod
-    def get_offset(cls, offset_parameters, *args, **kwargs) -> float | np.ndarray:
-        """
-        Calculate random samples of partition coefficient errors
-
-        Parameters
-        ----------
-        offset_parameters : float, array-like
-            random samples of a standard normal distribution.
-        """
-        return cls.get_error() * offset_parameters
-
 
 class putirka2016_8c(Kd_model):
     """
@@ -559,7 +501,7 @@ class putirka2016_8c(Kd_model):
 
     components = ["SiO2", "Na2O", "K2O"]
 
-    Kd_error = 4e-2
+    error = 4e-2
 
     @classmethod
     def calculate_Kd(cls, melt_mol_fractions, *args, **kwargs) -> float | np.ndarray:
@@ -587,40 +529,6 @@ class putirka2016_8c(Kd_model):
             + cls.c * (wt_pc[["Na2O", "K2O"]].sum(axis=axis) ** 2.0)
         )
 
-    @classmethod
-    def get_error(cls, *args, **kwargs) -> float:
-        """
-        Return one standard deviation errors on partition coefficients.
-
-        Returns
-        -------
-        float, array-like
-            partition coefficient errors
-        """
-        return cls.Kd_error
-
-    @staticmethod
-    def get_offset_parameters(n: int, *args, **kwargs) -> float | np.ndarray:
-        """
-        Randomly sample a standard normal distribution *n* times.
-
-        n   : int
-            sample amount.
-        """
-        return np.random.normal(loc=0, scale=1, size=n)
-
-    @classmethod
-    def get_offset(cls, offset_parameters, *args, **kwargs) -> float | np.ndarray:
-        """
-        Calculate random samples of partition coefficient errors
-
-        Parameters
-        ----------
-        offset_parameters : float, array-like
-            random samples of a standard normal distribution.
-        """
-        return cls.get_error() * offset_parameters
-
 
 class putirka2016_8d(Kd_model):
     """
@@ -642,7 +550,7 @@ class putirka2016_8d(Kd_model):
 
     components = ["SiO2", "Na2O", "K2O"]
 
-    Kd_error = 4.2e-2
+    error = 4.2e-2
 
     @classmethod
     def calculate_Kd(
@@ -682,40 +590,6 @@ class putirka2016_8d(Kd_model):
             + cls.g * np.log(Al_number)
             + cls.h * (wt_pc[["Na2O", "K2O"]].sum(axis=axis) ** 3.0)
         )
-
-    @classmethod
-    def get_error(cls, *args, **kwargs) -> float:
-        """
-        Return one standard deviation errors on partition coefficients.
-
-        Returns
-        -------
-        float, array-like
-            partition coefficient errors
-        """
-        return cls.Kd_error
-
-    @staticmethod
-    def get_offset_parameters(n: int, *args, **kwargs) -> float | np.ndarray:
-        """
-        Randomly sample a standard normal distribution *n* times.
-
-        n   : int
-            sample amount.
-        """
-        return np.random.normal(loc=0, scale=1, size=n)
-
-    @classmethod
-    def get_offset(cls, offset_parameters, *args, **kwargs) -> float | np.ndarray:
-        """
-        Calculate random samples of partition coefficient errors
-
-        Parameters
-        ----------
-        offset_parameters : float, array-like
-            random samples of a standard normal distribution.
-        """
-        return cls.get_error() * offset_parameters
 
 
 class sun2020(Kd_model):
@@ -772,30 +646,8 @@ class sun2020(Kd_model):
 
         return Kd_Fe2
 
-    @classmethod
-    def get_error(cls) -> float:
-        """
-        Calculate one standard deviation errors on Kds
 
-        Returns
-        -------
-        error:  float
-            one standard deviation error
-        """
-
-        return cls.error
-
-    @classmethod
-    def get_offset_parameters(cls, n=1):
-        return np.random.normal(loc=0, scale=1, size=n)
-
-    @classmethod
-    def get_offset(cls, offset_parameters, *args, **kwargs):
-        error = cls.get_error()
-        return offset_parameters * error
-
-
-class saper(Kd_model):
+class saper2022(Kd_model):
     """
     Calculate equilibrium Fe-Mg partition coefficients between olivine and melt according to equation 10 from Saper et al. (2022)\ []_.
 
@@ -893,28 +745,6 @@ class saper(Kd_model):
             *args,
             **kwargs,
         )
-
-    @classmethod
-    def get_error(cls) -> float:
-        """
-        Calculate one standard deviation errors on Kds
-
-        Returns
-        -------
-        error:  float
-            one standard deviation error
-        """
-
-        return cls.error
-
-    @classmethod
-    def get_offset_parameters(cls, n=1):
-        return np.random.normal(loc=0, scale=1, size=n)
-
-    @classmethod
-    def get_offset(cls, offset_parameters, *args, **kwargs):
-        error = cls.get_error()
-        return offset_parameters * error
 
 
 _clsmembers = inspect.getmembers(sys.modules[__name__], inspect.isclass)
