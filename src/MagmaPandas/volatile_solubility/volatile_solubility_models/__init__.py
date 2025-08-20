@@ -2,9 +2,9 @@ import inspect
 import sys
 
 from MagmaPandas.volatile_solubility.volatile_solubility_models import (
-    Allison2022,
-    IaconoMarziano,
-    Shiskina,
+    allison2022,
+    iaconomarziano2012,
+    shiskina2014,
 )
 
 _members = inspect.getmembers(sys.modules[__name__], inspect.ismodule)

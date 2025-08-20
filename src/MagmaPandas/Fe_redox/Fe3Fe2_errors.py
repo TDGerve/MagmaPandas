@@ -7,11 +7,11 @@ a+x + b*x + x**2 + c**(x+d)
 """
 
 error_params_1bar = {
-    "borisov": np.array([0.07881702, 0.02656421, 0.4333133, 3.4452295]),
-    "kressCarmichael": np.array(
+    "borisov2018": np.array([0.07881702, 0.02656421, 0.4333133, 3.4452295]),
+    "kress_carmichael1991": np.array(
         [7.05463020e-02, 2.43940927e-02, 9.88024806e-01, 2.25645326e02]
     ),
-    "jayasuriya": np.array(
+    "jayasuriya2004": np.array(
         [1.38784813e-01, 2.08193376e-02, 9.85875764e-01, 1.86942686e02]
     ),
     "putirka2016_6b": np.array(
@@ -20,23 +20,23 @@ error_params_1bar = {
     "putirka2016_6c": np.array(
         [-3.34648539e-02, 7.56520883e-02, 9.84864214e-01, 1.55199181e02]
     ),
-    "Deng2020": np.array(
+    "deng2020": np.array(
         [2.07517182e-01, 3.67122574e-03, 9.81786273e-01, 1.96442938e02]
     ),
-    "Oneill2006": np.array(
+    "oneill2006": np.array(
         [2.40671679e-01, 1.17056951e-02, 9.86394234e-01, 2.09113418e02]
     ),
-    "Oneill2018": np.array(
+    "oneill2018": np.array(
         [1.05928984e-02, 8.16688488e-02, 7.86674390e-01, 1.12117269e01]
     ),
-    "Armstrong2019": np.array(
+    "armstrong2019": np.array(
         [1.85786883e-01, 3.01012716e-02, 9.80903060e-01, 1.38943588e02]
     ),
-    "Zhang2017": np.array(
+    "zhang2017": np.array(
         [1.71420881e-01, 5.50814149e-03, 9.85221818e-01, 2.35216497e02]
     ),
-    "Hirschmann2022": np.array([0.06558719, 0.02810096, 0.56167845, 4.64421989]),
-    "Sun2024": np.array([0.05573283, 0.04157452, 0.4727692, 3.60686759]),
+    "hirschmann2022": np.array([0.06558719, 0.02810096, 0.56167845, 4.64421989]),
+    "sun2024": np.array([0.05573283, 0.04157452, 0.4727692, 3.60686759]),
 }
 
 """
@@ -44,7 +44,7 @@ For each Fe3Fe2 model, parameters for the spline representatition of the running
 """
 
 error_params_high_pressure = {
-    "borisov": (
+    "borisov2018": (
         np.array(
             [
                 0.05263158,
@@ -73,7 +73,7 @@ error_params_high_pressure = {
         ),
         3,
     ),
-    "kressCarmichael": (
+    "kress_carmichael1991": (
         np.array(
             [
                 0.05263158,
@@ -89,7 +89,7 @@ error_params_high_pressure = {
         np.array([0.03823765, 1.90252931, 0.64961134, 0.44982319, 0.0, 0.0, 0.0, 0.0]),
         3,
     ),
-    "jayasuriya": (
+    "jayasuriya2004": (
         np.array(
             [
                 0.05263158,
@@ -163,7 +163,7 @@ error_params_high_pressure = {
         np.array([0.00918482, 1.73938435, 1.04467002, 0.40195188, 0.0, 0.0, 0.0, 0.0]),
         3,
     ),
-    "Deng2020": (
+    "deng2020": (
         np.array(
             [
                 0.05263158,
@@ -179,7 +179,7 @@ error_params_high_pressure = {
         np.array([0.02155258, 1.06271701, -0.05844322, 0.37584427, 0.0, 0.0, 0.0, 0.0]),
         3,
     ),
-    "Oneill2006": (
+    "oneill2006": (
         np.array(
             [
                 0.05263158,
@@ -195,7 +195,7 @@ error_params_high_pressure = {
         np.array([0.07453568, 0.86373442, -0.03963105, 0.76323943, 0.0, 0.0, 0.0, 0.0]),
         3,
     ),
-    "Oneill2018": (
+    "oneill2018": (
         np.array(
             [
                 0.05263158,
@@ -224,7 +224,7 @@ error_params_high_pressure = {
         ),
         3,
     ),
-    "Armstrong2019": (
+    "armstrong2019": (
         np.array(
             [
                 0.05263158,
@@ -240,7 +240,7 @@ error_params_high_pressure = {
         np.array([0.0749464, 0.85863398, -0.02280428, 0.80182304, 0.0, 0.0, 0.0, 0.0]),
         3,
     ),
-    "Zhang2017": (
+    "zhang2017": (
         np.array(
             [
                 0.05263158,
@@ -256,7 +256,7 @@ error_params_high_pressure = {
         np.array([0.01845676, 0.67989422, 0.06968634, 0.58894266, 0.0, 0.0, 0.0, 0.0]),
         3,
     ),
-    "Hirschmann2022": (
+    "hirschmann2022": (
         np.array(
             [
                 0.05263158,
@@ -272,7 +272,7 @@ error_params_high_pressure = {
         np.array([0.04317791, 0.97216147, -0.23208595, 0.55753749, 0.0, 0.0, 0.0, 0.0]),
         3,
     ),
-    "Sun2024": (
+    "sun2024": (
         np.array(
             [
                 0.05263158,

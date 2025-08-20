@@ -92,7 +92,7 @@ def calculate_FeMg_Kd(
     Kd_model_name = kwargs.get("Kd_model", configuration.Kd_model)
     Kd_model = Kd_olmelt_FeMg_models_dict[Kd_model_name]
 
-    if Kd_model_name == "blundy":
+    if Kd_model_name == "blundy2020":
         dfO2 = kwargs.get("dfO2", configuration.dfO2)
         P_bar = kwargs["P_bar"]
         kwargs["fO2"] = calculate_fO2(T_K=T_K, P_bar=P_bar, dfO2=dfO2)
