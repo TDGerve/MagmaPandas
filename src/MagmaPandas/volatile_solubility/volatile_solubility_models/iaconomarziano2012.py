@@ -1,7 +1,3 @@
-"""
-|CO2|-|H2O| solubility models from :cite:t:`iacono-marziano_new_2012`
-"""
-
 from typing import Tuple
 
 import numpy as np
@@ -11,12 +7,6 @@ from scipy.optimize import root, root_scalar
 from MagmaPandas.magma_protocol import Magma
 from MagmaPandas.parse_io.validate import _check_argument, _check_setter
 from MagmaPandas.volatile_solubility.solubility_baseclass import Solubility_model
-
-"""
-Equations from:
-
-Iacono-Marziano G., Morizet Y., Le Trong E., Gaillard F. (2012) New experimental data and semi-empirical parameterization of |H2O|–|CO2| solubility in mafic melts. Geochimica et cosmochimica Acta. 97.
-"""
 
 parameter_options = ["hydrous_webapp", "hydrous_manuscript", "anhydrous"]
 fugacity_options = ["ideal"]
@@ -158,6 +148,10 @@ CO2_coefficients = {
 
 # Lower case names for classes, as to not mix up with variable names
 class h2o(Solubility_model):
+    """
+    |H2O| solubility model from :cite:t:`iacono-marziano_new_2012`
+    """
+
     @staticmethod
     def calculate_solubility(
         oxide_wtPercents: Magma,
@@ -296,6 +290,10 @@ class h2o(Solubility_model):
 
 # Lower case names for classes, as to not mix up with variable names
 class co2(Solubility_model):
+    """
+    |CO2| solubility model from :cite:t:`iacono-marziano_new_2012`
+    """
+
     @staticmethod
     def calculate_solubility(
         oxide_wtPercents: Magma,
@@ -434,6 +432,10 @@ class co2(Solubility_model):
 
 
 class mixed(Solubility_model):
+    """
+    |CO2|-|H2O| solubility models from :cite:t:`iacono-marziano_new_2012`
+    """
+
     @staticmethod
     @_check_argument("output", [None, "PXfl", "P", "Xfl"])
     def calculate_saturation(

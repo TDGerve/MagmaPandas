@@ -1,7 +1,3 @@
-"""
-|CO2|-|H2O| solubility models from :cite:t:`allison_mafich_2022`
-"""
-
 from typing import List, Tuple
 
 import elementMass as e
@@ -13,15 +9,6 @@ from MagmaPandas.EOSs.CO2_H2O import hollowayBlank
 from MagmaPandas.magma_protocol import Magma
 from MagmaPandas.parse_io.validate import _check_argument, _check_setter
 from MagmaPandas.volatile_solubility.solubility_baseclass import Solubility_model
-
-"""
-Equations from:
-
-Allison, C. M., Roggensack, K., Clarke, A. B. (2022)
-MafiCH: a general model for H2O–CO2 solubility in mafic magmas
-Contributions to mineralogy and petrology 40
-
-"""
 
 fugacity_options = ["hollowayBlank"]
 model_options = ["mixed", "h2o", "co2"]
@@ -138,6 +125,10 @@ fugacity_model = hollowayBlank.fugacity
 
 
 class h2o(Solubility_model):
+    """
+    |H2O| solubility model from :cite:t:`allison_mafich_2022`
+    """
+
     @staticmethod
     def calculate_saturation(oxide_wtPercents: Magma, T_K: float, **kwargs) -> float:
         """
@@ -212,6 +203,10 @@ class h2o(Solubility_model):
 
 
 class co2(Solubility_model):
+    """
+    |CO2| solubility model from :cite:t:`allison_mafich_2022`
+    """
+
     @staticmethod
     def calculate_saturation(
         oxide_wtPercents: Magma,
@@ -409,6 +404,8 @@ class co2(Solubility_model):
 
 
 class mixed(Solubility_model):
+    """|CO2|-|H2O| solubility models from :cite:t:`allison_mafich_2022`"""
+
     @staticmethod
     @_check_argument("output", [None, "PXfl", "P", "Xfl"])
     def calculate_saturation(

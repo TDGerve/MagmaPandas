@@ -1,7 +1,3 @@
-"""
-|CO2|-|H2O| solubility models from :cite:t:`shishkina_solubility_2010`
-"""
-
 from typing import Tuple
 
 import numpy as np
@@ -11,14 +7,6 @@ from MagmaPandas.magma_protocol import Magma
 from MagmaPandas.parse_io.validate import _check_argument, _check_setter
 from MagmaPandas.volatile_solubility.solubility_baseclass import Solubility_model
 
-"""
-Equations from:
-
-Shiskina, T. A., Botcharnikov, R. E., Holtz, F., Almeev, R. R., Jazwa, A. M., Jakubiak, A. A. (2014)
-Compositional and pressure effects on the solubility of H2Oand CO2 in maficmelt
-Chemical geology 388 (112 - 129)
-
-"""
 fugacity_options = ["ideal"]
 
 
@@ -78,6 +66,10 @@ co2_parameters = {
 
 
 class h2o(Solubility_model):
+    """
+    |CO2| solubility model from :cite:t:`shishkina_solubility_2010`
+    """
+
     @staticmethod
     def calculate_saturation(oxide_wtPercents: Magma, **kwargs) -> float:
         """
@@ -183,6 +175,10 @@ class h2o(Solubility_model):
 
 
 class co2(Solubility_model):
+    """
+    |CO2| solubility models from :cite:t:`shishkina_solubility_2010`
+    """
+
     @staticmethod
     def calculate_saturation(oxide_wtPercents: Magma, **kwargs) -> float:
         """
@@ -297,6 +293,10 @@ class co2(Solubility_model):
 
 
 class mixed(Solubility_model):
+    """
+    |CO2|-|H2O| solubility models from :cite:t:`shishkina_solubility_2010`
+    """
+
     @staticmethod
     @_check_argument("output", [None, "PXfl", "P", "Xfl"])
     def calculate_saturation(
