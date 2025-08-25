@@ -3,3 +3,4 @@
 .. |fO2| replace:: *f*\ O\ :sub:`2`
 .. |H2O| replace:: H\ :sub:`2`\ O
 .. |CO2| replace:: CO\ :sub:`2`
+.. |kd| replace:: :math:`{K_{D}}^{Fe-Mg}_{ol-melt}`

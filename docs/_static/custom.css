@@ -1,0 +1,44 @@
+/* Wrap table cells so content can break */
+table td {
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+/* Sidebar width */
+.wy-nav-side {
+    max-width: 250px !important;
+}
+
+/* Outer wrapper: 80% of browser width, offset for sidebar */
+.wy-nav-content-wrap {
+    max-width: 75% !important;
+    width: 75% !important;
+    margin-left: 250px !important; /* offset by sidebar width */
+    flex: 1 1 70% !important;
+}
+
+/* Inner content */
+.wy-nav-content {
+    max-width: 100% !important; /* fill container */
+    width: 100% !important;
+    flex: 1 1 100% !important;
+}
+
+/* Actual document content */
+.rst-content {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* Tables and code blocks fill container */
+.rst-content table,
+.rst-content .highlight {
+    width: 100% !important;
+    table-layout: auto;
+}
+
+/* Wrap table cells */
+table td {
+    word-wrap: break-word;
+    white-space: normal;
+}

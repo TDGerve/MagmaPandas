@@ -34,10 +34,13 @@ extensions = [
     "nbsphinx",
     "sphinx_design",
     "sphinx.ext.autodoc",
+    "sphinxcontrib.bibtex",
 ]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+bibtex_bibfiles = ["ref.bib"]
+bibtex_reference_style = "author_year"
 
 intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
@@ -52,5 +55,8 @@ autodoc_member_order = "groupwise"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_rtd_theme"
-html_theme_options = {"navigation_depth": 6}
+html_theme_options = {"navigation_depth": 6, "body_max_width": None}
 html_static_path = ["../_static"]
+html_css_files = [
+    "custom.css",
+]

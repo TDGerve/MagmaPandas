@@ -14,6 +14,8 @@ MagmaPandas quickstart
    examples
    extending
    code_documentation
+   models
+   bibliography
    changelog
    support
    license

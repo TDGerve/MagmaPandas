@@ -101,18 +101,18 @@ Thermometers
 
     Allison 2022
     ************
-    .. automodule:: MagmaPandas.volatile_solubility.volatile_solubility_models.Allison2022
+    .. automodule:: MagmaPandas.volatile_solubility.volatile_solubility_models.allison2022
         :members:
 
     Iacono-Marziano 2012
     ********************
-    .. automodule:: MagmaPandas.volatile_solubility.volatile_solubility_models.IaconoMarziano
+    .. automodule:: MagmaPandas.volatile_solubility.volatile_solubility_models.iaconomarziano2012
         :members:
         :exclude-members: NBO_O_calculate
 
     Shiskina 2014
     *************
-    .. automodule:: MagmaPandas.volatile_solubility.volatile_solubility_models.Shiskina
+    .. automodule:: MagmaPandas.volatile_solubility.volatile_solubility_models.shiskina2014
         :members:
 
 .. _references:
