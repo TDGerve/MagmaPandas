@@ -406,7 +406,7 @@ def calculate_fO2(
     logshift: float, T_K, P_bar, full_output=False, suppress_Fe_liquid=False
 ):
     """
-    Calculate oxygen fugacity at the Iron-Wustite buffer according to Hirschmann (2021)\ [18]_
+    Calculate oxygen fugacity at the Iron-Wustite buffer according to :cite:t:`Hirschmann2021`
 
     Parameters
     ----------

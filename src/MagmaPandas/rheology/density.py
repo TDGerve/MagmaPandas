@@ -5,7 +5,7 @@ from MagmaPandas.magma_protocol import Magma
 from MagmaPandas.parse_io import check_components
 
 """
-based on Iacovino and Till (2019)\ [23]_
+based on :cite:t:`Iacovino2019`
 """
 
 T_reference = pd.Series(
@@ -73,9 +73,9 @@ def calculate_density(
     melt_wt_percent: Magma, T_K: float | pd.Series, P_bar: float | pd.Series
 ) -> pd.Series:
     """
-    Calculate silicate liquid densities according to the model from Iacovino and Till (2019)\ [23]_
+    Calculate silicate liquid densities according to the model from :cite:t:`Iacovino2019`
 
-    The model uses thermodynamic data from Lange and Carmichael (1987)\ [24]_, Lange (1997)\ [25]_, Kress and Carmichael (1991)\ [2]_ and Ochs III and Lange (1999)\ [26]_
+    The model uses thermodynamic data from :cite:t:`Lange1987`, :cite:t:`Lange1997`, :cite:t:`kress_compressibility_1991` and :cite:t:`Ochs1999`
 
     Parameters
     ----------

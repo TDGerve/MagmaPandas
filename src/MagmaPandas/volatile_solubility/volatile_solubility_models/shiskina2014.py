@@ -1,5 +1,5 @@
 """
-|CO2|-|H2O| solubility models from Shiskina et al. (2010)\ [34]_
+|CO2|-|H2O| solubility models from :cite:t:`shishkina_solubility_2010`
 """
 
 from typing import Tuple

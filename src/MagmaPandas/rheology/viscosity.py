@@ -115,7 +115,7 @@ def calculate_viscosity(
     melt_mol_fractions: Union[pd.DataFrame, pd.Series], T_K: Union[pd.Series, float]
 ) -> pd.Series:
     """
-    Calculate melt viscosity according to equation 1 of Giordano et al. (2008)\ [27]_.
+    Calculate melt viscosity according to equation 1 of :cite:t:`Giordano2008`.
 
     Parameters
     ----------

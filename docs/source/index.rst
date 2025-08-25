@@ -12,10 +12,10 @@ MagmaPandas quickstart
    getting_started
    notebooks/Fe3Fe2_errors
    examples
-   extending
-   code_documentation
    models
    bibliography
+   extending
+   code_documentation
    changelog
    support
    license

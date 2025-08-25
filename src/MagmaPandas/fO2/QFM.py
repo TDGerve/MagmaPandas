@@ -132,7 +132,7 @@ def _muO2_QFM_P(T_K, P_bar):
 
 def _muO2_QFM_1bar(T_K, warning=False):
     """
-    calculate chemical potential of oxygen at QFM a 1 bar. Equation from O'Neill 1987
+    calculate chemical potential of oxygen at QFM a 1 bar. Equation from :cite:t:`oneill_quartz-fayalite-iron_1987`
 
     Parameters
     ----------
@@ -164,7 +164,7 @@ def _muO2_QFM_1bar(T_K, warning=False):
 
 def _fO2_QFM_1bar(T_K, logshift=0):
     """
-    calculate fO2 at QFM + logshift a 1 bar. Equation from O'Neill 1987
+    calculate fO2 at QFM + logshift a 1 bar. Equation from :cite:t:`oneill_quartz-fayalite-iron_1987`
 
     Parameters
     ----------
@@ -190,7 +190,7 @@ def calculate_fO2(
     """
     Calculate |fO2| at the QFM buffer.
 
-    1 bar components is calculated according to O'Neill (1987)\ [13]_ and pressure contributions according to Holland and Powell (2011)\ [14]_, with Landau theory from Holland and Powell (1990, 1998)\ [15]_:sup:`,`\ [16]_ and thermal Tait equations of state parameters from Holland and Powell (2011)\ [14]_, updated by Jennings and Holland (2015)\ [17]_.
+    1 bar components is calculated according to :cite:t:`oneill_quartz-fayalite-iron_1987` and pressure contributions according to :cite:t:`Holland2011`, with Landau theory from :cite:t:`holland_enlarged_1990` and :cite:t:`holland1998`\ , and thermal Tait equations of state parameters from :cite:t:`Holland2011`, updated by :cite:t:`jennings_simple_2015`
 
     Parameters
     ----------

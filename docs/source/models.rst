@@ -101,9 +101,9 @@ Available models
      - eq. 3
      - deng2020
    * - 
-     - :cite:t:`ONeill2016` 
+     - :cite:t:`ONeill2006` 
      - eq. 10
-     - oneill2016
+     - oneill2006
    * - 
      - :cite:t:`oneill_oxidation_2018`
      - eq. 9a

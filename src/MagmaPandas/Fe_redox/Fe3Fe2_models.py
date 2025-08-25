@@ -71,7 +71,7 @@ class fixed(Fe3Fe2_model):
 
 class borisov2018(Fe3Fe2_model):
     """
-    Calculate melt |Fe3Fe2| ratios according to equation 4 from Borisov et al. (2018)\ [1]_.
+    Calculate melt |Fe3Fe2| ratios according to equation 4 from :cite:t:`borisov_ferricferrous_2018`.
     """
 
     components = ["SiO2", "TiO2", "MgO", "CaO", "Na2O", "K2O", "Al2O3", "P2O5"]
@@ -138,7 +138,7 @@ class borisov2018(Fe3Fe2_model):
 
 class kress_carmichael1991(Fe3Fe2_model):
     """
-    Calculate melt |Fe3Fe2| ratios according to equation 7 from Kress and Carmichael (1991)\ [2]_.
+    Calculate melt |Fe3Fe2| ratios according to equation 7 from :cite:t:`kress_compressibility_1991`.
     """
 
     components = ["Al2O3", "FeO", "CaO", "Na2O", "K2O"]
@@ -220,7 +220,7 @@ class kress_carmichael1991(Fe3Fe2_model):
 
 class jayasuriya2004(Fe3Fe2_model):
     """
-    Jayasuriya et al. (2004)\ [3]_ equation 12.
+    :cite:t:`Jayasuriya2004` equation 12.
     """
 
     components = ["MgO", "CaO", "Na2O", "K2O", "Al2O3", "P2O5", "FeO"]
@@ -273,7 +273,7 @@ class jayasuriya2004(Fe3Fe2_model):
 
 class putirka2016_6b(Fe3Fe2_model):
     """
-    Putirka (2016)\ [4]_ equation 6b.
+    :cite:t:`Putirka2016` equation 6b.
     """
 
     components = ["Na2O", "K2O", "Al2O3", "SiO2", "CaO"]
@@ -320,7 +320,7 @@ class putirka2016_6b(Fe3Fe2_model):
 
 class putirka2016_6c(Fe3Fe2_model):
     """
-    Putirka (2016)\ [4]_ equation 6c.
+    :cite:t:`Putirka2016` equation 6c.
     """
 
     components = [
@@ -413,7 +413,7 @@ class putirka2016_6c(Fe3Fe2_model):
 
 class deng2020(Fe3Fe2_model):
     """
-    Deng et al. (2020)\ [5]_
+    :cite:t:`Deng2020`
     """
 
     components = [
@@ -712,7 +712,7 @@ class deng2020(Fe3Fe2_model):
 
 class oneill2006(Fe3Fe2_model):
     """
-    O'neill et al. (2006)\ [6]_
+    :cite:t:`ONeill2006`
     """
 
     components = ["MgO", "CaO", "Na2O", "K2O", "Al2O3", "P2O5", "FeO"]
@@ -828,7 +828,7 @@ class oneill2006(Fe3Fe2_model):
 
 class oneill2018(Fe3Fe2_model):
     """
-    O'Neill et al. (2018)\ [7]_
+    :cite:t:`oneill_oxidation_2018`
     """
 
     components = ["CaO", "Na2O", "K2O", "P2O5"]
@@ -885,9 +885,9 @@ class oneill2018(Fe3Fe2_model):
 
 class armstrong2019(Fe3Fe2_model):
     """
-    Armstrong et al. (2019)\ [8]_
+    :cite:t:`Armstrong2019`
 
-    Calibrated with one andesitic and one MORB compositions + data from O'neill et al. (2006)\ [6]_ and Zhang et al. (2017)\ [9]_
+    Calibrated with one andesitic and one MORB compositions + data from :cite:t:`ONeill2006` and :cite:t:`Zhang2017`
     """
 
     components = ["MgO", "CaO", "Na2O", "K2O", "Al2O3"]
@@ -1110,7 +1110,7 @@ class armstrong2019(Fe3Fe2_model):
 
 class zhang2017(Fe3Fe2_model):
     """
-    Zhang et al. (2017)\ [9]_
+    :cite:t:`Zhang2017`
 
     Only calibrated with an andesitic melt composition
     """
@@ -1193,7 +1193,7 @@ class zhang2017(Fe3Fe2_model):
 
 class hirschmann2022(Fe3Fe2_model):
     """
-    Hirschmann (2022)\ [10]_
+    :cite:t:`Hirschmann2022`
     """
 
     components = ["SiO2", "TiO2", "MgO", "CaO", "Na2O", "K2O", "P2O5", "Al2O3"]
@@ -1307,7 +1307,7 @@ class hirschmann2022(Fe3Fe2_model):
 
 class sun2024(Fe3Fe2_model):
     """
-    Sun and Yao (2024)\ [11]_
+    :cite:t:`Sun2024`
     """
 
     components = ["FeO", "SiO2", "Al2O3", "TiO2", "CaO", "MgO", "Na2O", "K2O"]

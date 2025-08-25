@@ -74,7 +74,7 @@ def putirka2008_13(
     """
     melt-only thermometer
 
-    Equation 13 from Putirka (2008)\ [28]_ calculates liquidus temperatures based on melt compositions.
+    Equation 13 from :cite:t:`Putirka2008a` calculates liquidus temperatures based on melt compositions.
     Requires saturation in olivine.
 
     SEE = 71 degrees
@@ -112,7 +112,7 @@ def putirka2008_14(
     """
     melt-only thermometer
 
-    Equation 14 from Putirka (2008)\ [28]_ calculates liquidus temperatures based on melt compositions.
+    Equation 14 from :cite:t:`Putirka2008a` calculates liquidus temperatures based on melt compositions.
     Requires saturation in olivine.
 
     SEE = 58 degrees
@@ -198,7 +198,7 @@ def putirka2008_15(
     """
     melt-only thermometer
 
-    Equation 15 from Putirka (2008)\ [28]_ calculates liquidus temperatures based on melt compositions.
+    Equation 15 from :cite:t:`Putirka2008a` calculates liquidus temperatures based on melt compositions.
     Requires saturation in olivine.
 
     SEE = 46 degrees
@@ -285,7 +285,7 @@ def putirka2008_16(
     """
     melt-only thermometer
 
-    Equation 16 from Putirka (2008)\ [28]_ calculates liquiqdus temperatures based on melt compositions.
+    Equation 16 from :cite:t:`Putirka2008a` calculates liquiqdus temperatures based on melt compositions.
     Requires equilibrium with olivine + plagioclase + clinopyroxene and saturation with additional phases drastically increases the standard error of estimate.
 
     SEE = 26 degrees (saturation in olivine + plagioclase + clinopyroxene)
@@ -355,7 +355,7 @@ def putirka2008_22(
     """
     melt-only thermometer
 
-    Equation 22 from Putirka (2008)\ [28]_, combined with equation 12 from Beattie (1993) calculates liquidus temperatures based on melt compositions. #TODO add reference link
+    Equation 22 from :cite:t:`Putirka2008a`, combined with equation 12 from Beattie (1993) calculates liquidus temperatures based on melt compositions. #TODO add reference link
 
 
     Parameters
@@ -429,7 +429,7 @@ def sun2020(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs):
     """
     Equation 6 from:
 
-    Sun and Dasgupta (2020)\ [22]_
+    :cite:t:`Sun2020a`
 
     Calibrated at:
     ~ 2 - 10 GPa
@@ -488,7 +488,7 @@ def sun2020(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs):
 
 def shea2022(melt, offset: float = 0.0, **kwargs):
     """
-    Equation 1 from Shea et al. (2022)\ [30]_
+    Equation 1 from :cite:t:`Shea2022`
 
     Calibrated at:
     1 bar
@@ -523,7 +523,7 @@ def shea2022(melt, offset: float = 0.0, **kwargs):
 
 def sugawara2000_3(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs):
     """
-    Equation 3 with olivine-liquid parameters and corrected for H2O according to equation 7a from Sugawara (2000)\ [31]_
+    Equation 3 with olivine-liquid parameters and corrected for H2O according to equation 7a from :cite:t:`Sugawara2000`
 
     Calibrated at:
     <= 3.5 GPa
@@ -568,7 +568,7 @@ def sugawara2000_3(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs
 
 def sugawara2000_6a(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs):
     """
-    Equation 6a corrected for H2O according to equation 7a from Sugawara (2000)\ [31]_
+    Equation 6a corrected for H2O according to equation 7a from :cite:t:`Sugawara2000`
     Calibrated at:
     <= 3.5 GPa
     1266 - 1873 C

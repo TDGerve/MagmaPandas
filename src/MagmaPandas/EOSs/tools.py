@@ -9,9 +9,9 @@ def landau(phase, pkbar, T_K, **kwargs):
     Excess Gibbs free energy from Landau theory.
 
     Based on:
-    Holland and Powell, 1998, p.312
+    :cite:t:`holland1998` p.312
     and
-    Holland and Powell, 1990
+    :cite:t:`holland_enlarged_1990`
 
     Rewritten according to Michael Anenberg:
     https://fo2.rses.anu.edu.au/fo2app/
@@ -80,7 +80,7 @@ def landau_P_dependent(phase, pkbar, T_K, formulation="anenberg"):
     pkbar       :   int, float
         Pressure in kilobars
     formulation :   str
-        'holland' for the formulation by Holland and Powell (1998), otherwise Michael Anenberg's
+        'holland' for the formulation by :cite:t:`holland1998`, otherwise Michael Anenberg's
         formulation will be used:
         https://fo2.rses.anu.edu.au/fo2app/
         (see FMQ buffer details and references)
@@ -103,7 +103,7 @@ def landau_Holland(phase, pkbar, T_K, **kwargs):
     """
     Excess Gibbs free energy from Landau theory
 
-    Equations from Holland and Powell (1998), p. 312
+    Equations from :cite:t:`holland1998`
 
     Parameters
     ----------
@@ -214,7 +214,7 @@ def enthalpy(phase: str, T_K: int | float, Tref: int | float = 298.15):
 
     Cp = a + bT + cT**-2 + dT**(-1/2)
 
-    Cp, a, b, c, & d from Holland and Powell (2011)
+    Cp, a, b, c, & d from cite:t:`Holland2011`
 
     Parameters
     ----------
@@ -247,7 +247,7 @@ def entropy(phase: str, T_K: int | float, Tref: int | float = 298.15):
 
     Cp/T = a/T + b + cT**-3 + dT**(-3/2)
 
-    Cp, a, b, c & d from Holland and Powell (2011)
+    Cp, a, b, c & d from :cite:t:`Holland2011`
 
     Parameters
     ----------
@@ -276,7 +276,7 @@ def entropy(phase: str, T_K: int | float, Tref: int | float = 298.15):
 
 def thermal_expansivity(V, V_0, alpha0, delta0, kappa):
     """
-    Equation 5 from Komabayashi (2014)
+    Equation 5 from :cite:t:`Komabayashi2014`
 
     Parameters
     ----------
