@@ -108,7 +108,7 @@ class Fe3Fe2_model(ABC):
         Fe3Fe2  : array-like
             melt |Fe3Fe2| ratios
         pressure : array-like, optional
-            pressures of each element in ``|Fe3Fe2|``. If this term is not included, errors will be calculated strictly at 1 bar.
+            pressures of each element in ``Fe3Fe2``. If this term is not included, errors will be calculated strictly at 1 bar.
 
         Returns
         -------

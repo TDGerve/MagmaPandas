@@ -28,7 +28,8 @@ def _is_Fe3Fe2_model(cls):
 
 class fixed(Fe3Fe2_model):
     """
-    Get fixed |Fe3Fe2| ratios.
+    Get fixed |Fe3Fe2| ratios. Values and errors need to be set via :py:class:`~MagmaPandas.configuration.configuration`
+
     """
 
     value = None

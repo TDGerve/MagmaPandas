@@ -28,7 +28,7 @@ def _is_Kd_model(cls):
 
 class fixed(Kd_model):
     """
-    Get fixed Kd ratios.
+    Get fixed Kd ratios. Values and errors need to be set via :py:class:`~MagmaPandas.configuration.configuration`
     """
 
     value = None
