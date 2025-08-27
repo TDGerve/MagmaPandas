@@ -99,7 +99,7 @@ Available models
      - 0.0141
      - saper2022
    * - 
-     - fixed
+     - fixed value
      - user set
      - user set
      - fixed
@@ -169,7 +169,7 @@ Available models
      - fitted
      - sun2024
    * - 
-     - fixed
+     - fixed value
      - user set
      - user set
      - fixed  
