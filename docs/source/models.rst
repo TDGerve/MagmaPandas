@@ -240,7 +240,7 @@ Available models
      - shishkina2010
 
 
-Errors are uncertainties on calibrations, as reported in their original publications. For fitted Fe3Fe2 errors, please see the `Fe3Fe2 error documentation <https://magmapandas.readthedocs.io/en/latest/notebooks/Fe3Fe2_errors.html>`_. For |fo2| and volatile solubility models, errors are not available
+Errors are uncertainties on calibrations, as reported in their original publications. Fe3Fe2 errors are fitted from a validation dataset, please see the `Fe3Fe2 error documentation <https://magmapandas.readthedocs.io/en/latest/notebooks/Fe3Fe2_errors.html>`_ for further explanation. For |fo2| and volatile solubility models, errors are not available
 
      
 
