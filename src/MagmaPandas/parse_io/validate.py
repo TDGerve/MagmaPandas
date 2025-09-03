@@ -135,3 +135,12 @@ def _match_index(x, arg_names: list[str], kwargs):
             continue
         if not x.index.equals(param.index):
             raise RuntimeError(f"index doesn't match with {name}")
+
+
+def _ensure_str_list(names: List[str], vals: List):
+    for name, val in zip(names, vals):
+        if not (
+            isinstance(val, str)
+            or (isinstance(val, list) and all(isinstance(i, str) for i in val))
+        ):
+            raise TypeError(f"{name} must be a string or list of strings.")
