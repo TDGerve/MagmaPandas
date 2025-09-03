@@ -1,6 +1,7 @@
 import elementMass as e
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 
 markers = ("<", "^", "s", "v", ">", "*", "p", ".", "P", "X", "8", "d")
 marker_sizes = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.5, 1.2, 1.5, 1.2, 1.2, 1.0, 1.2])
@@ -273,3 +274,30 @@ def subscript_numbers(compound: str):
             string = string + f"$_{quantity}$"
 
     return string
+
+
+def _normalise_kde(kde: Axes, axis: str, min_val=0, max_val=1):
+    """Normalise the height of kde to `max_val`"""
+
+    if axis not in ("x", "y"):
+        raise ValueError("axis must be 'x' or 'y'.")
+    ax = {"x": 1, "y": 0}[axis]
+
+    for collection in kde.collections:
+
+        path = collection.get_paths()
+
+        kde_values = path[0].vertices[:, ax]
+        normalised_kde_values = []
+        diff = max_val - min_val
+        diff_array = max(kde_values) - min(kde_values)
+        for i in kde_values:
+            temp = (((i - min(kde_values)) * diff) / diff_array) + min_val
+            normalised_kde_values.append(temp)
+
+        path[0].vertices[:, ax] = normalised_kde_values
+    if axis == "y":
+        kde.set_xlim(min_val, max_val * 1.05)
+    elif axis == "x":
+        kde.set_ylim(min_val, max_val * 1.05)
+    kde.autoscale_view()
