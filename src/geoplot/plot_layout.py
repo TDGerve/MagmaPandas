@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib.axes import Axes
 
 markers = ("<", "^", "s", "v", ">", "*", "p", ".", "P", "X", "8", "d")
-marker_sizes = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.5, 1.2, 1.5, 1.2, 1.2, 1.0, 1.2])
+marker_sizes = np.array([1.0, 1.2, 1.0, 1.0, 1.0, 1.5, 1.2, 1.5, 1.2, 1.2, 1.0, 1.2])
 
 
 # Color palettes
@@ -138,7 +138,7 @@ def layout(colors=colors.hollywood, fontsize=8, **kwargs):
     axTitleSize = int(fontsize)
     axLabelSize = int(fontsize)
     tickLabelSize = int(fontsize)
-    markersize = kwargs.pop("markersize", 3)
+    markersize = kwargs.pop("markersize", 4)
     linewidth = kwargs.pop("linewidth", 1)
     facecolor = kwargs.pop("facecolor", "white")
     gridcolor = kwargs.pop("gridcolor", "whitesmoke")
