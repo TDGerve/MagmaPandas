@@ -112,8 +112,8 @@ def plot_calibration(
         melts=melts,
         models=models,
         sidekde=sidekde,
-        calibration_props={"mec": "k", "ms": 4},
-        melt_props={"mec": "k", "ms": 5},
+        calibration_props=calibration_props,
+        melt_props=melt_props,
     )
 
     ax.set_xlabel(f"wt.% {'+'.join(gp.subscript_numbers(i) for i in x_elements)}")
@@ -254,7 +254,7 @@ def _prepare_plot_calibration(
         calibration_plot = ax.plot(
             x_calibration_data,
             y_calibration_data,
-            "D",
+            # "D",
             lw=0.0,
             label=f"{model} dataset\n($n={data.shape[0]:d}$)",
             **calibration_props,
@@ -284,9 +284,7 @@ def _prepare_plot_calibration(
     x_melt_data = melts[x_elements].sum(axis=1)
     y_melt_data = melts[y_elements].sum(axis=1)
 
-    melts_plot = ax.plot(
-        x_melt_data, y_melt_data, "o", lw=0.0, label="melts", **melt_props
-    )
+    melts_plot = ax.plot(x_melt_data, y_melt_data, lw=0.0, label="melts", **melt_props)
 
     results.append(melts_plot)
 
