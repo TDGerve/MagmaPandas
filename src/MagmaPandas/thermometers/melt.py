@@ -17,7 +17,7 @@ from MagmaPandas.tools.modify_compositions import (
     _anhydrous_composition,
     _get_elements,
     _remove_elements,
-    moles_per_oxygen,
+    cation_moles_per_oxygen,
 )
 
 calibration_range = {
@@ -157,10 +157,10 @@ def putirka2008_14(
     # composition = parse_data(melt, oxides_needed)
 
     H2O = composition["H2O"].copy()
-    composition = _anhydrous_composition(composition)
+    anhydrous_composition = _anhydrous_composition(composition, normalise=False)
 
     # Calculate molar oxide fractions
-    mol_fractions = composition.moles()
+    mol_fractions = anhydrous_composition.moles()
     # Melt Mg#
     Mg_no = mol_fractions["MgO"] / (
         mol_fractions["MgO"] + mol_fractions["FeO"]
@@ -245,12 +245,12 @@ def putirka2008_15(
     # composition = parse_data(melt, oxides_needed)
 
     H2O = composition["H2O"].copy()
-    composition = _anhydrous_composition(composition)
+    anhydrous_composition = _anhydrous_composition(composition, normalise=False)
 
     P_GPa = P_bar / 1e4
 
     # Calculate molar oxide fractions
-    mol_fractions = composition.moles()
+    mol_fractions = anhydrous_composition.moles()
     # Melt Mg#
     Mg_no = mol_fractions["MgO"] / (
         mol_fractions["MgO"] + mol_fractions["FeO"]
@@ -321,7 +321,7 @@ def putirka2008_16(
             raise RuntimeError("Melt and P_bar indices don't match")
 
     if "H2O" in elements:
-        composition = _anhydrous_composition(composition)
+        composition = _anhydrous_composition(composition, normalise=False)
 
     # Convert pressure from bars to GPa
     P_GPa = P_bar / 1e4
@@ -460,7 +460,7 @@ def sun2020(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs):
     composition_volatile_free = _remove_elements(
         composition=moles, drop=["H2O", "CO2", "F", "S", "Cl"]
     )
-    moles_unit_oxygen = moles_per_oxygen(moles=composition_volatile_free)
+    moles_unit_oxygen = cation_moles_per_oxygen(moles=composition_volatile_free)
 
     Omega = (
         2.59
@@ -523,7 +523,7 @@ def shea2022(melt, offset: float = 0.0, **kwargs):
 
 def sugawara2000_3(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs):
     """
-    Equation 3 with olivine-liquid parameters and corrected for H2O according to equation 7a from :cite:t:`Sugawara2000`
+    Equation 3 from :cite:t:`Sugawara2000` with olivine-liquid parameters and corrected for H2O according to equation 7a.
 
     Calibrated at:
     <= 3.5 GPa
@@ -549,15 +549,16 @@ def sugawara2000_3(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwargs
     composition = check_components(
         composition=melt, components=components["sugawara2000_3"]
     )
-    moles_percent = composition.moles() * 100
+    anhydrous_composition = _anhydrous_composition(composition=composition)
+    moles_percent = anhydrous_composition.moles() * 100
 
     A = 1293
     B = 14.60
     C = 5.5e-3
     T_K = A + B * moles_percent["MgO"] + C * P_bar
 
-    if "H2O" in moles_percent.elements:
-        T_K = T_K - 5.403 * moles_percent["H2O"]
+    if "H2O" in composition.elements:
+        T_K = T_K - 5.403 * composition.moles()["H2O"] * 100
 
     _check_temperature(T_K)
 
@@ -593,19 +594,20 @@ def sugawara2000_6a(melt, P_bar: float | pd.Series, offset: float = 0.0, **kwarg
     composition = check_components(
         composition=melt, components=components["sugawara2000_6a"]
     )
-    moles_percent = composition.moles() * 100
+    anhydrous_composition = _anhydrous_composition(composition=composition)
+    anhydrous_moles_percent = anhydrous_composition.moles() * 100
 
     T_K = (
         1466
-        - 1.44 * moles_percent["SiO2"]
-        - 0.5 * moles_percent["FeO"]
-        + 12.32 * moles_percent["MgO"]
-        - 3.899 * moles_percent["CaO"]
+        - 1.44 * anhydrous_moles_percent["SiO2"]
+        - 0.5 * anhydrous_moles_percent["FeO"]
+        + 12.32 * anhydrous_moles_percent["MgO"]
+        - 3.899 * anhydrous_moles_percent["CaO"]
         + 4.3e-3 * P_bar
     )
 
-    if "H2O" in moles_percent.elements:
-        T_K = T_K - 5.403 * moles_percent["H2O"]
+    if "H2O" in composition.elements:
+        T_K = T_K - 5.403 * composition.moles()["H2O"] * 100
 
     _check_temperature(T_K)
 

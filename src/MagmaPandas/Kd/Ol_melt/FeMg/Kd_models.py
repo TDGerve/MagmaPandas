@@ -13,7 +13,10 @@ from MagmaPandas.Kd.Ol_melt.FeMg.Kd_iterate import (
     iterate_Kd_vectorized,
 )
 from MagmaPandas.parse_io import check_components
-from MagmaPandas.tools.modify_compositions import _remove_elements, moles_per_oxygen
+from MagmaPandas.tools.modify_compositions import (
+    _remove_elements,
+    cation_moles_per_oxygen,
+)
 
 
 def _is_Kd_model(cls):
@@ -110,7 +113,7 @@ class toplis2005(Kd_model):
         Phi for SiO2 > 60 mol%
         """
 
-        return (11 - 5.5 * 100 / (100 - molar_SiO2)) * np.exp(
+        return (11 - 5.5 * (100 / (100 - molar_SiO2))) * np.exp(
             -0.31 * (molar_Na2O + molar_K2O)
         )
 
@@ -497,7 +500,7 @@ class putirka2016_8c(Kd_model):
 
     a = 0.25
     b = 1.8e-3
-    c = -3.25e-4
+    c = -3.27e-4
 
     components = ["SiO2", "Na2O", "K2O"]
 
@@ -548,8 +551,6 @@ class putirka2016_8d(Kd_model):
 
     components = ["SiO2", "Al2O3", "Na2O", "K2O"]
 
-    components = ["SiO2", "Na2O", "K2O"]
-
     error = 4.2e-2
 
     @classmethod
@@ -599,7 +600,7 @@ class sun2020(Kd_model):
     Sun, C., Dasgupta, R. (2020) Thermobarometry of CO2-rich, silica-undersaturated melts constrains cratonic lithosphere thinning through time in areas of kimberlitic magmatism. Earth and Planetary Sience Letters. 550
     """
 
-    volatiles = ["H2O", "CO2", "F", "S", "Cl"]
+    volatiles = ["H2O", "CO2"]
     components = ["MgO", "Na2O", "H2O"]
     error = 0.03
 
@@ -630,16 +631,20 @@ class sun2020(Kd_model):
         composition = check_components(
             composition=melt_mol_fractions, components=cls.components
         )
-        melt_volatile_free = _remove_elements(composition, drop=cls.volatiles)
-        melt_per_oxygen = moles_per_oxygen(moles=melt_volatile_free)
+        melt_volatile_free = _remove_elements(
+            composition, drop=["H2O", "CO2"]
+        ).normalise()
+        cations_per_oxygen = cation_moles_per_oxygen(moles=melt_volatile_free)
         melt_wtpc = composition.wt_pc()
 
         Kd_Fe_total = np.exp(
             -1.65
-            + 1.22 * np.sqrt(melt_per_oxygen["Mg1O"])
-            + 2.45 * melt_per_oxygen["Na2O"]
-            + 0.54 * melt_wtpc["H2O"] / 100
+            + 1.22 * np.sqrt(cations_per_oxygen["Mg1O"])
+            + 2.45 * cations_per_oxygen["Na2O"]
+            + 0.54 * (melt_wtpc["H2O"] / 100)
         )
+        # the paper uses 2.45*Na2O, but with this value, calculations from the spreadsheet in the paper supplement cannot be reproduced.
+
         Fe3FeTotal = Fe3Fe2 / (1 + Fe3Fe2)
 
         Kd_Fe2 = Kd_Fe_total / (1 - Fe3FeTotal)
