@@ -8,11 +8,12 @@ MagmaPandas quickstart
    :maxdepth: 2
    :caption: Contents:
 
-   about
    getting_started
-   notebooks/Fe3Fe2_errors
+   about
    examples
    models
+   notebooks/Fe3Fe2_errors
+   benchmarks
    bibliography
    extending
    code_documentation

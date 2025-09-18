@@ -1,8 +1,8 @@
 sphinx_rtd_theme
-myst-parser
-nbsphinx
+myst-nb
 sphinx-design
 sphinxcontrib-bibtex
+docutils
 pandas<=2.1.4
 numpy<=1.26.4
 scipy

@@ -27,14 +27,18 @@ release = "2.0.6"
 
 
 extensions = [
-    "myst_parser",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
-    "nbsphinx",
+    "myst_nb",
     "sphinx_design",
     "sphinx.ext.autodoc",
     "sphinxcontrib.bibtex",
+]
+
+myst_enable_extensions = [
+    "amsmath",
+    "dollarmath",
 ]
 
 templates_path = ["_templates"]
@@ -50,7 +54,7 @@ intersphinx_mapping = {
 intersphinx_disabled_reftypes = ["*"]
 autodoc_member_order = "groupwise"
 
-
+nb_execution_mode = "off"
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
