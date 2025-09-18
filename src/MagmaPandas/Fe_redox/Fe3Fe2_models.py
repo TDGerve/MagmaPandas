@@ -7,13 +7,17 @@ import pandas as pd
 from scipy.constants import Avogadro, R
 from scipy.optimize import fsolve
 
-from MagmaPandas.EOSs.birch_murnaghan import birch_murnaghan_4th_order
+from MagmaPandas.EOSs.birch_murnaghan import (
+    birch_murnaghan_4th_order,
+    birch_murnaghan_4th_order_stacey,
+)
 from MagmaPandas.Fe_redox.Fe3Fe2_baseclass import Fe3Fe2_model
 from MagmaPandas.Fe_redox.Fe3Fe2_errors import (
     error_params_1bar,
     error_params_high_pressure,
 )
 from MagmaPandas.parse_io import check_components, make_equal_length
+from MagmaPandas.parse_io.validate import _check_argument
 
 
 def _is_Fe3Fe2_model(cls):
@@ -192,7 +196,7 @@ class kress_carmichael1991(Fe3Fe2_model):
             composition=melt_mol_fractions, components=cls.components
         )
 
-        P_Pa = P_bar / 1e5
+        P_Pa = P_bar * 1e5
 
         axis = [0, 1][isinstance(moles, pd.DataFrame)]
 
@@ -279,11 +283,11 @@ class putirka2016_6b(Fe3Fe2_model):
 
     components = ["Na2O", "K2O", "Al2O3", "SiO2", "CaO"]
 
-    a = 6.53
+    a = -6.53
     b = 10813.8
     c = 0.19
     d = 12.4
-    e = 3.44
+    e = -3.44
     f = 4.15
 
     error_params = [1.87571331e-01, 2.58857703e-03, 8.65663335e-01, 2.43304009e01]
@@ -299,10 +303,10 @@ class putirka2016_6b(Fe3Fe2_model):
 
         axis = [0, 1][isinstance(moles, pd.DataFrame)]
 
-        part1 = -cls.a + cls.b / T_K
-        part2 = cls.c * np.log(fO2) + 12.4 * moles[["Na2O", "K2O"]].sum(axis=axis)
+        part1 = cls.a + cls.b / T_K
+        part2 = cls.c * np.log(fO2) + cls.d * moles[["Na2O", "K2O"]].sum(axis=axis)
         part3 = (
-            -cls.e * (moles["Al2O3"] / moles[["Al2O3", "SiO2"]].sum(axis=axis))
+            +cls.e * (moles["Al2O3"] / moles[["Al2O3", "SiO2"]].sum(axis=axis))
             + cls.f * moles["CaO"]
         )
 
@@ -430,12 +434,12 @@ class deng2020(Fe3Fe2_model):
     ]
     gibbs_parameters = pd.Series(
         {
-            "a": -3.310e5,
-            "b": -190.379,
-            "c": 14.785,
-            "d": -1.649e-3,
-            "e": 9.348e6,
-            "f": 1.077e4,
+            "a": -331035.9211346371,
+            "b": -190.3795512883899,
+            "c": 14.785873706952849,
+            "d": -0.0016487959655627517,
+            "e": 9348044.389346942,
+            "f": 10773.299613088355,
         }
     )
 
@@ -453,6 +457,8 @@ class deng2020(Fe3Fe2_model):
     )
     Fe_margules = -14210  # fit 3
 
+    # More accurate values from the code on Deng's github page: https://github.com/neojie/oxidation_lite
+    # These values are slightly different than the rounded values in the Deng supplement.
     eos_params = pd.DataFrame(
         [
             [1180.114014, 1204.763652, 1192.011066, 1256.727179],
@@ -473,6 +479,28 @@ class deng2020(Fe3Fe2_model):
         columns=list(zip(*[["12.5molpc"] * 2 + ["25molpc"] * 2, ["Fe2", "Fe3"] * 2])),
         index=["a", "b", "c"],
     )
+
+    eos_params_paper = pd.DataFrame(
+        [
+            [1180.1, 1204.69, 1192.01, 1256.73],
+            [26.76, 23.18, 23.95, 16.13],
+            [2.80, 3.22, 3.32, 4.58],
+            [0.01, 0.01, -0.01, -0.18],
+        ],
+        columns=list(zip(*[["12.5molpc"] * 2 + ["25molpc"] * 2, ["Fe2", "Fe3"] * 2])),
+        index=["V_0", "K_0", "Kprime_0", "Kprime_prime_0"],
+    )
+
+    thermal_pressure_params_paper = pd.DataFrame(
+        [
+            [35.7, 34.53, 31.35, 30.38],
+            [71.10, 68.64, 62.49, 59.11],
+            [36.6, 35.27, 32.47, 29.65],
+        ],
+        columns=list(zip(*[["12.5molpc"] * 2 + ["25molpc"] * 2, ["Fe2", "Fe3"] * 2])),
+        index=["a", "b", "c"],
+    )
+
     formula_units = {"12.5molpc": 2.0, "25molpc": 4.0}
     T_K_ref = 3000
     A3_to_cm3 = 1e-24
@@ -489,6 +517,7 @@ class deng2020(Fe3Fe2_model):
         melt_Fe: str = "12.5molpc",
         Fe3Fe2_init=0.3,
         total_Fe="FeO",
+        params_paper=False,
         **kwargs,
     ):
 
@@ -500,7 +529,9 @@ class deng2020(Fe3Fe2_model):
 
         # TODO  CHECK UNITS: BARS, PASCAL OR GPA??
 
-        dVdP = cls._dVdP(T_K=T_K, P_bar=P_bar, melt_Fe=melt_Fe, **kwargs)
+        dVdP = cls._dVdP(
+            T_K=T_K, P_bar=P_bar, melt_Fe=melt_Fe, params_paper=params_paper, **kwargs
+        )
         gibbs0 = cls._gibbs0(T_K)
 
         try:
@@ -559,7 +590,9 @@ class deng2020(Fe3Fe2_model):
         cations = moles.FeO_Fe2O3_calc(Fe3Fe2, wtpc=False, total_Fe=total_Fe).cations()
         Fe_activities = cls._Fe_activities(cations, T_K)
 
-        Fe3Fe2 = np.exp(-(gibbs0 + dVdP) / (R * T_K) - Fe_activities + np.log(fO2) / 4)
+        Fe3Fe2 = np.exp(
+            -(gibbs0 + dVdP) / (R * T_K) - Fe_activities + (np.log(fO2) / 4)
+        )
 
         return Fe3Fe2
 
@@ -591,7 +624,7 @@ class deng2020(Fe3Fe2_model):
     @classmethod
     @np.vectorize(excluded=["cls", "phase", "melt_Fe"])
     def _calculate_volume(
-        cls, T_K: float, P_bar: float, phase: str, melt_Fe: str
+        cls, T_K: float, P_bar: float, phase: str, melt_Fe: str, params_paper=False
     ) -> float:
         """
         Equation 2 solved for volume.
@@ -599,13 +632,18 @@ class deng2020(Fe3Fe2_model):
         Returns
         -------
         volume  :   float
-            volume in Angstrom^3
+            volume in cm3
         """
         P_GPa = P_bar / 1e4
-        eos_params = cls.eos_params[(f"{melt_Fe}", f"{phase}")]
-        thermal_pressure_params = cls.thermal_pressure_params[
-            (f"{melt_Fe}", f"{phase}")
-        ]
+        eos_params = cls.eos_params if not params_paper else cls.eos_params_paper
+        eos_params = eos_params[(f"{melt_Fe}", f"{phase}")]
+
+        thermal_pressure_params = (
+            cls.thermal_pressure_params
+            if not params_paper
+            else cls.thermal_pressure_params_paper
+        )
+        thermal_pressure_params = thermal_pressure_params[(f"{melt_Fe}", f"{phase}")]
 
         v_init = eos_params["V_0"] - 6 * P_GPa
 
@@ -620,40 +658,44 @@ class deng2020(Fe3Fe2_model):
             - P_GPa
         )
 
-        V_sol = fsolve(func, x0=v_init)[0]
+        V_sol = fsolve(func, x0=v_init)[
+            0
+        ]  # A3 per mole Mg14Fe2Si16Oxx or Mg12Fe4Si16Oxx
+        V_sol = V_sol / cls.formula_units[melt_Fe] * Avogadro  # convert to A3 per Fe
+        V_sol = V_sol * cls.A3_to_cm3  # convert to cm3
 
-        V_sol / cls.formula_units[
-            melt_Fe
-        ]  # do not delete this line; for some reason that results in divide by 0 warnings from numpy. Don't ask me why :(
+        # V_sol / cls.formula_units[
+        #     melt_Fe
+        # ]  # do not delete this line; for some reason that results in divide by 0 warnings from numpy. Don't ask me why :(
 
         return V_sol
 
     @classmethod
-    def _deltaV(cls, T_K, P_bar, melt_Fe):
+    def _deltaV(cls, T_K, P_bar, melt_Fe, params_paper=False):
         """
         Volume change across equation 1.
 
         Returns
         -------
         dV : float
-            delta Volume in cm^3/mol (Fe3 - Fe2).
+            delta Volume in cm^3 (Fe3 - Fe2).
         """
         if isinstance(T_K, (float, int)):
             T_K = np.ones_like(P_bar) * T_K
 
         Fe2_volume = (
-            cls._calculate_volume(T_K, P_bar, "Fe2", melt_Fe)
-            / cls.formula_units[melt_Fe]
-            * Avogadro
-            * cls.A3_to_cm3
-        )  # cm3/mol
+            cls._calculate_volume(T_K, P_bar, "Fe2", melt_Fe, params_paper=params_paper)
+            # / cls.formula_units[melt_Fe]
+            # * Avogadro
+            # * cls.A3_to_cm3
+        )  # cm3
 
         Fe3_volume = (
-            cls._calculate_volume(T_K, P_bar, "Fe3", melt_Fe)
-            / cls.formula_units[melt_Fe]
-            * Avogadro
-            * cls.A3_to_cm3
-        )  # cm3/mol
+            cls._calculate_volume(T_K, P_bar, "Fe3", melt_Fe, params_paper=params_paper)
+            # / cls.formula_units[melt_Fe]
+            # * Avogadro
+            # * cls.A3_to_cm3
+        )  # cm3
 
         return Fe3_volume - Fe2_volume
 
@@ -666,6 +708,7 @@ class deng2020(Fe3Fe2_model):
         melt_Fe: str,
         Pbar_min=1.0,
         Pbar_step=5e2,
+        params_paper=False,
         **kwargs,
     ):
         """
@@ -679,10 +722,15 @@ class deng2020(Fe3Fe2_model):
 
         P_array = np.arange(Pbar_min, P_bar + Pbar_step, Pbar_step)
 
-        dV = cls._deltaV(T_K=T_K, P_bar=P_array, melt_Fe=melt_Fe) * 1e-6  # cm3 to m3
+        dV = (
+            cls._deltaV(
+                T_K=T_K, P_bar=P_array, melt_Fe=melt_Fe, params_paper=params_paper
+            )
+            * 1e-6
+        )  # cm3 to m3
 
         # TODO  CHECK UNITS: CM3, M3, A3, BAR, PASCAL OR GPA??
-        return np.trapz(dV, P_array * 1e5)  # bar to Pascal
+        return np.trapezoid(dV, P_array * 1e5)  # bar to Pascal
 
     @classmethod
     def _Fe_activities(cls, melt_cation_fractions, T_K):
@@ -694,9 +742,11 @@ class deng2020(Fe3Fe2_model):
 
         sum_margules = melt_cation_fractions.mul(cls.margules).sum(axis=axis)
 
-        LN_aFe3_aFe2 = sum_margules / (R * T_K) + (
-            melt_cation_fractions["Fe"] - melt_cation_fractions["Fe3"]
-        ) * cls.Fe_margules / (R * T_K)
+        LN_aFe3_aFe2 = (
+            sum_margules
+            + (melt_cation_fractions["Fe"] - melt_cation_fractions["Fe3"])
+            * cls.Fe_margules
+        ) / (R * T_K)
 
         return LN_aFe3_aFe2
 
@@ -781,8 +831,8 @@ class oneill2006(Fe3Fe2_model):
 
         Fe3Fe2 = pd.Series(dtype=float)
 
-        for (n, X), P, T, f in zip(moles.iterrows(), P_bar, T_K, fO2):
-            Fe3Fe2.loc[n] = fsolve(Fe3Fe2_func, x0=Fe3Fe2_init, args=(X, P, T, f))[0]
+        for (n, X), P, T_K, f in zip(moles.iterrows(), P_bar, T_K, fO2):
+            Fe3Fe2.loc[n] = fsolve(Fe3Fe2_func, x0=Fe3Fe2_init, args=(X, P, T_K, f))[0]
 
         return Fe3Fe2.squeeze()
 
@@ -1131,6 +1181,7 @@ class zhang2017(Fe3Fe2_model):
     error_params = [1.55144202e-01, 3.39642134e-03, 9.87246138e-01, 2.68123961e02]
 
     @classmethod
+    @_check_argument("parameters", ("LC", "Guo"))
     def calculate_Fe3Fe2(
         cls, melt_mol_fractions, T_K, P_bar, fO2, parameters="LC", *args, **kwargs
     ):
@@ -1331,7 +1382,46 @@ class sun2024(Fe3Fe2_model):
             "h": 2.1410,
         }
     )
-    # TODO calculate parameters
+
+    Gamma_parameters = pd.DataFrame(
+        {
+            "t0": [
+                -1.75528e-01,
+                3.48174e00,
+                3.06370e00,
+                1.36134e-02,
+                1.52660e-05,
+                -4.68802e-01,
+                -3.58957e00,
+                -1.09496e-01,
+                -7.28938e-04,
+            ],
+            "t1": [
+                1.82549e-03,
+                -1.06395e-02,
+                -2.36645e-02,
+                -1.56206e-08,
+                -1.66849e-08,
+                1.44394e-03,
+                1.48791e-02,
+                -3.32256e-04,
+                5.45464e-07,
+            ],
+            "t2": [
+                -2.14783e-04,
+                1.19184e-03,
+                2.76222e-03,
+                -3.92864e-07,
+                1.56116e-09,
+                -1.60439e-04,
+                -1.69242e-03,
+                4.31406e-05,
+                -4.43921e-08,
+            ],
+        },
+        index=["b0", "b1", "b2", "b3", "b4", "c1", "c2", "c3", "c4"],
+    )
+
     error_params = [1, 1, 1, 1]
 
     @classmethod
@@ -1374,7 +1464,36 @@ class sun2024(Fe3Fe2_model):
         )
 
     @classmethod
-    def calculate_Fe3Fe2(cls, melt_mol_fractions, T_K, P_bar, fO2, *args, **kwargs):
+    def _Gamma_parameterised(cls, T_K, P_bar):
+
+        t0, t1, t2 = [cls._calculate_t(number=n, P_bar=P_bar) for n in range(3)]
+
+        return t0 + t1 * T_K + t2 * T_K * np.log(T_K)
+
+    @classmethod
+    def _calculate_t(cls, number: int, P_bar):
+        P_GPa = P_bar / 1e4
+        P_0 = 1e-4
+
+        params = cls.Gamma_parameters[f"t{number}"]
+
+        part_1 = params["b0"] * P_GPa**2 * np.log(P_GPa / P_0)
+
+        part_2 = sum(
+            [
+                params[f"b{n}"] * (P_GPa - P_0) ** n
+                + params[f"c{n}"] * (P_GPa - P_0) ** (n - 0.5)
+                for n in range(1, 5)
+            ]
+        )
+
+        return part_1 + part_2
+
+    @classmethod
+    @_check_argument(var_name="dV", allowed_values=["deng", "parameterised"])
+    def calculate_Fe3Fe2(
+        cls, melt_mol_fractions, T_K, P_bar, fO2, dV="deng", *args, **kwargs
+    ):
         """
         Calculate melt |Fe3Fe2| ratios with equation 9.
 
@@ -1403,7 +1522,11 @@ class sun2024(Fe3Fe2_model):
 
         omega = cls._Omega(T_K=T_K)
         phi = cls._Phi(cations=cations)
-        gamma = cls._Gamma(T_K=T_K, P_bar=P_bar)
+        gamma = (
+            cls._Gamma(T_K=T_K, P_bar=P_bar)
+            if dV == "deng"
+            else cls._Gamma_parameterised(T_K=T_K, P_bar=P_bar)
+        )
 
         return 10 ** (
             (np.log10(fO2) - omega - phi - cls.params["h"] * gamma)
