@@ -1,6 +1,5 @@
 import json
 import os
-import warnings as w
 from typing import Dict, List
 
 import matplotlib.pyplot as plt
@@ -62,6 +61,11 @@ def get_calibration_data(parameter, model=None):
 
     calibration_data, calibration_datasets = _read_calibration_data(parameter=parameter)
     datasets = calibration_datasets[model]
+
+    if datasets is None:
+        raise RuntimeError(
+            f"The calibration dataset is not available for {model}. Please refer to the original publication."
+        )
 
     data = calibration_data.query("ref in @datasets")
 
