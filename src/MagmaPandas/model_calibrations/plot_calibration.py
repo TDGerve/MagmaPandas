@@ -120,12 +120,21 @@ def plot_calibration(
         melt_props=melt_props,
     )
 
-    ax.set_xlabel(f"wt.% {'+'.join(gp.subscript_numbers(i) for i in x_elements)}")
-    ax.set_ylabel(f"wt.% {'+'.join(gp.subscript_numbers(i) for i in y_elements)}")
+    labels = {}
+
+    for axis, label in zip(("x", "y"), (x_elements, y_elements)):
+        try:
+            labels[axis] = f"wt.% {'+'.join(gp.subscript_numbers(i) for i in label)}"
+        except ValueError:
+            labels[axis] = f"{'+'.join(i for i in label)}"
+
+    ax.set_xlabel(labels["x"])
+    ax.set_ylabel(labels["y"])
 
     ax.legend(frameon=True, fancybox=False)
+    ax.set_title(f"{parameter} calibration data")
 
-    plt.show()
+    return fig, ax
 
 
 def plot_calibration_PT(
@@ -203,8 +212,11 @@ def plot_calibration_PT(
     ax.legend(frameon=True, fancybox=False)
     ax.set_xlabel("Temperature ($\degree$C)")
     ax.set_ylabel("Pressure (kbar)")
+    ax.set_title(f"{parameter} calibration data")
 
     plt.show()
+
+    return
 
 
 def _prepare_plot_calibration(
@@ -252,8 +264,8 @@ def _prepare_plot_calibration(
         datasets = calibration_datasets[model]
         data = calibration_data.query("ref in @datasets")
 
-        x_calibration_data = data[x_elements].sum(axis=1)
-        y_calibration_data = data[y_elements].sum(axis=1)
+        x_calibration_data = data[x_elements].sum(axis=1, min_count=1)
+        y_calibration_data = data[y_elements].sum(axis=1, min_count=1)
 
         calibration_plot = ax.plot(
             x_calibration_data,
