@@ -1,6 +1,6 @@
 def fO2_RuRuO2(logshift, T_K, P_bar):
     """
-    Armstrong et al. (2018) Supplementary materials equation S3.
+    Armstrong et al. (2019) Supplementary materials equation S3.
     and
     Armstrong et al. (2020)
 

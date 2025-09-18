@@ -113,6 +113,10 @@ def _Gibbs0_polynomial(T_K: float | np.ndarray, a, b, c, d, e, f, g, h, i, **kwa
     )
 
 
+# Hirschmann Fe_G0 =  a + bT + cT.LN(T) + dT**2 + eT**3 + f/T + gT**7 + hT**-9
+# Hirschmann FeO_G0 =  a + bT + cT.LN(T) + dT**2 + e/T + f.LN(T) + gT**3
+
+
 def _Gibbs0(T_K: float | np.ndarray, params: pd.Series | pd.DataFrame):
     """
     calculate Gibbs free energy at 1 bar
@@ -137,19 +141,20 @@ def _Gibbs_Fe_magnetic(T_K):
     A = 1.55828482
 
     if T_K < Tc:
-        gibbs_magnetic = 1 - (1 / A) * (
-            (79 * (T_K / Tc) ** (-1) / (140 * P_factor))
-            + (474 / 497)
+        term1 = (79 * (T_K / Tc) ** -1) / (140 * P_factor)
+        term2 = (
+            (474 / 497)
             * ((1 / P_factor) - 1)
             * ((T_K / Tc) ** 3 / 6 + (T_K / Tc) ** 9 / 135 + (T_K / Tc) ** 15 / 600)
         )
+        Gibbs_magnetic = 1 - (1 / A) * (term1 + term2)
     else:
-        # why divide T_K by T_K, should this be T_K / Tc?
-        gibbs_magnetic = (-1 / A) * (
+
+        Gibbs_magnetic = (-1 / A) * (
             (T_K / Tc) ** -5 / 10 + (T_K / Tc) ** -15 / 315 + (T_K / T_K) ** -25 / 1500
         )
 
-    return gibbs_magnetic * (R * T_K * np.log(beta + 1))
+    return Gibbs_magnetic * (R * T_K * np.log(beta + 1))
 
 
 def _Gibbs_Fe_polymorphs(P_bar, T_K):
@@ -170,10 +175,18 @@ def _Gibbs_Fe_polymorphs(P_bar, T_K):
         gibbs0_params.iterrows(), _eos_parameters.loc[_Fe_polymorphs, :].iterrows()
     ):
         gibbs0.loc[name] = _Gibbs0(T_K=T_K, params=G0)
+
+    gibbs0["Fe_bcc-alpha"] += _Gibbs_Fe_magnetic(T_K=T_K)
+
+    if P_bar <= 1:
+        return gibbs0
+
+    for ((name, _), G0), (_, eos_params) in zip(
+        gibbs0_params.iterrows(), _eos_parameters.loc[_Fe_polymorphs, :].iterrows()
+    ):
         gibbs_pressure.loc[name] = Vinet_VdP(P_GPa=P_GPa, T_K=T_K, **eos_params)
 
     gibbs_total = gibbs0.add(gibbs_pressure)
-    gibbs_total["Fe_bcc-alpha"] += _Gibbs_Fe_magnetic(T_K=T_K)
 
     return gibbs_total
 
@@ -199,6 +212,10 @@ def _Gibbs_wustite_O2(P_bar, T_K):
 
     for (name, _), G0 in gibbs0_params.iterrows():
         gibbs0.loc[name] = _Gibbs0(T_K=T_K, params=G0)
+
+    if P_bar <= 1:
+        return gibbs0
+
     for name, eos_params in _eos_parameters.loc[gibbs_pressure.index, :].iterrows():
         gibbs_pressure.loc[name] = Vinet_VdP(P_GPa=P_GPa, T_K=T_K, **eos_params)
 
@@ -219,17 +236,15 @@ def _Gibbs_IW(P_bar, T_K, Fe_phase=False, suppress_Fe_liquid=True):
     gibbs_Fe_all = _Gibbs_Fe_polymorphs(P_bar=P_bar, T_K=T_K)
     addendum = ""
     if suppress_Fe_liquid:
-        addendum = (
-            "*" if gibbs_Fe_all.index[gibbs_Fe_all.argmin()] == "Fe_liquid" else ""
-        )
+        addendum = "*" if gibbs_Fe_all.idxmin() == "Fe_liquid" else ""
         gibbs_Fe_all = gibbs_Fe_all.drop("Fe_liquid")
-    Fe_phase, Fe_gibbs = (
-        gibbs_Fe_all.index[gibbs_Fe_all.argmin()],
+    Fe_stable_phase, Fe_gibbs = (
+        gibbs_Fe_all.idxmin(),
         gibbs_Fe_all.min(),
     )
     gibbs_total["Fe"] = Fe_gibbs
 
-    output = (gibbs_total, Fe_phase + addendum) if Fe_phase else gibbs_total
+    output = (gibbs_total, Fe_stable_phase + addendum) if Fe_phase else gibbs_total
 
     return output
 
@@ -536,3 +551,27 @@ def _fO2_IW_Zhang(logshift, T_K, P_bar):
     fO2 = np.concatenate([fO2_low_pressure, fO2_high_pressure])
 
     return fO2
+
+
+def _fO2_IW_oneill1993(T_K, logshift=0):
+
+    offset = 10**logshift
+
+    # Initialize mu1bar array
+    mu1bar = np.zeros_like(T_K, dtype=float)
+
+    # Calculate mu1bar based on temperature using vectorized operations
+    mu1bar = np.where(
+        T_K < 1042,
+        (-605568 + 1366.42 * T_K - 182.7955 * np.log(T_K) * T_K + 0.10359 * T_K**2),
+        mu1bar,
+    )
+    mu1bar = np.where(
+        (T_K >= 1042) & (T_K <= 1184),
+        (-519113 + 59.129 * T_K + 8.9276 * np.log(T_K) * T_K),
+        mu1bar,
+    )
+    mu1bar = np.where(
+        T_K > 1184, (-550915 + 269.106 * T_K - 16.9484 * np.log(T_K) * T_K), mu1bar
+    )
+    return np.exp(mu1bar / (R * T_K))
