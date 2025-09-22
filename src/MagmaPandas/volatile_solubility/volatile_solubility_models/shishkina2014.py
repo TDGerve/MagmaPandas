@@ -10,7 +10,7 @@ from MagmaPandas.volatile_solubility.solubility_baseclass import Solubility_mode
 fugacity_options = ["ideal"]
 
 
-class _meta_shiskina_configuration(type):
+class _meta_shishkina_configuration(type):
     def __init__(cls, *args, **kwargs):
         cls._fugacity = "ideal"
 
@@ -29,7 +29,7 @@ class _meta_shiskina_configuration(type):
         cls._model = "mixed"
 
 
-class shiskina_configuration(metaclass=_meta_shiskina_configuration):
+class shishkina_configuration(metaclass=_meta_shishkina_configuration):
     @classmethod
     def reset(cls):
         cls._fugacity = "ideal"
