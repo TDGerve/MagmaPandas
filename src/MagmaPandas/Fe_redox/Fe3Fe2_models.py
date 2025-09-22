@@ -730,7 +730,7 @@ class deng2020(Fe3Fe2_model):
         )  # cm3 to m3
 
         # TODO  CHECK UNITS: CM3, M3, A3, BAR, PASCAL OR GPA??
-        return np.trapezoid(dV, P_array * 1e5)  # bar to Pascal
+        return np.trapz(dV, P_array * 1e5)  # bar to Pascal
 
     @classmethod
     def _Fe_activities(cls, melt_cation_fractions, T_K):
