@@ -76,15 +76,14 @@ def cation_moles_per_oxygen(moles):
 
 def _anhydrous_composition(composition, normalise=True):
 
-    if ("H2O" not in composition.index) & ("H2O" not in composition.columns):
-        return composition.copy()
+    axis = [0, 1][isinstance(composition, pd.DataFrame)]
 
     composition_H2O = composition.copy()
 
     try:
-        composition_H2O = composition_H2O.drop("H2O")
+        composition_H2O = composition_H2O.drop("H2O", axis=axis)
     except KeyError:
-        composition_H2O = composition_H2O.drop(columns=["H2O"])
+        return composition.copy()
 
     if not normalise:
         return composition_H2O.recalculate()
