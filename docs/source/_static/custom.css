@@ -42,3 +42,14 @@ table td {
     word-wrap: break-word;
     white-space: normal;
 }
+
+/* --- Fix Pandas DataFrame rendering in notebooks --- */
+div.nbinput div.output_area table.dataframe,
+div.nboutput div.output_area table.dataframe,
+div.output_area table.dataframe,
+table.dataframe {
+    display: block;
+    overflow-x: auto;   /* enable horizontal scroll */
+    white-space: nowrap; /* prevent breaking cells */
+    max-width: 100%;
+}
