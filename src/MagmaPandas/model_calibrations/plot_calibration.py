@@ -132,7 +132,7 @@ def plot_calibration(
     ax.set_ylabel(labels["y"])
 
     ax.legend(frameon=True, fancybox=False)
-    ax.set_title(f"{parameter} calibration data")
+    fig.suptitle(f"{parameter} calibration data", size=8)
 
     return fig, ax
 
@@ -212,7 +212,7 @@ def plot_calibration_PT(
     ax.legend(frameon=True, fancybox=False)
     ax.set_xlabel("Temperature ($\degree$C)")
     ax.set_ylabel("Pressure (kbar)")
-    ax.set_title(f"{parameter} calibration data")
+    fig.suptitle(f"{parameter} calibration data", size=8)
 
     plt.show()
 
