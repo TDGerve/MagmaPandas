@@ -107,7 +107,7 @@ class MagmaFrame(pd.DataFrame):
     @property
     def loc(self):
         """Extended version of pandas._LocIndexer. Ensures that metadata are updated"""
-        return _MagmaLocIndexer(self)
+        return _MagmaLocIndexer("loc", self)
 
     @property
     def _no_data(self) -> List:
