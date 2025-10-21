@@ -18,6 +18,12 @@ from MagmaPandas.enums import Datatype, Unit
 from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
 
 
+class _MagmaLocIndexer(pd.core.indexing._LocIndexer):
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        self.obj.recalculate(inplace=True)
+
+
 class MagmaFrame(pd.DataFrame):
     """
     Generic MagmaPandas DataFrame class for geochemical data.
@@ -35,7 +41,7 @@ class MagmaFrame(pd.DataFrame):
     """
 
     # New attributes
-    _metadata = ["_weights", "_units", "_datatype"]
+    _metadata = ["_weights", "_units", "_datatype", "_recalc"]
 
     @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
     @_check_argument("datatype", [None, "cation", "oxide"])
@@ -64,6 +70,8 @@ class MagmaFrame(pd.DataFrame):
             self._weights = weights.copy()
         elif not hasattr(self, "_weights"):
             self._weights = element_weights.weights_as_series(self.columns)
+
+        self._recalc = True
 
     @property
     def _constructor(self):
@@ -95,6 +103,11 @@ class MagmaFrame(pd.DataFrame):
             return MagmaSeries(*args, weights=weights, **kwargs).__finalize__(self)
 
         return _c
+
+    @property
+    def loc(self):
+        """Extended version of pandas._LocIndexer. Ensures that metadata are updated"""
+        return _MagmaLocIndexer(self)
 
     @property
     def _no_data(self) -> List:
@@ -138,6 +151,41 @@ class MagmaFrame(pd.DataFrame):
         Names of all elements in the MagmaFrame.
         """
         return list(self._weights.index).copy()
+
+    def drop(self, *args, **kwargs) -> Self:
+        """Extended version of pandas.DataFrame.drop. Ensures that metadata are updated"""
+        inplace = kwargs.get("inplace", False)
+        dropped = super().drop(*args, **kwargs)
+        if inplace:
+            self.recalculate(inplace=True)
+            return
+        return dropped.recalculate()
+
+    def __setitem__(self, key, value):
+        """Extended version of pandas.DataFrame.__setitem__. Ensures that metadata are updated"""
+        super().__setitem__(key, value)
+        if getattr(self, "_recalc", True):
+            self.recalculate(inplace=True)
+
+    def recalculate(self, inplace=False) -> Self:
+        """
+        Recalculate element masses and total weight and updates metadata.
+        """
+        df = self if inplace else self.copy()
+        # avoid __setitem__ recursion when setting df.loc[:, "total"]
+        df._recalc = False
+
+        try:
+            df._weights = element_weights.weights_as_series(self.columns)
+
+            if df._total:
+                totals = df.loc[:, df.elements].sum(axis=1)
+                df.loc[:, "total"] = totals.astype(df["total"].dtype).values
+        finally:
+            df._recalc = True
+
+        if not inplace:
+            return df
 
     # @_check_attribute("_units", ["wt. %", "ppm"])
     def moles(self, normalise=True) -> Self:
@@ -380,21 +428,6 @@ class MagmaFrame(pd.DataFrame):
         cations["O"] = O
 
         return cations
-
-    def recalculate(self, inplace=False) -> Self:
-        """
-        Recalculate element masses and total weight.
-        """
-        df = self if inplace else self.copy()
-
-        df._weights = element_weights.weights_as_series(self.columns)
-
-        if df._total:
-            totals = df.loc[:, df.elements].sum(axis=1)
-            df.loc[:, "total"] = totals.astype(df["total"].dtype).values
-
-        if not inplace:
-            return df
 
     def normalise(self, to=None) -> Self:
         """
