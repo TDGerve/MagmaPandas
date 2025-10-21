@@ -22,7 +22,7 @@ MagmaPandas can be combined with `MagmaPEC <https://github.com/TDGerve/MagmaPEC>
 
 Documentation
 -------------
-Code documentation is currently being worked on at `magmapandas.readthedocs.io <https://magmapandas.readthedocs.io>`_
+Code documentation and working examples are available at `magmapandas.readthedocs.io <https://magmapandas.readthedocs.io>`_
 
 
 How to cite MagmaPandas
@@ -46,6 +46,6 @@ If you want to install from a specific git branch or release, use:
 
     pip install git+https://github.com/TDGerve/MagmaPandas.git@tag
 
-where *tag* should be replaced by the release tag or branch name (e.g. *v1.0.0* or *development*)
+where *tag* should be replaced by the release tag or branch name (e.g. *v2.2.6* or *development*)
 
 
