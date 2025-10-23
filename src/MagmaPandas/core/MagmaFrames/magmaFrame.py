@@ -13,18 +13,13 @@ import numpy as np
 import pandas as pd
 from typing_extensions import Self
 
-from MagmaPandas.Elements import element_weights, oxide_compositions
-from MagmaPandas.enums import Datatype, Unit
+from MagmaPandas.core.Elements import element_weights, oxide_compositions
+from MagmaPandas.core.enums import Datatype, Unit
+from MagmaPandas.core.indexing_assignment import indexing_assignment_mixin
 from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
 
 
-class _MagmaLocIndexer(pd.core.indexing._LocIndexer):
-    def __setitem__(self, key, value):
-        super().__setitem__(key, value)
-        self.obj.recalculate(inplace=True)
-
-
-class MagmaFrame(pd.DataFrame):
+class MagmaFrame(indexing_assignment_mixin, pd.DataFrame):
     """
     Generic MagmaPandas DataFrame class for geochemical data.
 
@@ -94,20 +89,23 @@ class MagmaFrame(pd.DataFrame):
 
     @property
     def _constructor_sliced(self):
-        from MagmaPandas.MagmaSeries import MagmaSeries
+        from MagmaPandas.core.MagmaSeries import MagmaSeries
 
-        def _c(*args, **kwargs):
+        def _c(data, *args, **kwargs):
+            # return a regular pandas series if data is not a Series with chemical elements as index.
+            if not hasattr(data, "index") or all(
+                [i not in self.elements for i in data.index]
+            ):
+                return pd.Series(data, *args, **kwargs).__finalize__(self)
+            # make sure weights is copied over to the sliced MagmaSeries
             if (weights := getattr(self, "_weights", None)) is not None:
                 weights = weights.copy(deep=True)
 
-            return MagmaSeries(*args, weights=weights, **kwargs).__finalize__(self)
+            return MagmaSeries(data, *args, weights=weights, **kwargs).__finalize__(
+                self
+            )
 
         return _c
-
-    @property
-    def loc(self):
-        """Extended version of pandas._LocIndexer. Ensures that metadata are updated"""
-        return _MagmaLocIndexer("loc", self)
 
     @property
     def _no_data(self) -> List:
@@ -151,21 +149,6 @@ class MagmaFrame(pd.DataFrame):
         Names of all elements in the MagmaFrame.
         """
         return list(self._weights.index).copy()
-
-    def drop(self, *args, **kwargs) -> Self:
-        """Extended version of pandas.DataFrame.drop. Ensures that metadata are updated"""
-        inplace = kwargs.get("inplace", False)
-        dropped = super().drop(*args, **kwargs)
-        if inplace:
-            self.recalculate(inplace=True)
-            return
-        return dropped.recalculate()
-
-    def __setitem__(self, key, value):
-        """Extended version of pandas.DataFrame.__setitem__. Ensures that metadata are updated"""
-        super().__setitem__(key, value)
-        if getattr(self, "_recalc", True):
-            self.recalculate(inplace=True)
 
     def recalculate(self, inplace=False) -> Self:
         """

@@ -2,8 +2,8 @@ import elementMass as e
 import pandas as pd
 from typing_extensions import Self
 
-from MagmaPandas.enums import Datatype, Unit
-from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
+from MagmaPandas.core.enums import Datatype, Unit
+from MagmaPandas.core.MagmaFrames.magmaFrame import MagmaFrame
 from MagmaPandas.parse_io import check_components
 
 _endmember_required_elements = ["MgO", "MnO", "FeO", "Fe2O3", "TiO2", "Al2O3"]

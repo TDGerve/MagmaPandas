@@ -1,7 +1,7 @@
 import elementMass as e
 import pandas as pd
 
-from MagmaPandas.magma_protocol import Magma
+from MagmaPandas.core.magma_protocol import Magma
 from MagmaPandas.parse_io import check_components
 
 """

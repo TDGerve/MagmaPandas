@@ -1,7 +1,7 @@
 import pandas as pd
 from typing_extensions import Self
 
-from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
+from MagmaPandas.core.MagmaFrames.magmaFrame import MagmaFrame
 
 
 class Plagioclase(MagmaFrame):

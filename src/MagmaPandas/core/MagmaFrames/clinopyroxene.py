@@ -1,8 +1,8 @@
 import pandas as pd
 from typing_extensions import Self
 
-from MagmaPandas.enums import Unit
-from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
+from MagmaPandas.core.enums import Unit
+from MagmaPandas.core.MagmaFrames.magmaFrame import MagmaFrame
 
 
 class Clinopyroxene(MagmaFrame):

@@ -7,14 +7,15 @@ import pandas as pd
 from typing_extensions import Self
 
 from MagmaPandas.configuration import configuration
-from MagmaPandas.Elements import element_weights, oxide_compositions
-from MagmaPandas.enums import Datatype, Unit
+from MagmaPandas.core.Elements import element_weights, oxide_compositions
+from MagmaPandas.core.enums import Datatype, Unit
+from MagmaPandas.core.indexing_assignment import indexing_assignment_mixin
 from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
 from MagmaPandas.thermometers.melt import melt_thermometers_dict
 
 
 def _MagmaSeries_expanddim(data=None, *args, **kwargs):
-    from MagmaPandas.MagmaFrames import MagmaFrame
+    from MagmaPandas.core.MagmaFrames import MagmaFrame
 
     if isinstance(data, MagmaSeries):
         kwargs["units"] = data._units
@@ -35,7 +36,7 @@ def _MagmaSeries_expanddim(data=None, *args, **kwargs):
 # _MagmaSeries_expanddim._get_axis_number = pd.DataFrame._get_axis_number
 
 
-class MagmaSeries(pd.Series):
+class MagmaSeries(indexing_assignment_mixin, pd.Series):
     """
     Generic MagmaSeries class for chemical data.
 
@@ -52,7 +53,7 @@ class MagmaSeries(pd.Series):
     """
 
     # New attributes
-    _metadata = ["_weights", "_units", "_datatype"]
+    _metadata = ["_weights", "_units", "_datatype", "_recalc"]
 
     @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
     @_check_argument("datatype", [None, "cation", "oxide"])
@@ -159,6 +160,30 @@ class MagmaSeries(pd.Series):
         Names of all elements in the MagmaSeries
         """
         return list(self._weights.index)
+
+    def recalculate(self, inplace=False) -> Self:
+        """
+        Recalculate element masses and total weight and updates metadata.
+        """
+
+        series = self if inplace else self.copy()
+
+        series._recalc = False
+
+        try:
+            series._weights = element_weights.weights_as_series(series.index)
+
+            if series._total:
+                totals = series.loc[:, series.elements].sum(axis=1)
+                series.loc[:, "total"] = totals.astype(series["total"].dtype).values
+        finally:
+            series._recalc = True
+
+        if series._total:
+            series["total"] = series[series.elements].sum()
+
+        if not inplace:
+            return series
 
     def moles(self, normalise=True) -> Self:
         """
@@ -362,21 +387,6 @@ class MagmaSeries(pd.Series):
         cations["O"] = O
 
         return cations
-
-    def recalculate(self, inplace=False) -> Self:
-        """
-        Recalculate element masses and total weight.
-        """
-
-        series = self if inplace else self.copy()
-
-        series._weights = element_weights.weights_as_series(series.index)
-
-        if series._total:
-            series["total"] = series[series.elements].sum()
-
-        if not inplace:
-            return series
 
     def normalise(self, to=None) -> Self:
         """

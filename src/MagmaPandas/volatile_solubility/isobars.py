@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 
-from MagmaPandas.magma_protocol import Magma
+from MagmaPandas.core.magma_protocol import Magma
 from MagmaPandas.volatile_solubility import volatile_solubility_models
 
 

@@ -4,7 +4,7 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
-from MagmaPandas.magma_protocol import Magma
+from MagmaPandas.core.magma_protocol import Magma
 
 
 def _check_calibration_range_Series(melt: pd.Series, calibration_range: Dict) -> None:

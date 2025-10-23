@@ -3,8 +3,8 @@ from typing import List
 import elementMass as e
 import pandas as pd
 
-from MagmaPandas import MagmaFrames
-from MagmaPandas.MagmaFrames import (
+from MagmaPandas.core import MagmaFrames
+from MagmaPandas.core.MagmaFrames import (
     Clinopyroxene,
     MagmaFrame,
     Melt,

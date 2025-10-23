@@ -7,9 +7,9 @@ from alive_progress import alive_bar
 from typing_extensions import Self
 
 from MagmaPandas.configuration import configuration
+from MagmaPandas.core.MagmaFrames.magmaFrame import MagmaFrame
 from MagmaPandas.Fe_redox.Fe3Fe2_calculate import calculate_Fe3Fe2
 from MagmaPandas.Kd.Ol_melt.FeMg.Kd_models import Kd_olmelt_FeMg_models_dict
-from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
 from MagmaPandas.parse_io.validate import _check_argument, _match_index
 from MagmaPandas.rheology import calculate_density, calculate_viscosity
 from MagmaPandas.thermometers.melt import melt_thermometers_dict

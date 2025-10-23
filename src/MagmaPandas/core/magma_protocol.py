@@ -2,7 +2,7 @@ from typing import Protocol
 
 import pandas as pd
 
-from MagmaPandas.enums import Datatype, Unit
+from MagmaPandas.core.enums import Datatype, Unit
 
 
 class Magma(Protocol):
