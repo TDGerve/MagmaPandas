@@ -5,7 +5,7 @@ About
 
 How to cite MagmaPandas
 ------------------------------
-If have used MagmaPandas in your research, please reference  `this <https://doi.org/10.1093/petrology/egae006>`_ paper published in Journal of Petrology. To ensure reproducibility, please also mention the release version of MagmaPandas and reference the specific models you used (see :ref:`references<references>`).
+If have used MagmaPandas in your research, please reference `this <http://dx.doi.org/10.1029/2025GC012420>`_ paper published in Geochemistry, Geophysics, Geosystems. To ensure reproducibility, please also mention the release version of MagmaPandas and reference the specific models you used (see :ref:`references<references>`).
 
 
 
