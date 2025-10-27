@@ -4,8 +4,6 @@ from multiprocessing import Pool
 import numpy as np
 import pandas as pd
 from alive_progress import alive_bar
-from typing_extensions import Self
-
 from MagmaPandas.configuration import configuration
 from MagmaPandas.core.MagmaFrames.magmaFrame import MagmaFrame
 from MagmaPandas.Fe_redox.Fe3Fe2_calculate import calculate_Fe3Fe2
@@ -17,6 +15,7 @@ from MagmaPandas.volatile_solubility.calculate_volatiles import (
     calculate_saturation,
     get_solubility_model,
 )
+from typing_extensions import Self
 
 
 class Melt(MagmaFrame):

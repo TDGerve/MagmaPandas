@@ -174,13 +174,10 @@ class MagmaSeries(indexing_assignment_mixin, pd.Series):
             series._weights = element_weights.weights_as_series(series.index)
 
             if series._total:
-                totals = series.loc[:, series.elements].sum(axis=1)
-                series.loc[:, "total"] = totals.astype(series["total"].dtype).values
+                series.loc["total"] = series.loc[series.elements].sum()
+
         finally:
             series._recalc = True
-
-        if series._total:
-            series["total"] = series[series.elements].sum()
 
         if not inplace:
             return series

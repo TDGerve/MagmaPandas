@@ -92,11 +92,14 @@ class MagmaFrame(indexing_assignment_mixin, pd.DataFrame):
         from MagmaPandas.core.MagmaSeries import MagmaSeries
 
         def _c(data, *args, **kwargs):
-            # return a regular pandas series if data is not a Series with chemical elements as index.
-            if not hasattr(data, "index") or all(
-                [i not in self.elements for i in data.index]
-            ):
+
+            # TODO test if this index check correctly returns pandas series and magmaseries
+            index = getattr(data, "index", kwargs.get("index", []))
+
+            if all([i not in self.elements for i in index]):
+                # return a pandas series if none of the indeces are elements
                 return pd.Series(data, *args, **kwargs).__finalize__(self)
+
             # make sure weights is copied over to the sliced MagmaSeries
             if (weights := getattr(self, "_weights", None)) is not None:
                 weights = weights.copy(deep=True)
