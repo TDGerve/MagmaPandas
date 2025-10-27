@@ -28,7 +28,7 @@ class MagmaFrame(indexing_assignment_mixin, pd.DataFrame):
     data : ndarray (structured or homogeneous), Iterable, dict, or DataFrame
         geochemical data with elements or oxides in columns
     units : None, str
-        data units, either "mol fraction", "wt. %" or "ppm"
+        data units, either "mol fraction", "wt.%" or "ppm"
     datatype : None, str
         datatype either "cation" or "oxide"
     weights : None, pandas Series
@@ -38,7 +38,7 @@ class MagmaFrame(indexing_assignment_mixin, pd.DataFrame):
     # New attributes
     _metadata = ["_weights", "_units", "_datatype", "_recalc"]
 
-    @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
+    @_check_argument("units", [None, "mol fraction", "wt.%", "ppm"])
     @_check_argument("datatype", [None, "cation", "oxide"])
     def __init__(
         self,
@@ -173,7 +173,7 @@ class MagmaFrame(indexing_assignment_mixin, pd.DataFrame):
         if not inplace:
             return df
 
-    # @_check_attribute("_units", ["wt. %", "ppm"])
+    # @_check_attribute("_units", ["wt.%", "ppm"])
     def moles(self, normalise=True) -> Self:
         """
         Data converted to mol fraction.
@@ -337,7 +337,7 @@ class MagmaFrame(indexing_assignment_mixin, pd.DataFrame):
 
         return oxygen
 
-    @_check_attribute("_units", ["wt. %", "ppm"])
+    @_check_attribute("_units", ["wt.%", "ppm"])
     def convert_ppm_wtPercent(self) -> Self:
         """
         ppm converted to wt. % and vice versa
@@ -352,7 +352,7 @@ class MagmaFrame(indexing_assignment_mixin, pd.DataFrame):
 
         return converted
 
-    @_check_attribute("_units", ["wt. %", "mol fraction"])
+    @_check_attribute("_units", ["wt.%", "mol fraction"])
     def _convert_moles_wtPercent(self, normalise=True) -> Self:
         """
         moles converted to wt. % and vice versa

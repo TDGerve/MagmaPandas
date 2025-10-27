@@ -91,7 +91,7 @@ def read_clinopyroxene(
         index_col=index_col,
         total_col=total_col,
         keep_columns=keep_columns,
-        units="wt. %",
+        units="wt.%",
         datatype="oxide",
         **kwargs,
     )
@@ -103,7 +103,7 @@ def read_melt(
     index_col: List[str] = None,
     total_col: str = None,
     keep_columns: List[str] = None,
-    units="wt. %",
+    units="wt.%",
     datatype="oxide",
     **kwargs,
 ) -> Melt:
@@ -131,7 +131,7 @@ def read_olivine(
     index_col: List[str] = None,
     total_col: str = None,
     keep_columns: List[str] = None,
-    units="wt. %",
+    units="wt.%",
     datatype="oxide",
     **kwargs,
 ) -> Olivine:
@@ -159,7 +159,7 @@ def read_plagioclase(
     index_col: List[str] = None,
     total_col: str = None,
     keep_columns: List[str] = None,
-    units="wt. %",
+    units="wt.%",
     datatype="oxide",
     **kwargs,
 ) -> Plagioclase:

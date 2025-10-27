@@ -45,7 +45,7 @@ class MagmaSeries(indexing_assignment_mixin, pd.Series):
     data : array-like, Iterable, dict, or scalar value
         geochemical data with elements or oxides as index
     units : None, str
-        data units, either "mol fraction", "wt. %" or "ppm"
+        data units, either "mol fraction", "wt.%" or "ppm"
     datatype : None, str
         datatype either "cation" or "oxide"
     weights : None, pandas Series
@@ -55,7 +55,7 @@ class MagmaSeries(indexing_assignment_mixin, pd.Series):
     # New attributes
     _metadata = ["_weights", "_units", "_datatype", "_recalc"]
 
-    @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
+    @_check_argument("units", [None, "mol fraction", "wt.%", "ppm"])
     @_check_argument("datatype", [None, "cation", "oxide"])
     def __init__(
         self,
