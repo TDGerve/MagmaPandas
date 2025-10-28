@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 from scipy.optimize import root, root_scalar
 
-from MagmaPandas.magma_protocol import Magma
+from MagmaPandas.core.magma_protocol import Magma
 from MagmaPandas.parse_io.validate import _check_argument, _check_setter
 from MagmaPandas.volatile_solubility.solubility_baseclass import Solubility_model
 

@@ -9,7 +9,7 @@ import elementMass as e
 import numpy as np
 import pandas as pd
 
-from MagmaPandas.magma_protocol import Magma
+from MagmaPandas.core.magma_protocol import Magma
 from MagmaPandas.parse_io import check_components
 from MagmaPandas.thermometers.validate_temperatures import _check_temperature
 from MagmaPandas.tools.calibration_range import _check_calibration_range

@@ -2,11 +2,11 @@ import pandas as pd
 from typing_extensions import Self
 
 from MagmaPandas.configuration import configuration
-from MagmaPandas.enums import Unit
+from MagmaPandas.core.enums import Unit
+from MagmaPandas.core.MagmaFrames.magmaFrame import MagmaFrame
+from MagmaPandas.core.MagmaFrames.melt import Melt
+from MagmaPandas.core.MagmaSeries import MagmaSeries
 from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
-from MagmaPandas.MagmaFrames.magmaFrame import MagmaFrame
-from MagmaPandas.MagmaFrames.melt import Melt
-from MagmaPandas.MagmaSeries import MagmaSeries
 
 
 class Olivine(MagmaFrame):

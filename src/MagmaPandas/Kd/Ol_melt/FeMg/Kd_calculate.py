@@ -1,9 +1,9 @@
 import pandas as pd
 
+from MagmaPandas.core.magma_protocol import Magma
 from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
 from MagmaPandas.fO2.fO2_calculate import calculate_fO2
 from MagmaPandas.Kd.Ol_melt.FeMg.Kd_models import Kd_olmelt_FeMg_models_dict
-from MagmaPandas.magma_protocol import Magma
 
 # configuration needs to be imported last to avoid circular imports
 from MagmaPandas.configuration import configuration  # isort: skip

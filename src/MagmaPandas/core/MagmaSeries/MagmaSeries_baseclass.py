@@ -1,10 +1,3 @@
-"""
-===========
-MagmaFrames
-===========
-Module with the generic MagmaFrame class.
-"""
-
 import re
 from typing import Dict, List
 
@@ -13,95 +6,122 @@ import numpy as np
 import pandas as pd
 from typing_extensions import Self
 
-from MagmaPandas.Elements import element_weights, oxide_compositions
-from MagmaPandas.enums import Datatype, Unit
+from MagmaPandas.configuration import configuration
+from MagmaPandas.core.Elements import element_weights, oxide_compositions
+from MagmaPandas.core.enums import Datatype, Unit
+from MagmaPandas.core.indexing_assignment import indexing_assignment_mixin
 from MagmaPandas.parse_io.validate import _check_argument, _check_attribute
+from MagmaPandas.thermometers.melt import melt_thermometers_dict
 
 
-class MagmaFrame(pd.DataFrame):
+def _MagmaSeries_expanddim(data=None, *args, **kwargs):
+    from MagmaPandas.core.MagmaFrames import MagmaFrame
+
+    if isinstance(data, MagmaSeries):
+        kwargs["units"] = data._units
+        kwargs["datatype"] = data._datatype
+        kwargs["weights"] = data._weights.copy(deep=True)
+
+    df = MagmaFrame(data, *args, **kwargs)
+
+    # df._units = data._units.copy(deep=True)
+    # df._datatype = data._datatype.copy(deep=True)
+
+    return df
+
+
+# # pd.concat (pandas/core/reshape/concat.py) requires this for the
+# # concatenation of series since pandas 1.1
+# # (https://github.com/pandas-dev/pandas/commit/f9e4c8c84bcef987973f2624cc2932394c171c8c)
+# _MagmaSeries_expanddim._get_axis_number = pd.DataFrame._get_axis_number
+
+
+class MagmaSeries(indexing_assignment_mixin, pd.Series):
     """
-    Generic MagmaPandas DataFrame class for geochemical data.
+    Generic MagmaSeries class for chemical data.
 
     Parameters
     ----------
-    data : ndarray (structured or homogeneous), Iterable, dict, or DataFrame
-        geochemical data with elements or oxides in columns
+    data : array-like, Iterable, dict, or scalar value
+        geochemical data with elements or oxides as index
     units : None, str
-        data units, either "mol fraction", "wt. %" or "ppm"
+        data units, either "mol fraction", "wt.%" or "ppm"
     datatype : None, str
         datatype either "cation" or "oxide"
     weights : None, pandas Series
-        atomic weights of elements or oxides in the MagmaFrame
+        atomic weights of elements or oxides in the MagmaSeries
     """
 
     # New attributes
-    _metadata = ["_weights", "_units", "_datatype"]
+    _metadata = ["_weights", "_units", "_datatype", "_recalc"]
 
-    @_check_argument("units", [None, "mol fraction", "wt. %", "ppm"])
+    @_check_argument("units", [None, "mol fraction", "wt.%", "ppm"])
     @_check_argument("datatype", [None, "cation", "oxide"])
     def __init__(
         self,
         data=None,
         *args,
-        units: None | str = None,
-        datatype: None | str = None,
+        units: str = None,
+        datatype: str = None,
         weights: pd.Series = None,
         **kwargs,
     ) -> None:
         self._units: Unit = Unit(units)
         self._datatype: Datatype = Datatype(datatype)
 
-        super().__init__(data, **kwargs)
-
-        if not self._total:
-            total_regex = re.search(
-                "total", "".join(map(str, self.columns.to_list())), re.IGNORECASE
-            )
-            if total_regex:
-                self.rename(columns={total_regex[0]: "total"}, inplace=True)
+        super().__init__(data, *args, **kwargs)
 
         if weights is not None:
-            self._weights = weights.copy()
+            self._weights = weights.copy(deep=True)
         elif not hasattr(self, "_weights"):
-            self._weights = element_weights.weights_as_series(self.columns)
+            self._weights = element_weights.weights_as_series(self.index)
 
     @property
     def _constructor(self):
-        """This is the key to letting Pandas know how to keep
+        """
+        This is the key to letting Pandas know how to keep
         derivatives of `MagmaBase` the same type as yours.  It should
         be enough to return the name of the Class.  However, in
         some cases, `__finalize__` is not called and `new attributes` are
-        not carried over.  We can fix that by constructing a callable
-        that makes sure to call `__finalize__` every time."""
+        not carried over (see: https://github.com/pandas-dev/pandas/issues/13208).
+        We can fix that by constructing a callable
+        that makes sure to call `__finalize__` every time.
+        """
 
         def _c(*args, **kwargs):
             if (weights := getattr(self, "_weights", None)) is not None:
                 weights = weights.copy(deep=True)
 
-            current_class = type(self)
-
-            return current_class(*args, weights=weights, **kwargs).__finalize__(self)
+            # The finalize call crashes the Python kernel when using a dictionary as data:
+            # 'Cannot execute code, session has been disposed. Please try restarting the Kernel.'
+            # WHY?
+            return MagmaSeries(*args, weights=weights, **kwargs)  # .__finalize__(self)
 
         return _c
 
     @property
-    def _constructor_sliced(self):
-        from MagmaPandas.MagmaSeries import MagmaSeries
-
+    def _constructor_expanddim(self):
         def _c(*args, **kwargs):
             if (weights := getattr(self, "_weights", None)) is not None:
                 weights = weights.copy(deep=True)
 
-            return MagmaSeries(*args, weights=weights, **kwargs).__finalize__(self)
+            return _MagmaSeries_expanddim(
+                *args, weights=weights, **kwargs
+            ).__finalize__(self)
+
+        # pd.concat (pandas/core/reshape/concat.py) requires this for the
+        # concatenation of series since pandas 1.1
+        # (https://github.com/pandas-dev/pandas/commit/f9e4c8c84bcef987973f2624cc2932394c171c8c)
+        _c._get_axis_number = pd.DataFrame._get_axis_number
 
         return _c
 
     @property
     def _no_data(self) -> List:
         """
-        Names of all columns without chemical data
+        Names of all index without chemical data
         """
-        no_data = list(self.columns.difference(self.elements))
+        no_data = list(self.index.difference(self.elements))
         if "total" in no_data:
             no_data.remove("total")
         return no_data
@@ -109,10 +129,12 @@ class MagmaFrame(pd.DataFrame):
     @property
     def _total(self) -> bool:
         """
-        Dataframe contains column with totals
+        Dataframe contains totals in index
         """
-
-        return "total" in self.columns
+        if "total" in self.index:
+            return True
+        else:
+            return False
 
     @property
     def units(self) -> str:
@@ -128,23 +150,42 @@ class MagmaFrame(pd.DataFrame):
     @property
     def weights(self) -> pd.Series:
         """
-        Atomic weights of all elements in the MagmaFrame.
+        Atomic weights of all elements in the MagmaSeries.
         """
-        return self._weights.copy()
+        return self._weights
 
     @property
     def elements(self) -> List[str]:
         """
-        Names of all elements in the MagmaFrame.
+        Names of all elements in the MagmaSeries
         """
-        return list(self._weights.index).copy()
+        return list(self._weights.index)
 
-    # @_check_attribute("_units", ["wt. %", "ppm"])
+    def recalculate(self, inplace=False) -> Self:
+        """
+        Recalculate element masses and total weight and updates metadata.
+        """
+
+        series = self if inplace else self.copy()
+
+        series._recalc = False
+
+        try:
+            series._weights = element_weights.weights_as_series(series.index)
+
+            if series._total:
+                series.loc["total"] = series.loc[series.elements].sum()
+
+        finally:
+            series._recalc = True
+
+        if not inplace:
+            return series
+
     def moles(self, normalise=True) -> Self:
         """
-        Data converted to mol fraction.
+        Data converted to mol fractions.
         """
-
         if self._units == Unit.MOL_FRACTIONS:
             return self.copy()
 
@@ -161,7 +202,6 @@ class MagmaFrame(pd.DataFrame):
         """
         Data converted to wt. %.
         """
-
         if self._units == Unit.WT_PERCENT:
             return self.copy()
 
@@ -174,9 +214,6 @@ class MagmaFrame(pd.DataFrame):
 
     @property
     def ppm(self) -> Self:
-        """
-        Data converted to ppm.
-        """
 
         if self._units == Unit.PPM:
             return self.copy()
@@ -190,21 +227,19 @@ class MagmaFrame(pd.DataFrame):
 
     def cations(self, normalise=True, norm_to=1, mol_fractions=True) -> Self:
         """
-        Data converted to cation mol fraction
+        Data converted to cation mol fractions
         """
-        # Calculate oxide moles
         if (self._datatype == Datatype.CATION) & (
             mol_fractions & (self._units == Unit.MOL_FRACTIONS)
         ):
             return self.copy()
 
-        moles = self[self.elements].moles(normalise=False)
+        moles = self.moles(normalise=False)[self.elements]
 
-        # Calculate cation moles
         cations_per_oxide = oxide_compositions.cation_amount(moles.elements)
-        cations = moles[moles.elements].mul(cations_per_oxide)
-        # Rename columns to cations
-        cations.columns = oxide_compositions.cation_names(moles.elements)
+        cations = moles.mul(pd.Series(cations_per_oxide, index=moles.elements))
+        # Rename index to cations
+        cations.index = oxide_compositions.cation_names(cations.elements)
 
         cations._datatype = Datatype.CATION
         cations = cations.recalculate()
@@ -216,15 +251,14 @@ class MagmaFrame(pd.DataFrame):
 
         if not normalise:
             cations["total"] = cations.sum(axis=1)
-            return cations
+            return cations.recalculate()
 
         # Normalise to 1
-        total = cations.sum(axis=1)
-        cations = cations.div(total, axis=0) * norm_to
+        total = cations.sum()
+        cations = cations.div(total) * norm_to
         cations["total"] = norm_to
-
         # Set the right datatype and elements
-        cations._datatype = Datatype.CATION
+
         cations.recalculate(inplace=True)
 
         return cations
@@ -260,11 +294,11 @@ class MagmaFrame(pd.DataFrame):
         cations_per_oxide = e.cation_numbers(oxide_names)
 
         oxides = cations.rename(
-            columns={cation: oxide for cation, oxide in zip(cation_names, oxide_names)}
+            index={cation: oxide for cation, oxide in zip(cation_names, oxide_names)}
         ).recalculate()  # rename to oxides
 
-        oxides = oxides.div(cations_per_oxide, axis=1)  # recalculate to oxides
-        oxides["total"] = oxides[oxides.elements].sum(axis=1)
+        oxides = oxides.div(cations_per_oxide)  # recalculate to oxides
+        oxides["total"] = oxides[oxides.elements].sum()
         oxides._datatype = Datatype.OXIDE
 
         if units == Unit.MOL_FRACTIONS:
@@ -272,38 +306,42 @@ class MagmaFrame(pd.DataFrame):
                 return oxides
             return oxides.normalise()
 
-        oxides_wt_pc = oxides.wt_pc(normalise=False)
-        # oxides_wt_pc["total"] = oxides_wt_pc[oxides_wt_pc.elements].sum(axis=1)
+        oxides_wt_pc = oxides.wt_pc(normalise=False)  # recalculate to wt. %
         if not normalise:
             return oxides_wt_pc
         return oxides_wt_pc.normalise()
 
-    @property
-    def oxygen(self) -> pd.Series:
+    def _convert_moles_wtPercent(self, normalise=True) -> Self:
         """
-        oxygen per 1 mole of cations
+        moles converted to wt. % and vice versa
         """
-        # Calculate oxide moles
-        if self._datatype != Datatype.CATION:
-            cations = self.cations()
-            cations = cations[cations.elements]
-        else:
-            cations = self[self.elements].copy()
 
-        oxygen_per_mole = oxide_compositions.oxygen_amount(
-            cations.elements, type="cation"
-        )
-        cation_per_mole = oxide_compositions.cation_amount(
-            cations.elements, type="cation"
-        )
+        converted = self.copy()[self.elements]
+        if self._units == Unit.WT_PERCENT:
+            converted = converted.div(converted.weights)
+            units = Unit.MOL_FRACTIONS
+        elif self._units == Unit.MOL_FRACTIONS:
+            converted = converted.mul(converted.weights)
+            units = Unit.WT_PERCENT
 
-        oxygen_per_cation = oxygen_per_mole / cation_per_mole
+        if not normalise:
+            converted["total"] = converted.sum()
+            converted._units = units
+            return converted
 
-        oxygen = cations.mul(oxygen_per_cation).sum(axis=1)
+        # Normalise
+        total = converted.sum()
+        converted = converted.div(total)
+        converted["total"] = converted.sum()
+        # Set the right units
 
-        return oxygen
+        if self._units == Unit.MOL_FRACTIONS:
+            converted = converted.mul(100)
 
-    @_check_attribute("_units", ["wt. %", "ppm"])
+        converted._units = units
+
+        return converted
+
     def convert_ppm_wtPercent(self) -> Self:
         """
         ppm converted to wt. % and vice versa
@@ -318,38 +356,6 @@ class MagmaFrame(pd.DataFrame):
 
         return converted
 
-    @_check_attribute("_units", ["wt. %", "mol fraction"])
-    def _convert_moles_wtPercent(self, normalise=True) -> Self:
-        """
-        moles converted to wt. % and vice versa
-        """
-
-        converted = self[self.elements].copy()
-        if self._units == Unit.WT_PERCENT:
-            converted = converted.div(converted.weights)
-            units = Unit.MOL_FRACTIONS
-        elif self._units == Unit.MOL_FRACTIONS:
-            converted = converted.mul(converted.weights)
-            units = Unit.WT_PERCENT
-
-        if not normalise:
-            converted["total"] = converted[converted.elements].sum(axis=1)
-            converted._units = units
-            return converted.recalculate()
-
-        # Normalise
-        total = converted[converted.elements].sum(axis=1)
-        converted = converted.div(total, axis=0)
-        converted["total"] = converted[converted.elements].sum(axis=1)
-        # Set the right units
-
-        if self._units == Unit.MOL_FRACTIONS:
-            converted = converted.mul(100)
-
-        converted._units = units
-
-        return converted
-
     def mineral_formula(self, O: int = None) -> Self:
         """
         Calculate mineral formulas by normalising to oxygen per formula unit
@@ -361,11 +367,9 @@ class MagmaFrame(pd.DataFrame):
 
         Returns
         -------
-        mineral formulas : MagmaFrame
+        mineral formulas : MagmaSeries
         """
         # Calculate cation fractions
-        O = float(O)
-
         cations = self.cations()
         cations = cations[cations.elements]
         # Calculate oxygens per cation
@@ -374,27 +378,12 @@ class MagmaFrame(pd.DataFrame):
         )
         oxygen_numbers.index = cations.elements
         # Normalise to oxygen
-        oxygen_total = cations.mul(oxygen_numbers).sum(axis=1)
+        oxygen_total = cations.mul(oxygen_numbers).sum()
         oxygen_factor = O / oxygen_total
-        cations = cations.mul(oxygen_factor, axis=0)
+        cations = cations.mul(oxygen_factor)
         cations["O"] = O
 
         return cations
-
-    def recalculate(self, inplace=False) -> Self:
-        """
-        Recalculate element masses and total weight.
-        """
-        df = self if inplace else self.copy()
-
-        df._weights = element_weights.weights_as_series(self.columns)
-
-        if df._total:
-            totals = df.loc[:, df.elements].sum(axis=1)
-            df.loc[:, "total"] = totals.astype(df["total"].dtype).values
-
-        if not inplace:
-            return df
 
     def normalise(self, to=None) -> Self:
         """
@@ -407,25 +396,93 @@ class MagmaFrame(pd.DataFrame):
 
         Returns
         -------
-        normalised data : MagmaFrame
+        normalised data : MagmaSeries
         """
         if to is not None:
-            norm = float(to)
+            norm = to
         elif self._units == Unit.WT_PERCENT:
-            norm = 100.0
+            norm = 100
         else:
-            norm = 1.0
+            norm = 1
 
-        # self = self.recalculate()
-        normalised = self[self.elements].copy()
+        normalised = self.recalculate()[self.elements]
 
-        total = normalised.sum(axis=1)
-
-        normalised = normalised.div(total, axis=0)
-        normalised = normalised.mul(norm, axis=0)
-        normalised.loc[:, "total"] = normalised.sum(axis=1)
+        total = normalised.sum()
+        normalised = normalised.div(total)
+        normalised = normalised.mul(norm)
+        normalised["total"] = normalised.sum()
 
         return normalised
+
+    def temperature(self, *args, **kwargs) -> float:
+        """
+        Calculate melt liquidus temperature.
+        Thermometer models are selected in the global configuration.
+
+        Parameters
+        ----------
+        P_bar   : float, pandas Series
+            pressure in bar
+
+        Returns
+        -------
+        temperatures : float
+            Liquidus temperature in Kelvin
+        """
+
+        thermometer = melt_thermometers_dict[configuration.melt_thermometer]
+
+        return thermometer(melt=self.wt_pc(), *args, **kwargs)
+
+    @_check_argument("total_Fe", ["FeO", "Fe2O3"])
+    def FeO_Fe2O3_calc(
+        self,
+        Fe3Fe2: float,
+        total_Fe: str = "FeO",
+        inplace: bool = False,
+        wtpc=True,
+    ) -> Self:
+        """
+        Calculate melt FeO and |Fe2O3| based on total Fe.
+
+        Parameters
+        ----------
+        Fe3Fe2 : pandas Series
+            melt |Fe3Fe2| ratios
+        total_Fe    : str
+            columname in Melt frame with total Fe
+        inplace : bool
+
+        Returns
+        -------
+        Melt    : Self
+            melt compositions inclusding FeO and |Fe2O3|
+        """
+
+        Fe2Fe_total = 1 / (1 + Fe3Fe2)
+        melt_mol_fractions = self.moles()
+
+        if total_Fe == "FeO":
+            Fe2 = melt_mol_fractions["FeO"] * Fe2Fe_total
+            Fe3 = melt_mol_fractions["FeO"] * (1 - Fe2Fe_total) / 2
+        if total_Fe == "Fe2O3":
+            Fe2 = melt_mol_fractions["Fe2O3"] * Fe2Fe_total * 2
+            Fe3 = melt_mol_fractions["Fe2O3"] * (1 - Fe2Fe_total)
+
+        melt_mol_fractions["FeO"] = Fe2
+        melt_mol_fractions["Fe2O3"] = Fe3
+        melt_mol_fractions.recalculate(inplace=True)
+
+        # Recalculate to wt. % (normalised)
+        melt = melt_mol_fractions.wt_pc() if wtpc else melt_mol_fractions
+
+        if inplace:
+            self["FeO"] = melt["FeO"]
+            self["Fe2O3"] = melt["Fe2O3"]
+            self.recalculate(inplace=True)
+
+        else:
+            return melt
 
     def random_sample(self, errors) -> Self:
         """
@@ -440,14 +497,14 @@ class MagmaFrame(pd.DataFrame):
 
         Returns
         -------
-        resampled data : MagmaFrame
+        resampled data : MagmaSeries
             Randomly resampled compositions
         """
 
         random_sample = np.random.normal(self[self.elements], errors)
-        random_sample[random_sample < 0] = 0.0
+        random_sample[random_sample < 0] = 0
 
-        df = self.copy()
-        df[df.elements] = random_sample
+        sr = self.copy()
+        sr[sr.elements] = random_sample
 
-        return df
+        return sr
